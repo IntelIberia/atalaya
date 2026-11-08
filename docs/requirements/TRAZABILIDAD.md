@@ -1,6 +1,6 @@
 # Trazabilidad requisito → tests
 
-Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como cerradas: [-1, 0].
+Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como cerradas: [-1].
 
 | Requisito | Prio | Fase | Tests | Resultado | Estado |
 |---|---|---|---|---|---|
@@ -79,16 +79,16 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-NFR-011 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-012 | SHOULD | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-013 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-NFR-014 | MUST | 0 | 4 | verde | OK |
-| REQ-NFR-015 | MUST | 0 | 0 | sin tests | HUECO |
-| REQ-NFR-016 | MUST | 0 | 0 | sin tests | HUECO |
+| REQ-NFR-014 | MUST | 0 | 14 | verde | en curso |
+| REQ-NFR-015 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-NFR-016 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-017 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-NFR-018 | MUST | 0 | 0 | sin tests | HUECO |
+| REQ-NFR-018 | MUST | 0 | 3 | verde | en curso |
 | REQ-NFR-019 | SHOULD | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-020 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-021 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-LEG-001 | MUST | 0 | 17 | verde | OK |
-| REQ-LEG-002 | MUST | 0 | 16 | verde | OK |
+| REQ-LEG-001 | MUST | 0 | 17 | verde | en curso |
+| REQ-LEG-002 | MUST | 0 | 16 | verde | en curso |
 | REQ-LEG-003 | MUST | 6 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-004 | MUST | 6 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-005 | MUST | 5 | 10 | verde | en curso |
@@ -102,37 +102,37 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-LEG-013 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-014 | MUST | 4 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-015 | MUST | 7 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-LEG-016 | MUST | 0 | 0 | sin tests | HUECO |
-| REQ-LEG-017 | MUST | 0 | 7 | verde | OK |
-| REQ-SEC-001 | MUST | 0 | 90 | verde | OK |
-| REQ-SEC-002 | MUST | 0 | 28 | verde | OK |
-| REQ-SEC-003 | MUST | 0 | 41 | verde | OK |
+| REQ-LEG-016 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-LEG-017 | MUST | 0 | 7 | verde | en curso |
+| REQ-SEC-001 | MUST | 0 | 90 | verde | en curso |
+| REQ-SEC-002 | MUST | 0 | 29 | verde | en curso |
+| REQ-SEC-003 | MUST | 0 | 42 | verde | en curso |
 | REQ-SEC-004 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-SEC-005 | MUST | 0 | 0 | sin tests | HUECO |
+| REQ-SEC-005 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-006 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-007 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-008 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-009 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-010 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-011 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-SEC-012 | MUST | 0 | 9 | verde | OK |
+| REQ-SEC-012 | MUST | 0 | 9 | verde | en curso |
 | REQ-SEC-013 | MUST | 12 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-014 | SHOULD | 12 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-SEC-015 | MUST | 0 | 0 | sin tests | HUECO |
-| REQ-SEC-016 | MUST | 0 | 0 | sin tests | HUECO |
+| REQ-SEC-015 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-SEC-016 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-017 | SHOULD | 3 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-018 | MUST | 3 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-019 | MUST | 12 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-001 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-002 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-PRIV-003 | MUST | 0 | 0 | sin tests | HUECO |
+| REQ-PRIV-003 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-004 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-005 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-PRIV-006 | MUST | 0 | 0 | sin tests | HUECO |
-| REQ-PRIV-007 | MUST | 0 | 0 | sin tests | HUECO |
+| REQ-PRIV-006 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-PRIV-007 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-008 | MUST | 3 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-009 | MUST | 4 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-010 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-011 | SHOULD | 3 | 0 | sin tests | pendiente (fase abierta) |
 
-Huecos: 10 · IDs desconocidos en tests: 0
+Huecos: 0 · IDs desconocidos en tests: 0

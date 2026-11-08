@@ -610,3 +610,16 @@ def test_settings_tx_en_hook_bloqueado() -> None:
 @pytest.mark.req("REQ-SEC-002")
 def test_settings_ilegible_se_analiza_entero() -> None:
     assert "sdr-tx" in reglas(".claude/settings.json", '{"deny": ["rpi' + 'tx" ')
+
+
+@pytest.mark.req("REQ-SEC-002")
+def test_settings_con_permissions_sin_deny() -> None:
+    txt = _settings([], []).replace('"deny": [],', "")
+    assert '"deny"' not in txt
+    assert reglas(".claude/settings.json", txt) == set()
+
+
+@pytest.mark.req("REQ-SEC-003")
+def test_hook_bypass_informe_exacto() -> None:
+    got = [str(v) for v in g.check_command("git commit --no-verify -m x")]
+    assert got == ["[hook-bypass] <bash>: evasión de los hooks de git"]

@@ -56,3 +56,10 @@ paths_to_mutate = ["scripts/guardrails.py"]
 tests_dir = ["tests/guardrails/"]
 also_copy = ["scripts/", "tests/", "pyproject.toml"]
 pytest_add_cli_args = ["-m", "not subproceso"]
+
+[tool.atalaya]
+# Umbrales de calidad (ADR 0006). Cambiarlos exige un ADR nuevo.
+coverage_branch_min = 90
+coverage_critical = ["scripts/guardrails.py", "scripts/traceability.py", "scripts/evidence.py", "scripts/mutation_report.py"]
+mutation_threshold = 0.80
+mutation_critical = ["scripts/guardrails.py"]

@@ -1,0 +1,41 @@
+{
+  "scripts/guardrails.py": {
+    "sha256": "951decaed254652076a8d9c20ab84801e11ef8d701af36b00048a676d52a731b",
+    "total": 380,
+    "killed": 351,
+    "survived": 29,
+    "other": 0,
+    "score": 0.9236842105263158,
+    "survivors": [
+      "scripts.guardrails.x__changed__mutmut_23",
+      "scripts.guardrails.x__decode__mutmut_3",
+      "scripts.guardrails.x__decode__mutmut_6",
+      "scripts.guardrails.x__decode__mutmut_9",
+      "scripts.guardrails.x__enclosing_identifier__mutmut_3",
+      "scripts.guardrails.x__git__mutmut_8",
+      "scripts.guardrails.x__settings_without_deny__mutmut_12",
+      "scripts.guardrails.x__settings_without_deny__mutmut_13",
+      "scripts.guardrails.x__settings_without_deny__mutmut_15",
+      "scripts.guardrails.x__settings_without_deny__mutmut_16",
+      "scripts.guardrails.x__settings_without_deny__mutmut_17",
+      "scripts.guardrails.x__settings_without_deny__mutmut_18",
+      "scripts.guardrails.x_check_file__mutmut_26",
+      "scripts.guardrails.x_check_file__mutmut_32",
+      "scripts.guardrails.x_load_allowlist__mutmut_10",
+      "scripts.guardrails.x_load_allowlist__mutmut_13",
+      "scripts.guardrails.x_load_allowlist__mutmut_3",
+      "scripts.guardrails.x_load_allowlist__mutmut_5",
+      "scripts.guardrails.x_main__mutmut_16",
+      "scripts.guardrails.x_main__mutmut_18",
+      "scripts.guardrails.x_main__mutmut_2",
+      "scripts.guardrails.x_main__mutmut_21",
+      "scripts.guardrails.x_main__mutmut_22",
+      "scripts.guardrails.x_main__mutmut_3",
+      "scripts.guardrails.x_main__mutmut_43",
+      "scripts.guardrails.x_main__mutmut_47",
+      "scripts.guardrails.x_main__mutmut_50",
+      "scripts.guardrails.x_range_files__mutmut_12",
+      "scripts.guardrails.x_range_files__mutmut_9"
+    ]
+  }
+}
