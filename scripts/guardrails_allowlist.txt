@@ -1,0 +1,6 @@
+# Identificadores defensivos permitidos por scripts/guardrails.py (ADR 0005).
+# Un identificador por línea, exacto (no patrones). Solo vocabulario de DETECCIÓN.
+# Añadir uno exige justificarlo en el PR y revisión del subagente legal-guardrail-reviewer.
+spoof_indicator        # indicio de Remote ID falsificado (REQ-FUN-031)
+remote_id_spoof_indicator
+spoof_suspicion_score

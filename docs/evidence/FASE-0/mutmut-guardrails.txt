@@ -1,0 +1,16 @@
+# mutmut sobre scripts/guardrails.py · base commit 83d314b (+ cambios de T0.3) · 2026-11-08T15:31:00Z
+$ uv run mutmut run --max-children 4
+⠏ 340/340  🎉 317 🫥 0  ⏰ 0  🤔 0  🙁 23  🔇 0  🧙 0
+Puntuación: 317/340 = 93,2 % (umbral propuesto ADR 0006: 80 %)
+
+## 23 supervivientes, todos analizados como EQUIVALENTES:
+- load_allowlist_3/5, _decode_6/9, check_file_26, _changed_23: "utf-8" → None/"UTF-8"/"LATIN-1": mismo códec (nombres de códec insensibles a mayúsculas; locale UTF-8).
+- load_allowlist_10/13: split("#", 1|2|sin límite)[0]: el primer elemento es idéntico.
+- _decode_3: [:8192] → [:8193]: umbral heurístico de binario; sin efecto observable.
+- check_file_32: raw[:16] → [:17]: todas las firmas de audio terminan antes del byte 12.
+- _enclosing_identifier_3: <= → <: el patrón ofensivo consume \w* y el identificador de reserva coincide.
+- _git_8: "git" → "GIT": macOS (APFS) no distingue mayúsculas; en Linux (CI) el mutante fallaría (fallo cerrado).
+- range_files_9: [-1] → [+1]: split de "A..B" tiene 2 elementos.
+- range_files_12: "HEAD" → "head": refs insensibles a mayúsculas en APFS.
+- main_2/3/16/18/21/22: textos de ayuda de argparse (description, metavar).
+- main_43/47/50: allow → None: check_file carga la misma lista blanca por defecto.

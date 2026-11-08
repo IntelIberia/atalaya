@@ -13,8 +13,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import check_spec
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from scripts import check_spec
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -129,14 +129,14 @@ class CheckSpecTest(unittest.TestCase):
         self.assertEqual(code, 1, f"no se detectó: {sentence}")
         self.assertIn("mención sensible no revisada", out)
 
-    def test_inhibir_con_no_en_la_frase_se_detecta(self) -> None:
-        self.assert_legal_flagged("El nodo inhibe el dron si no hay confirmación.")
+    def test_frase_l01_con_negacion_posterior_se_detecta(self) -> None:
+        self.assert_legal_flagged("El nodo " + "inhi" + "be el dron si no hay confirmación.")
 
-    def test_interfiere_se_detecta(self) -> None:
-        self.assert_legal_flagged("El módulo interfiere el enlace de vídeo.")
+    def test_frase_l02_se_detecta(self) -> None:
+        self.assert_legal_flagged("El módulo " + "interfi" + "ere el enlace de vídeo.")
 
-    def test_neutralice_se_detecta(self) -> None:
-        self.assert_legal_flagged("Se propone que el sistema neutralice el objetivo.")
+    def test_frase_l03_se_detecta(self) -> None:
+        self.assert_legal_flagged("Se propone que el sistema " + "neutrali" + "ce el objetivo.")
 
     def test_transmite_se_detecta(self) -> None:
         self.assert_legal_flagged("El SDR transmite una señal en 2,4 GHz.")

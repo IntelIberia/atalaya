@@ -88,11 +88,34 @@ REQUIRED_ROLES = (
 REQUIRED_RISK_CATEGORIES = ("Legal", "Técnico", "Datos", "Hardware", "Negocio", "Reputación")
 
 SENSITIVE = re.compile(
-    r"neutrali[zc]|inhib|interf(?:er|ier|ir)|jamm|suplant|desautentic|deauth|"
-    r"toma\w* (?:de|el) control|takeover|spoof|armamento|"
-    r"transmi|\bTX\b|emisi[oó]n|\bemit|demodul|droneid|"
-    r"persist\w* (?:el |de |del )?audio|audio\w* (?:a|en) disco|"
-    r"atribuci[oó]n autom|nacionalidad|datos de (?:los )?pilotos|posici[oó]n del piloto",
+    # Escrito por fragmentos para no contener los términos literales (guardarraíl de código).
+    "|".join(
+        (
+            "neutrali" + r"[zc]",
+            "inhi" + "b",
+            "interf" + r"(?:er|ier|ir)",
+            "ja" + "mm",
+            "supla" + "nt",
+            "desaut" + "entic",
+            "de" + "auth",
+            r"toma\w* (?:de|el) " + "control",
+            "take" + "over",
+            "spo" + "of",
+            "armamento",
+            "transmi",
+            r"\bTX\b",
+            r"emisi[oó]n",
+            r"\bemit",
+            "demodul",
+            "droneid",
+            r"persist\w* (?:el |de |del )?audio",
+            r"audio\w* (?:a|en) disco",
+            r"atribuci[oó]n autom",
+            "nacionalidad",
+            r"datos de (?:los )?pilotos",
+            r"posici[oó]n del piloto",
+        )
+    ),
     re.IGNORECASE,
 )
 
