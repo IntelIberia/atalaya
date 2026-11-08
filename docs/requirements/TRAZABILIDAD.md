@@ -102,11 +102,11 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-LEG-013 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-014 | MUST | 4 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-015 | MUST | 7 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-LEG-016 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-LEG-016 | MUST | 0 | 16 | verde | en curso |
 | REQ-LEG-017 | MUST | 0 | 7 | verde | en curso |
 | REQ-SEC-001 | MUST | 0 | 90 | verde | en curso |
 | REQ-SEC-002 | MUST | 0 | 29 | verde | en curso |
-| REQ-SEC-003 | MUST | 0 | 42 | verde | en curso |
+| REQ-SEC-003 | MUST | 0 | 43 | verde | en curso |
 | REQ-SEC-004 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-005 | MUST | 0 | 4 | verde | en curso |
 | REQ-SEC-006 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
@@ -115,7 +115,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-SEC-009 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-010 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-011 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-SEC-012 | MUST | 0 | 9 | verde | en curso |
+| REQ-SEC-012 | MUST | 0 | 12 | verde | en curso |
 | REQ-SEC-013 | MUST | 12 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-014 | SHOULD | 12 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-015 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
