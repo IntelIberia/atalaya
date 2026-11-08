@@ -27,6 +27,7 @@ package = false
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+junit_family = "xunit1"
 markers = [
     "req(id): requisitos que verifica el test (trazabilidad)",
     "subproceso: lanza un script en otro proceso (se excluye de mutmut)",

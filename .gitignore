@@ -33,3 +33,4 @@ reports/
 .vscode/
 # Claude Code local
 .claude/settings.local.json
+reports/
