@@ -34,3 +34,4 @@ reports/
 # Claude Code local
 .claude/settings.local.json
 reports/
+.claude/worktrees/
