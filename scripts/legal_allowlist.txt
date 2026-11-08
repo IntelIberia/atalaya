@@ -61,3 +61,9 @@ a8601b40ac2ff21bea874676857fbe49444343d33a2a4390c3e58eef7aa6a9d3  docs/plans/FAS
 65a4da175394c2a305c33e2fdb8873409b584c5c931941cf8d21b968a446b2f1  docs/threat-model/v0.md  # | Suplantación | **Nodos suplantados** que publican como un nodo legítimo | F1 | mTLS por dispositivo con CA p
 77914fc2681f25280a6f5b8ea4006c9c54d0ec77c2b98c0cff7256e629487633  docs/threat-model/v0.md  # | Suplantación | **Remote ID falsificado** emitido por un tercero | F1 | Detección de incoherencias (REQ-FUN-0
 b4279dc01c5ac796980380caa46ebcb964006008c9f1f4f49ebd83fd2961a96e  docs/threat-model/v0.md  # | Suplantación | Operador suplantado en el dashboard | F2 | MFA y RBAC (REQ-SEC-006/007) | Planificado (F10) |
+# Revisión 2026-11-08 (ADR 0008): cita de la ley prohibitiva y referencias de Remote ID estándar.
+aac90bd47daeb8319b7a3239308d1cbcf9bdaba3afedffe9fb169738eee40417  docs/SPEC.md  # | Ley 11/2022, art. 82.4: prohíbe la importación, comercialización, tenencia, instalación y uso de equipos con
+d6495a36d54a1c73be78f6d8e60d8a159ed6b46e8d3a94b82abab9c49f8f0fd4  docs/requirements/REQUIREMENTS.md  # | REQ-FUN-030 | MUST | Recepción de Remote ID estándar (EN 4709-002 en la UE; ASTM F3411 en EE. UU., ADR 0008)
+8631500cb5377023fd6f6c0d8223cdbfedd0a874bc3ce0376bdc2f20777bfe5b  docs/requirements/REQUIREMENTS.md  # | REQ-LEG-004 | MUST | Remote ID solo en su forma estándar (EN 4709-002 en la UE; ASTM F3411 en EE. UU., ADR 0
+69a8b3cf5737ad69b79cfbb0495224c89aa18e0761ff72357180e21ef286eb6b  docs/adr/0002-restricciones-legales.md  # tenencia, puesta en servicio o uso de equipos con funcionalidades para generar interferencias
+08226fe8d45316167f01936227ae90ae96e398785bcb5c6ff41fc93aae74b827  docs/adr/0008-correcciones-verificadas.md  # OpenDroneID también decodifica. Sin cambio de alcance.

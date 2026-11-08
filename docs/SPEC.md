@@ -212,7 +212,7 @@ Supuestos: una persona revisando y una IA implementando; la dedicación semanal 
 | B-04 | Sin Raspberry Pi ni GPS PPS | REQ-FUN-029 (en la Pi), REQ-NFR-012, PPS real en REQ-FUN-036 | Punto de decisión de gasto 4 |
 | B-05 | Sin ESP32 ni SDR | Pruebas con hardware de REQ-FUN-030, 032 y 033; REQ-SEC-013 y 014 en ESP32 | Punto de decisión de gasto 2 |
 | B-06 | Sin usuarios reales | Usabilidad de la FASE 10 | Contacto en prisiones, puertos o seguridad privada |
-| B-07 | Sin `.proto` oficiales de SAPIENT ni acceso al harness | REQ-FUN-054 | Registro en BSI (el MEGAPROMPT dice que es gratis; NO VERIFICADO) y búsqueda del harness de Dstl |
+| B-07 | Harness de conformidad SAPIENT solo para Windows (los `.proto` sí están disponibles, Apache-2.0) | REQ-FUN-054 (parte del harness) | Máquina o VM Windows |
 | B-08 | Sin emplazamiento ni cliente | REQ-NFR-007, FASE 13 | Cliente o financiación |
 | B-09 | Sin 4G real | REQ-NFR-002 (solo emulado) | Módem y SIM IoT |
 
@@ -224,8 +224,8 @@ Se resolverán con un ADR en la FASE 0. **Ninguna relaja una restricción legal.
 |---|---|---|
 | D1 | El guardarraíl de commit bloquea términos como «spoofing» en el código, pero el sistema **tiene que** detectar Remote ID falsificado (REQ-FUN-031) | El guardarraíl bloquea capacidades ofensivas (APIs de TX y verbos de ataque sobre drones) y deja pasar el vocabulario defensivo de detección (`detect_forged_remote_id`, `spoof_indicator`) con una lista blanca explícita y probada. Los tests intentan colar código ofensivo disfrazado |
 | D2 | El hook `Stop` obliga a que `make check` pase para terminar: si un test falla de verdad, puede bloquear el informe honesto del fallo o entrar en bucle | Hook `Stop` con protección contra bucles (comprobar `stop_hook_active`) que exige ejecutar `make check` e informar del resultado, no ocultarlo. Verificar la sintaxis en code.claude.com/docs |
-| D3 | El MEGAPROMPT pide CodeQL; en repositorios privados, el code scanning de GitHub requiere una licencia de pago, y la licencia de CodeQL CLI restringe su uso en código cerrado (**NO VERIFICADO**) | Semgrep CE y bandit en CI; CodeQL solo si se confirma un uso gratuito que lo permita |
-| D4 | GitHub Actions en repos privados tiene minutos gratuitos limitados al mes (**NO VERIFICADO**: cifra exacta y vigente) | CI ligera en cada push (lint, tipos, unitarios, guardarraíles); las pruebas pesadas (mutation testing, e2e, compilación Android) en local con `make` o por la noche; evidencia en el paquete |
+| D3 | El MEGAPROMPT pide CodeQL; en repositorios privados, el code scanning de GitHub requiere una licencia de pago, y la licencia de CodeQL CLI restringe su uso en código cerrado (**CONFIRMADO**, §11) | Semgrep CE y bandit en CI; CodeQL solo si se confirma un uso gratuito que lo permita |
+| D4 | GitHub Actions en repos privados de cuentas Free incluye 12 $/mes de cómputo (≈ 2.000 min Linux; **CONFIRMADO**, §11) | CI ligera en cada push (lint, tipos, unitarios, guardarraíles); las pruebas pesadas (mutation testing, e2e, compilación Android) en local con `make` o por la noche; evidencia en el paquete |
 | D5 | El kit piloto (~4.400 €) y la GPU (200-700 $) no caben en un presupuesto de 0 € | Hito v1 definido en §3.1 y puntos de decisión de gasto en §8 |
 | D6 | La FASE 6 pide validar Remote ID «con una app receptora frente al ESP32». Que el ESP32 emita Remote ID sería transmitir identificaciones no reales | Sin emisión: las pruebas usan tramas grabadas o vectores de referencia de OpenDroneID. Validación con un dron real que emita Remote ID en el hito v1+ |
 | D7 | ADS-B sin RTL-SDR: los agregadores públicos (OpenSky, adsb.lol, airplanes.live…) tienen licencias distintas, algunas no comerciales (**NO VERIFICADO**) | Solo replays con licencia registrada mediante `dataset-intake`; nada no comercial en producción |
@@ -235,23 +235,26 @@ Se resolverán con un ADR en la FASE 0. **Ninguna relaja una restricción legal.
 | D11 | El MEGAPROMPT entrena el profesor en la nube (Kaggle), y la entrevista dice «solo local». «Solo local» se refiere a dónde corre la plataforma, pero entrenar fuera es sacar datos | ADR en la FASE 5 antes de subir nada: a Kaggle solo van datasets públicos con licencia verificada, nunca datos de emplazamientos ni grabaciones propias. Si el usuario no lo aprueba, el profesor es opcional y la v1 se queda con la línea base YAMNet más un clasificador ligero entrenados en el Mac |
 | D12 | Notificaciones reales (Telegram, SMS) mandan datos de alerta a servicios externos | En la v1, solo canal simulado local (REQ-FUN-052); un canal real, con ADR |
 
-## 11. Afirmaciones externas pendientes de verificar
+## 11. Afirmaciones externas: verificación (2026-11-08)
 
-Proceden del MEGAPROMPT o de conocimiento general y **no se han comprobado** en esta fase. Se verifican cuando una fase dependa de ellas, y hasta entonces se marcan como NO VERIFICADO.
+Verificadas por fuente primaria el 2026-11-08 (agente verificador; ver ADR 0008). Lo no verificado se mantiene marcado.
 
-| Afirmación | Fase que depende | Estado |
+| Afirmación | Veredicto | Fuente |
 |---|---|---|
-| Ley 11/2022, art. 82.4: prohíbe a los particulares los equipos de interferencia | 0 (ADR 0002) | NO VERIFICADO |
-| Los `.proto` de BSI Flex 335 v2.0 se descargan gratis con registro | 1 | NO VERIFICADO |
-| Existe un harness de conformidad de Dstl para BSI Flex 335 v2.0 accesible | 1, 11 | NO VERIFICADO |
-| Licencias de **todos** los datasets del MEGAPROMPT, incluidas las que ya da como conocidas (DroneRF CC BY 4.0, DroneAudioSet MIT) | 4 | NO VERIFICADO |
-| Espacio aéreo de Ceuta casi todo restringido | 7 | NO VERIFICADO (consultar ENAIRE Drones) |
-| Existencia y contenido de arXiv 2608.14287, PMC12656299 y Tegler et al. (CVPRW 2025) | 4, 5 | NO VERIFICADO |
-| Cuota de GPU gratuita de Kaggle (~30 h/semana) | 5 | NO VERIFICADO |
-| Alcances acústicos de diseño (FPV 150-450 m, pistón 3-5 km) | 7 | Declarados por fabricantes; NO VERIFICADO |
-| Licencia de Ultralytics YOLO (AGPL-3.0) y de las alternativas YOLOX y RT-DETR | 9 | NO VERIFICADO |
-| Fechas de aplicación del Cyber Resilience Act | 12 | NO VERIFICADO |
-| Límites de GitHub (Actions en privado, code scanning, CodeQL) | 0 | NO VERIFICADO |
+| Ley 11/2022, art. 82.4: prohíbe la importación, comercialización, tenencia, instalación y uso de equipos con funcionalidades para generar interferencias intencionadas, salvo excepciones de seguridad pública, defensa, navegación y prisiones; el art. 106.9 lo tipifica como infracción muy grave | **CONFIRMADA** | BOE-A-2022-10757 |
+| Los `.proto` de BSI Flex 335 v2.0 están disponibles | **CONFIRMADA (corregida)**: públicos en GitHub de Dstl, licencia Apache-2.0 (no se descargan de BSI) | github.com/dstl/SAPIENT-Proto-Files |
+| Existe un harness de conformidad de Dstl | **CONFIRMADA**: v5.2.4, Apache-2.0, **solo Windows** | github.com/dstl/BSI-Flex-335-v2-Test-Harness |
+| La OTAN adopta SAPIENT para C-UAS | **CONFIRMADA** como base de una STANREC | GOV.UK (guía SAPIENT); NATO ACT RFI-ACT-SACT-25-102 |
+| Remote ID en la UE: Reglamentos 2019/945 y 2019/947; norma EN 4709-002 | **CONFIRMADA**; EN 4709-002:2023 publicada con restricción (Decisión (UE) 2024/2103). **ASTM F3411 no figura** en la normativa de la UE | EUR-Lex |
+| Límites de GitHub Free en repos privados | **CONFIRMADA (corregida)**: Actions con 12 $/mes de cómputo incluido (≈ 2.000 min Linux, cálculo propio); code scanning y CodeQL CLI requieren licencia de pago en código cerrado; Pages exige repo público | docs.github.com; licencia de codeql-cli-binaries |
+| Cuota de GPU gratuita de Kaggle (~30 h/semana) | **NO VERIFICADO** (documentación no legible sin JavaScript) | — |
+| CRA (Reglamento (UE) 2024/2847): aplicación general 11-12-2027; art. 14 (notificación de vulnerabilidades e incidentes) desde el 11-09-2026 | **CONFIRMADA** | EUR-Lex |
+| Licencias: Ultralytics AGPL-3.0; YOLOX Apache-2.0; RT-DETR (repositorio original) Apache-2.0 (dentro de Ultralytics, AGPL) | **CONFIRMADA** | GitHub |
+| Espacio aéreo de Ceuta casi todo restringido | **CONFIRMADA**: zona LER12 CEUTA, sobrevuelo prohibido permanente (Defensa); helipuerto con coordinación Aena | Servicio ArcGIS de ENAIRE Drones |
+| Registro de operador UAS y formación/examen A1/A3 de AESA gratuitos | **CONFIRMADA** | seguridadaerea.gob.es |
+| Licencias de los datasets del MEGAPROMPT | En curso (planificador de la FASE 4) | — |
+| Existencia y contenido de arXiv 2608.14287, PMC12656299 y Tegler et al. | En curso (planificador de la FASE 4) | — |
+| Alcances acústicos de diseño | Declarados por fabricantes; NO VERIFICADO (se miden en la FASE 7) | — |
 
 ## 12. Documentos relacionados
 

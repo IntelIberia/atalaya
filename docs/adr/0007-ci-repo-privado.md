@@ -1,13 +1,15 @@
 # 0007 — CI en repositorio privado gratuito: ligera, sin CodeQL
 
-- Estado: aceptado (pendiente de confirmar límites exactos de GitHub: NO VERIFICADO)
+- Estado: aceptado (límites de GitHub confirmados el 2026-11-08, ADR 0008)
 - Fecha: 2026-11-08
 - Decisores: usuario, Claude Code (discrepancias D3 y D4)
 
 ## Contexto
 REQ-SEC-012 pide SBOM, vulnerabilidades, secretos y análisis estático (el MEGAPROMPT cita semgrep y
 CodeQL). El repo es privado en una cuenta gratuita: minutos de Actions limitados y code scanning de
-GitHub de pago en privados (pendiente de confirmación por fuente primaria).
+GitHub de pago en privados. Confirmado (docs.github.com, 2026-11-08): Actions con 12 $/mes de cómputo
+incluido en Free (≈ 2.000 min Linux); code scanning y CodeQL CLI requieren licencia de pago para código
+cerrado; Pages exige repo público.
 
 ## Opciones consideradas
 1. CI completa (incluida mutación, e2e y Android) en cada push: agota los minutos gratuitos.
