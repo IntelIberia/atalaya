@@ -1,0 +1,42 @@
+# Lista blanca de menciones sensibles revisadas por una persona (scripts/check_spec.py).
+# Formato: sha256(ruta + línea normalizada)  ruta  # fragmento
+# Cada línea que menciona un término sensible (capacidad ofensiva, TX, demodulación,
+# persistencia de audio, atribución, datos de pilotos) debe estar aquí. Si la línea
+# cambia, el hash cambia y hay que volver a revisarla. Nunca se añaden entradas sin leer
+# la línea completa. Los cambios en este fichero se revisan en cada STOP.
+# Revisión inicial: 2026-11-08, FASE -1. Las 34 menciones son prohibiciones, amenazas
+# a detectar o usos defensivos (p. ej. «OpenDroneID» contiene «DroneID»).
+84ae53a022780a03b7cc4c21c1792ae144199d8dc51206a8c3a1a9bac13912e6  docs/SPEC.md  # Atalaya **no neutraliza, no interfiere y no transmite**. Es una capa de detección y alerta, complementaria de 
+0fecb471da883c86aab9b471c15f59dfd5d27a84a37a31111f8445318e09d3f3  docs/SPEC.md  # - Cualquier capacidad de neutralizar, inhibir, interferir, suplantar, desautenticar o tomar el control de dron
+a15e5494fa2b7399d8d704017f76a982d38d1c3e1fc91513640487d6bcbbcfc2  docs/SPEC.md  # - Cualquier camino de transmisión por radio desde un SDR (REQ-LEG-002). Tampoco se emite Remote ID de prueba c
+4ea9b127c44eeb2ec46cd3778485ce14b2d412c91e64acd367c3b623ba47225f  docs/SPEC.md  # - Demodular comunicaciones de terceros o protocolos propietarios como DJI DroneID (REQ-LEG-003).
+a3dbb1afe8a7769188b0f956471340b15340a49441449920e64c7aeb4d23b0c6  docs/SPEC.md  # - Persistir audio fuera de una sesión de grabación autorizada (REQ-LEG-005/006).
+053d1cbf59a139805336b5d9b02c639af5d32dd53114705fd9daf082a31b3729  docs/SPEC.md  # - Atribuir automáticamente nacionalidad o actor (REQ-LEG-008).
+558eda906c37fdd669e37ea625416437bbd8b5a01068045b6fa8f613bd9af961  docs/SPEC.md  # - Publicar datos de pilotos u operadores (REQ-LEG-007).
+ed35d66bfbd047f52ac01eded1acf0e137ed389dfa457b8a5ffd04ff6ac2966e  docs/SPEC.md  # | FCSE | Guardia Civil, Policía Nacional o autonómica | Lo anterior en su ámbito, más los datos `FCSE_ONLY` (p
+84c41f59dd273dc0b0e6f3cff5d8e983d16583bc6a09d3dfaa78d719ccaca90a  docs/SPEC.md  # **CU-08 · Detectar presencia RF** — Actor: nodo RF pasivo (solo recepción). Mide energía y espectrogramas y cl
+4be0d3cb267761e849d5ec2a4db0c877e40d38b2145b77b2dc2761b1da00f979  docs/SPEC.md  # **CU-14 · Consultar datos FCSE_ONLY** — Actor: FCSE. Ve la posición del piloto en Remote ID, el número de oper
+f5bb56f422356f5345b6c3326a5a7c1547f02a121abf3c5dffe5d1ad6e9251dc  docs/SPEC.md  # | D1 | El guardarraíl de commit bloquea términos como «spoofing» en el código, pero el sistema **tiene que** d
+c52fa8b3c547564351a2873171cf0545983520d455269e4898fe3cd650cd801f  docs/SPEC.md  # | D6 | La FASE 6 pide validar Remote ID «con una app receptora frente al ESP32». Que el ESP32 emita Remote ID 
+77fa3511db8b7e61018c443fe601a0b3b7512bd6463fb555cc722563567b7d2f  docs/SPEC.md  # | Ley 11/2022, art. 82.4: prohíbe a los particulares los equipos de interferencia | 0 (ADR 0002) | NO VERIFICA
+c528cbbe68a4732142ac8cd3127e20ac66a07741c498869271e233a93d3a403d  docs/requirements/REQUIREMENTS.md  # | REQ-FUN-030 | MUST | Recepción de Remote ID estándar (ASTM F3411 / EN 4709-002) con OpenDroneID en firmware 
+4692c996e8856510a4a4f5259e1cad4293a772a9dbe9d816288b3ef9eab2cd60  docs/requirements/REQUIREMENTS.md  # | REQ-FUN-033 | MUST | Presencia RF pasiva en 2,4/5,8 GHz: espectrogramas y energía, con un clasificador de en
+125e29b96eb355393e5ae6d7d337589056969f7fda548f7179789ce96fa0bbf0  docs/requirements/REQUIREMENTS.md  # | REQ-LEG-001 | MUST | Atalaya solo detecta, clasifica, localiza, sigue, predice y alerta. Nunca contiene códi
+58230c0eedd0f807297c8d3db0b03bd44f7592106edd07cd02539d6dc0082fa8  docs/requirements/REQUIREMENTS.md  # | REQ-LEG-002 | MUST | No existe ningún camino de transmisión por radio desde un SDR | Test de CI que falla si
+7641852bf7fc98be9194e18992d81de898827eb9a17fb17f4ffc7588318adb6c  docs/requirements/REQUIREMENTS.md  # | REQ-LEG-003 | MUST | No se demodula el contenido de comunicaciones de terceros ni protocolos propietarios (i
+a01d2e88732d359caac1a6ea54da1eaa527c156a5f4c9aac7c3c33c1ebbbaf43  docs/requirements/REQUIREMENTS.md  # | REQ-LEG-004 | MUST | Remote ID solo en su forma estándar (ASTM F3411 / EN 4709-002) mediante OpenDroneID | I
+a8dcde4178693b469cd591252d6ecb4357f5cba4dac59f5add1d82b43b820497  docs/requirements/REQUIREMENTS.md  # | REQ-LEG-007 | MUST | Los datos que identifican o sitúan a pilotos u operadores (posición del piloto en Remot
+8d0a8d087782e0ec8e374664152ad29b52d6c39c158115a664ec5371349d6d9e  docs/requirements/REQUIREMENTS.md  # | REQ-LEG-008 | MUST | Sin atribución automática de nacionalidad ni de actor: la atribución es un campo aparte
+9e785af654a01b21e1542ec8fb746afbb664b247f63abd9e1b0486f79dccba11  docs/requirements/REQUIREMENTS.md  # | REQ-SEC-001 | MUST | Guardarraíl pre-commit que bloquea (exit 2): llamadas de transmisión SDR; los términos 
+48d78d656f850f0dcdb54407177a79aaf1e6cd8d5aa4e2ec18dfafb9f091dacb  docs/requirements/REQUIREMENTS.md  # | REQ-SEC-002 | MUST | Reglas `deny` de Claude Code: lectura de `.env*` y `secrets/**`; edición de `evals/froz
+947353792463f50642a695458cc55898b6e6112a986af03dd84f75974f0da058  docs/requirements/REQUIREMENTS.md  # | REQ-SEC-010 | MUST | Solo se aceptan detecciones de nodos registrados y autenticados, con integridad de mens
+4e329f18401a0e598d1a7a2819e460a647b994559db30e956af86fb6bd81ee43  docs/requirements/REQUIREMENTS.md  # | REQ-PRIV-010 | MUST | Los nodos emiten detecciones y características agregadas no reconstruibles, nunca dato
+c013067af10856669db26025fd31c8a43efa1107abb404ea97dfceb477f187b0  docs/requirements/REQUIREMENTS.md  # | LEGAL-1 | Solo detección; sin TX desde SDR | REQ-LEG-001, REQ-LEG-002, REQ-SEC-001, REQ-SEC-002 |
+86fa4ce020bff07c373d37700cf36118a10fd89cffe21a704d8c5a239de0b24d  docs/requirements/REQUIREMENTS.md  # | LEGAL-4 | Datos de pilotos y operadores `FCSE_ONLY`, auditados y con retención limitada | REQ-LEG-007, REQ-P
+b9091fc5616b7ad20b3ea4cf39908ac11346215fa66464e444f35862efc066be  docs/requirements/REQUIREMENTS.md  # | LEGAL-5 | Sin atribución automática de nacionalidad | REQ-LEG-008 |
+9ca20fd28bc5bd18d25f5d1202ea9a967205a9c6562983b4008427404c77492a  docs/PLAN-MAESTRO-DE-PRUEBAS.md  # | G-02 | Commit con código que llama a una API de transmisión SDR (p. ej. `hackrf_transfer -t`, `writeStream` 
+f60d8305e57d11fa6969d21485f746a7c2683b2788356d1004c45d014c49a337  docs/PLAN-MAESTRO-DE-PRUEBAS.md  # | G-03 | Commit con `jamming` en código (y un caso por término: `jammer`, `spoofing`, `deauth`, `takeover`, in
+5f3169e867acdbe89f857b20fad2e657f9476e4bb7cf48b7ddda248de328db5d  docs/PLAN-MAESTRO-DE-PRUEBAS.md  # | G-04 | Commit con un identificador defensivo de la lista blanca versionada (`detect_forged_remote_id`) | **P
+884612828af490b3c4ad22fe52ef641c11c6028ab4721868d9b131e269974147  docs/PLAN-MAESTRO-DE-PRUEBAS.md  # | G-09 | El nodo acústico intenta escribir audio en disco (sistema de ficheros de solo lectura + espía de `ope
+2629f03490783985cdf6814604f81e4c31d2d3ded5ddccefd5541bc3b2f7722a  docs/RIESGOS.md  # | R-04 | Legal | Riesgo legal en RF, audio y datos de pilotos | 3 | 5 | 15 | Restricciones no negociables, hoo
+6d9d9e2aa67efcfc9c64534a30b018335107d58e7b4168bd482c5ee2c38f14a2  docs/RIESGOS.md  # | R-06 | Seguridad | Ataques a la propia red de sensores (suplantación de nodos, detecciones falsas, Remote ID
