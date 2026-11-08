@@ -75,28 +75,7 @@ SCHEMA_EXTENSIONS = frozenset([".proto", ".json", ".yaml", ".yml"])
 
 # --- (a) transmisión por radio -------------------------------------------------------
 _TX = "t" + "x"
-SDR_TX_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
-    re.compile(p)
-    for p in (
-        r"hackrf" + r"_transfer\b[^\n]*\s-[tc]\b",  # TX desde fichero / onda continua
-        r"\bhackrf_start_" + _TX + r"\b",
-        r"\bhackrf_set_" + _TX + r"vga_gain\b",
-        r"\bSOAPY_SDR_" + _TX.upper() + r"\b",
-        r"\.write" + r"Stream\s*\(",
-        r"\." + _TX + r"\s*\(",  # pyadi-iio: método de transmisión de muestras
-        r"\b" + _TX + r"_(?:lo|hardwaregain\w*|enabled_channels|cyclic_buffer|destroy_buffer)\b",
-        r"\bosmosdr\.sink\b",
-        r"\buhd\.usrp_sink\b",
-        r"\biio\.\w*_sink\b",
-        r"\bsoapy\.sink\b",
-        r"\brpi" + _TX + r"\b",
-        r"\bsendiq\b",
-        r"\bosmocom_siggen\w*",
-        r"\besp_wifi_80211_" + _TX + r"\b",  # inyección de tramas Wi-Fi en ESP32
-        r"\besp_ble_gap_(?:start_advertising|config_adv_data\w*)\b",
-        r"\bble_gap_adv_start\b",
-    )
-)
+SDR_TX_PATTERNS: tuple[re.Pattern[str], ...] = ()  # PRUEBA G-08: guardarraíl desactivado
 
 # --- (b) términos ofensivos -------------------------------------------------------------
 OFFENSIVE_PATTERN = re.compile(
