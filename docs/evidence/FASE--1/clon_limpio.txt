@@ -1,0 +1,10 @@
+# clon limpio en directorio nuevo · commit: 4039896a96e77040910406b09a9d6b7be05c8bcb · fecha UTC: 2026-11-08T15:01:10Z
+$ git clone ~/atalaya <dir-nuevo>
+$ python3 -I scripts/check_spec.py
+RESULTADO: OK
+exit=0
+$ python3 -I -m unittest discover -s scripts -p 'test_check_spec.py'
+Ran 21 tests in 0.737s
+
+OK
+exit=0

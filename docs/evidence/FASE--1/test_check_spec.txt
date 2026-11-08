@@ -1,0 +1,29 @@
+# commit: 4039896a96e77040910406b09a9d6b7be05c8bcb · fecha UTC: 2026-11-08T15:00:51Z
+$ python3 -I -m unittest discover -s scripts -p 'test_check_spec.py' -v
+test_atribucion_automatica_se_detecta (test_check_spec.CheckSpecTest.test_atribucion_automatica_se_detecta) ... ok
+test_cu_con_requisito_inexistente_falla (test_check_spec.CheckSpecTest.test_cu_con_requisito_inexistente_falla) ... ok
+test_demodular_droneid_se_detecta (test_check_spec.CheckSpecTest.test_demodular_droneid_se_detecta) ... ok
+test_falta_categoria_de_riesgo_hardware_falla (test_check_spec.CheckSpecTest.test_falta_categoria_de_riesgo_hardware_falla) ... ok
+test_falta_restriccion_legal_en_correspondencia_falla (test_check_spec.CheckSpecTest.test_falta_restriccion_legal_en_correspondencia_falla) ... ok
+test_falta_rol_falla (test_check_spec.CheckSpecTest.test_falta_rol_falla) ... ok
+test_falta_seccion_fuera_de_alcance_falla (test_check_spec.CheckSpecTest.test_falta_seccion_fuera_de_alcance_falla) ... ok
+test_id_duplicado_falla (test_check_spec.CheckSpecTest.test_id_duplicado_falla) ... ok
+test_inhibir_con_no_en_la_frase_se_detecta (test_check_spec.CheckSpecTest.test_inhibir_con_no_en_la_frase_se_detecta) ... ok
+test_interfiere_se_detecta (test_check_spec.CheckSpecTest.test_interfiere_se_detecta) ... ok
+test_linea_revisada_modificada_vuelve_a_fallar (test_check_spec.CheckSpecTest.test_linea_revisada_modificada_vuelve_a_fallar) ... ok
+test_must_sin_metodo_falla (test_check_spec.CheckSpecTest.test_must_sin_metodo_falla) ... ok
+test_neutralice_se_detecta (test_check_spec.CheckSpecTest.test_neutralice_se_detecta) ... ok
+test_persistir_audio_se_detecta (test_check_spec.CheckSpecTest.test_persistir_audio_se_detecta) ... ok
+test_prioridad_invalida_falla (test_check_spec.CheckSpecTest.test_prioridad_invalida_falla) ... ok
+test_publicar_datos_de_pilotos_se_detecta (test_check_spec.CheckSpecTest.test_publicar_datos_de_pilotos_se_detecta) ... ok
+test_referencia_ver_inexistente_falla (test_check_spec.CheckSpecTest.test_referencia_ver_inexistente_falla) ... ok
+test_repositorio_actual_pasa (test_check_spec.CheckSpecTest.test_repositorio_actual_pasa) ... ok
+test_requisito_huerfano_falla (test_check_spec.CheckSpecTest.test_requisito_huerfano_falla) ... ok
+test_transmite_se_detecta (test_check_spec.CheckSpecTest.test_transmite_se_detecta) ... ok
+test_tx_se_detecta (test_check_spec.CheckSpecTest.test_tx_se_detecta) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 0.753s
+
+OK
+exit=0

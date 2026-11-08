@@ -1,0 +1,17 @@
+# commit: 4039896a96e77040910406b09a9d6b7be05c8bcb · fecha UTC: 2026-11-08T15:00:51Z
+$ python3 -I scripts/check_spec.py
+== check_spec.py — verificación de la FASE -1 ==
+Requisitos: 130
+  FUN   MUST= 50 SHOULD= 10 COULD=  2
+  NFR   MUST= 18 SHOULD=  3 COULD=  0
+  LEG   MUST= 17 SHOULD=  0 COULD=  0
+  SEC   MUST= 17 SHOULD=  2 COULD=  0
+  PRIV  MUST= 10 SHOULD=  1 COULD=  0
+Requisitos con bloqueo (**B**): 12 -> REQ-FUN-022, REQ-FUN-029, REQ-FUN-030, REQ-FUN-032, REQ-FUN-033, REQ-FUN-054, REQ-FUN-060, REQ-NFR-002, REQ-NFR-007, REQ-NFR-012, REQ-SEC-013, REQ-SEC-014
+Casos de uso: 24
+Requisitos sin caso de uso: 0
+Filas de correspondencia con el MEGAPROMPT: 22 (exigidas 22)
+Menciones sensibles: 34 (todas deben estar en scripts/legal_allowlist.txt)
+
+RESULTADO: OK
+exit=0
