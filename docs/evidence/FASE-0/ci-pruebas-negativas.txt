@@ -1,0 +1,20 @@
+# Pruebas negativas de CI (T0.11) · 2026-11-08 · base main 2db3334
+# Cada rama introduce una violación deliberada; la CI DEBE fallar. Commits con --no-verify A PROPÓSITO
+# (simula saltarse el hook local; la CI es la capa que no se puede saltar).
+
+PR #1 prueba/g08-desactivar-guardarrail — SDR_TX_PATTERNS vaciado (G-08)
+  ci        run 42498486342  failure  job check: tests test_g02_transmision_sdr_bloqueada FALLAN ("assert 'sdr-tx' in set()")
+  security  run 42498486401  failure  job secretos: contagio del token de G-06 (gitleaks con fetch-depth 0 analizó todas las ramas: 21 commits)
+
+PR #2 prueba/g06-secreto — token ghp_ falso y aleatorio en services/ingest/config_prueba.py (G-06)
+  ci        run 42498489949  failure  job check → lint: ruff S105 "Possible hardcoded password" (primera capa en saltar)
+  security  run 42498489952  failure  job secretos: gitleaks "leaks found: 1"
+
+PR #3 prueba/g12-gpl — dependencia de ejecución mutagen (GPL-2.0-or-later) (G-12)
+  ci        run 42498493542  success  (esperado: la CI ligera no comprueba licencias)
+  security  run 42498493558  failure  job licencias: "BLOQUEADA (ejecución): mutagen: GPL-2.0-or-later"
+                                     (+ secretos: contagio de G-06, mismo motivo que PR #1)
+
+Resultado: las 3 violaciones ponen la CI en ROJO por el motivo esperado. PR cerrados y ramas borradas.
+Nota: el token de G-06 era aleatorio e inválido; el commit sigue accesible en GitHub como refs/pull/2/head
+(no contiene ningún secreto real).
