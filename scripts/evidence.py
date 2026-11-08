@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import shlex
 import subprocess
 import sys
 from datetime import UTC, datetime
@@ -72,23 +73,26 @@ def verify_manifest(directory: Path) -> list[str]:
     return problems
 
 
-def capture(command: str, out: Path, repo: Path = ROOT) -> int:
-    r = subprocess.run(  # noqa: S602  (comandos fijos del Makefile, no entrada externa)
-        command, shell=True, cwd=repo, capture_output=True, text=True, executable="/bin/bash"
-    )
+def capture(argv: list[str], out: Path, repo: Path = ROOT) -> int:
+    """Ejecuta argv SIN shell y guarda cabecera, comando, salida y código de salida."""
+    r = subprocess.run(argv, cwd=repo, capture_output=True, text=True, check=False)
     out.write_text(
-        f"{_header(repo)}\n$ {command}\n{r.stdout}{r.stderr}exit={r.returncode}\n", encoding="utf-8"
+        f"{_header(repo)}\n$ {shlex.join(argv)}\n{r.stdout}{r.stderr}exit={r.returncode}\n",
+        encoding="utf-8",
     )
     return r.returncode
 
 
-def closing_commands(fase: str) -> dict[str, str]:
+def closing_commands(fase: str) -> dict[str, list[str]]:
+    trace_out = f"docs/evidence/FASE-{fase}/TRAZABILIDAD.md"
     return {
-        "make-check.txt": "make check",
-        "make-regress.txt": "make regress",
-        "trazabilidad.txt": f"uv run --frozen python -m scripts.traceability --fase {fase} "
-        f"--out docs/evidence/FASE-{fase}/TRAZABILIDAD.md",
-        "clon-limpio.txt": "scripts/verify_clean_clone.sh",
+        "make-check.txt": ["make", "check"],
+        "make-regress.txt": ["make", "regress"],
+        "trazabilidad.txt": [
+            *("uv", "run", "--frozen", "python", "-m", "scripts.traceability"),
+            *("--fase", fase, "--out", trace_out),
+        ],
+        "clon-limpio.txt": ["scripts/verify_clean_clone.sh"],
     }
 
 

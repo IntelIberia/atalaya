@@ -22,9 +22,10 @@ from __future__ import annotations
 import argparse
 import re
 import sys
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from defusedxml import ElementTree as ET
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_REQS = ROOT / "docs/requirements/REQUIREMENTS.md"
@@ -89,7 +90,9 @@ def parse_closed(path: Path) -> set[int]:
 def parse_junit(path: Path) -> tuple[dict[str, int], dict[str, int]]:
     passed: dict[str, int] = {}
     failed: dict[str, int] = {}
-    root = ET.parse(path).getroot()  # noqa: S314
+    root = ET.parse(path).getroot()
+    if root is None:
+        raise ValueError(f"JUnit XML vacío: {path}")
     for case in root.iter("testcase"):
         ids = [p.get("value", "") for p in case.iter("property") if p.get("name") == "req"]
         if case.find("skipped") is not None:

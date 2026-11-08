@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -82,10 +83,11 @@ def test_verificar_sin_manifiesto_falla(tmp_path: Path) -> None:
 @pytest.mark.req("REQ-NFR-014")
 def test_capturar_comando_guarda_salida_y_codigo(repo_tmp: Path) -> None:
     out = repo_tmp / "salida.txt"
-    rc = ev.capture("echo hola; exit 3", out, repo_tmp)
+    argv = [sys.executable, "-c", "print('hola'); raise SystemExit(3)"]
+    rc = ev.capture(argv, out, repo_tmp)
     assert rc == 3
     texto = out.read_text()
-    assert "$ echo hola; exit 3" in texto
+    assert "raise SystemExit(3)" in texto.splitlines()[1]
     assert "hola" in texto
     assert texto.rstrip().endswith("exit=3")
     assert "# commit:" in texto.splitlines()[0]

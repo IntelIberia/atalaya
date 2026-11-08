@@ -19,6 +19,8 @@ dev = [
     "libcst>=1.8.6,<1.9",
     "pyyaml>=6",
     "types-pyyaml>=6",
+    "defusedxml>=0.7",
+    "types-defusedxml>=0.7",
 ]
 
 [tool.uv]
