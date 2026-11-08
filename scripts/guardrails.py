@@ -24,6 +24,7 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -152,6 +153,11 @@ SECRET_PATH_IN_CMD = re.compile(
     r"(?:^|[\s/'\"=<>])(?:\.env(?:\.[\w.-]+)?(?=$|[\s'\";|&)<>/])|secrets/)"
 )
 FORCE_PUSH_RE = re.compile(r"\bgit\s+push\b[^\n;&|]*\s(?:--force(?:-with-lease)?|-f)\b")
+NO_VERIFY_RE = re.compile(
+    r"\bgit\b[^\n;&|]*\bcommit\b[^\n;&|]*\s(?:--no-verify\b|-[a-zA-Z]*n[a-zA-Z]*\b)"
+)
+HOOKS_PATH_RE = re.compile(r"core\.hooksPath", re.IGNORECASE)
+HOOKS_PATH_READ_RE = re.compile(r"--get(?:-all)?\s+core\.hooksPath\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -199,6 +205,22 @@ def _enclosing_identifier(line: str, start: int, end: int) -> str:
     return line[start:end]
 
 
+CLAUDE_SETTINGS = ".claude/settings.json"
+
+
+def _settings_without_deny(text: str) -> str:
+    """En .claude/settings.json se pueden NOMBRAR herramientas de TX solo para denegarlas:
+    se analiza todo el fichero excepto la lista permissions.deny. Si no es JSON válido,
+    se analiza entero (fallo cerrado)."""
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return text
+    if isinstance(data, dict) and isinstance(data.get("permissions"), dict):
+        data["permissions"].pop("deny", None)
+    return json.dumps(data, indent=1, ensure_ascii=False)
+
+
 def check_file(
     path: str, content: str | bytes, allowlist: frozenset[str] | None = None
 ) -> list[Violation]:
@@ -221,6 +243,8 @@ def check_file(
     text = _decode(content)
     if text is None:
         return violations
+    if rel == CLAUDE_SETTINGS:
+        text = _settings_without_deny(text)
 
     is_code = suffix in CODE_EXTENSIONS or PurePosixPath(rel).name == "Makefile"
     is_schema = suffix in SCHEMA_EXTENSIONS
@@ -265,6 +289,10 @@ def check_command(command: str) -> list[Violation]:
         found.append(Violation("<bash>", "sdr-tx", "transmisión por radio (REQ-LEG-002)"))
     if FORCE_PUSH_RE.search(command):
         found.append(Violation("<bash>", "force-push", "git push forzado"))
+    if NO_VERIFY_RE.search(command) or (
+        HOOKS_PATH_RE.search(command) and not HOOKS_PATH_READ_RE.search(command)
+    ):
+        found.append(Violation("<bash>", "hook-bypass", "evasión de los hooks de git"))
     return found
 
 

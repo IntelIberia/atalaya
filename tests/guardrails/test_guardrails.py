@@ -557,3 +557,56 @@ def test_fallo_cerrado_explica_el_motivo(
     err = capsys.readouterr().err
     assert err.startswith("GUARDARRAÍL: no se pudo verificar (")
     assert err.rstrip().endswith("bloqueado por seguridad.")
+
+
+# --- evasión de los hooks ------------------------------------------------------------
+@pytest.mark.req("REQ-SEC-003")
+@pytest.mark.parametrize(
+    ("comando", "bloqueado"),
+    [
+        ("git commit --no-verify -m x", True),
+        ("git commit -nm x", True),
+        ("git commit -n -m x", True),
+        ("git -c core.hooksPath=/dev/null commit -m x", True),
+        ("git config core.hooksPath ''", True),
+        ("git config --unset core.hooksPath", True),
+        ("git commit -m 'no verify needed'", False),
+        ("git commit -m x", False),
+        ("git config --get core.hooksPath", False),
+    ],
+)
+def test_evasion_de_hooks(comando: str, bloqueado: bool) -> None:
+    reglas_cmd = {v.rule for v in g.check_command(comando)}
+    assert ("hook-bypass" in reglas_cmd) is bloqueado
+
+
+# --- .claude/settings.json: nombrar TX solo para DENEGARLO ----------------------------
+def _settings(deny: list[str], allow: list[str]) -> str:
+    import json
+
+    return json.dumps({"permissions": {"deny": deny, "allow": allow}}, indent=2)
+
+
+@pytest.mark.req("REQ-SEC-002", "REQ-LEG-002")
+def test_settings_tx_en_deny_permitido() -> None:
+    txt = _settings(["Bash(rpi" + "tx *)", "Bash(send" + "iq *)"], [])
+    assert reglas(".claude/settings.json", txt) == set()
+
+
+@pytest.mark.req("REQ-SEC-002", "REQ-LEG-002")
+def test_settings_tx_en_allow_bloqueado() -> None:
+    txt = _settings([], ["Bash(rpi" + "tx *)"])
+    assert "sdr-tx" in reglas(".claude/settings.json", txt)
+
+
+@pytest.mark.req("REQ-SEC-002", "REQ-LEG-002")
+def test_settings_tx_en_hook_bloqueado() -> None:
+    import json
+
+    txt = json.dumps({"hooks": {"Stop": [{"hooks": [{"command": "rpi" + "tx -f 434"}]}]}})
+    assert "sdr-tx" in reglas(".claude/settings.json", txt)
+
+
+@pytest.mark.req("REQ-SEC-002")
+def test_settings_ilegible_se_analiza_entero() -> None:
+    assert "sdr-tx" in reglas(".claude/settings.json", '{"deny": ["rpi' + 'tx" ')
