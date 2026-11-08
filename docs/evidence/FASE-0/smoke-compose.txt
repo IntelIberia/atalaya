@@ -1,0 +1,22 @@
+# make up && make smoke · base d22e374 (+T0.10) · 2026-11-08T15:59:56Z
+$ make smoke
+OK    mqtt pub/sub con credenciales
+OK    mqtt anónimo RECHAZADO
+OK    mqtt contraseña errónea RECHAZADA
+OK    nats pub/sub con credenciales
+OK    nats contraseña errónea RECHAZADA
+OK    nats JetStream activo
+OK    redis PING con contraseña
+OK    redis sin contraseña RECHAZADO
+OK    postgres PostGIS + TimescaleDB
+OK    postgres contraseña errónea RECHAZADA (loopback)
+OK    postgres contraseña errónea RECHAZADA (red docker)
+OK    postgres contraseña errónea RECHAZADA (socket local)
+smoke: 12/12 OK
+exit=0
+
+# imágenes fijadas:
+    image: eclipse-mosquitto:2.0.22
+    image: nats:2.15.1-alpine
+    image: redis:7.4.11-alpine
+    image: timescale/timescaledb-ha:pg16.15-ts2.30.2

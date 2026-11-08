@@ -21,6 +21,7 @@ Idioma: documentación, informes y mensajes en español; código, ficheros y com
 | `make trace` | Genera `docs/requirements/TRAZABILIDAD.md`; falla si un MUST de fase cerrada no tiene test en verde |
 | `make evidence FASE=N` | Paquete de evidencias con `MANIFEST.sha256` y commit |
 | `make mutation` | mutmut sobre el código crítico (lento) |
+| `make up` / `make smoke` / `make down` | Docker Compose local (Mosquitto, NATS, Redis, PostgreSQL+PostGIS+TimescaleDB) |
 | `make doctor` | Comprueba herramientas |
 | `scripts/verify_clean_clone.sh` | Reproducibilidad en un clon limpio (puerta P4) |
 | `scripts/demo_guardrails.sh` | Demostración de bloqueo de commits prohibidos |

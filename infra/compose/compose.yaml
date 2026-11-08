@@ -1,0 +1,88 @@
+# Atalaya — stack local mínimo (FASE 0, ADR 0003). Solo localhost; sin credenciales por defecto:
+# todas las contraseñas salen de .env (generado por `make bootstrap`, ignorado por git, Read
+# denegado a Claude Code). Uso: make up / make smoke / make down.
+name: atalaya
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.22
+    environment:
+      MQTT_USER: ${MQTT_USER:?falta MQTT_USER en .env}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:?falta MQTT_PASSWORD en .env}
+    # El fichero de contraseñas (hash) se genera al arrancar a partir de las variables.
+    command: >-
+      sh -c 'mosquitto_passwd -c -b /mosquitto/passwd "$$MQTT_USER" "$$MQTT_PASSWORD" &&
+      chmod 0700 /mosquitto/passwd && chown mosquitto:mosquitto /mosquitto/passwd &&
+      exec mosquitto -c /mosquitto/config/mosquitto.conf'
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - "127.0.0.1:1883:1883"
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -u \"$$MQTT_USER\" -P \"$$MQTT_PASSWORD\" -t '$$SYS/broker/uptime' -C 1 -W 3"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 128m
+    restart: unless-stopped
+
+  nats:
+    image: nats:2.15.1-alpine
+    environment:
+      NATS_USER: ${NATS_USER:?falta NATS_USER en .env}
+      NATS_PASSWORD: ${NATS_PASSWORD:?falta NATS_PASSWORD en .env}
+    command: ["-js", "-sd", "/data", "-m", "8222", "--user", "${NATS_USER}", "--pass", "${NATS_PASSWORD}"]
+    volumes:
+      - nats-data:/data
+    ports:
+      - "127.0.0.1:4222:4222"
+      - "127.0.0.1:8222:8222"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8222/healthz?js-enabled-only=true"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 256m
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.11-alpine
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?falta REDIS_PASSWORD en .env}
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes"]
+    volumes:
+      - redis-data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 256m
+    restart: unless-stopped
+
+  postgres:
+    image: timescale/timescaledb-ha:pg16.15-ts2.30.2
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?falta POSTGRES_USER en .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en .env}
+      POSTGRES_DB: atalaya
+    volumes:
+      - pg-data:/home/postgres/pgdata
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/10-extensiones.sql:ro
+      - ./postgres/99-endurecer-pg_hba.sh:/docker-entrypoint-initdb.d/99-endurecer-pg_hba.sh:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d atalaya"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 1g
+    restart: unless-stopped
+
+volumes:
+  nats-data:
+  redis-data:
+  pg-data:

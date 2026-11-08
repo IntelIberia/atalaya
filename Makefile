@@ -12,6 +12,8 @@ MUT_FILES := $(shell $(PY) -c "import tomllib;print(' '.join(tomllib.load(open('
 .PHONY: help bootstrap doctor check lint typecheck test coverage guard spec trace regress \
         evidence mutation fmt up smoke down
 
+COMPOSE := docker compose --env-file .env -f infra/compose/compose.yaml
+
 help: ## Lista los objetivos
 	@sed -nE 's/^([a-z-]+):.*## (.*)/\1\t\2/p' Makefile
 
@@ -71,3 +73,13 @@ mutation: ## Mutation testing del código crítico (lento): make mutation FASE=N
 fmt: ## Formatea el código (modifica ficheros)
 	$(UV) ruff format .
 	$(UV) ruff check --fix .
+
+up: ## Arranca el stack local (Docker Compose) y espera a que esté sano
+	@scripts/gen_local_secrets.sh
+	$(COMPOSE) up -d --wait
+
+smoke: ## Pruebas positivas y negativas de cada servicio del stack
+	@$(UV) python -m scripts.smoke_compose
+
+down: ## Para el stack (conserva los volúmenes)
+	$(COMPOSE) down

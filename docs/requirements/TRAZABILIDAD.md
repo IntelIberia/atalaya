@@ -80,7 +80,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-NFR-012 | SHOULD | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-013 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-014 | MUST | 0 | 14 | verde | en curso |
-| REQ-NFR-015 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-NFR-015 | MUST | 0 | 1 | verde | en curso |
 | REQ-NFR-016 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-017 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-018 | MUST | 0 | 3 | verde | en curso |
@@ -108,7 +108,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-SEC-002 | MUST | 0 | 29 | verde | en curso |
 | REQ-SEC-003 | MUST | 0 | 42 | verde | en curso |
 | REQ-SEC-004 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-SEC-005 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-SEC-005 | MUST | 0 | 4 | verde | en curso |
 | REQ-SEC-006 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-007 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-008 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
