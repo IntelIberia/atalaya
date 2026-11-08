@@ -1,0 +1,14 @@
+# demo_guardrails.sh · base 87b2daa · 2026-11-08T15:32:00Z
+$ scripts/demo_guardrails.sh
+1. commit con un .wav                            esperado=bloqueado  real=bloqueado 
+    GUARDARRAÍL: cambio bloqueado (ver CLAUDE.md, restricciones legales):
+      [audio-file] grabacion.wav: audio fuera de tests/fixtures/sinteticos/ (REQ-LEG-005)
+2. commit con el término prohibido en código   esperado=bloqueado  real=bloqueado 
+    GUARDARRAÍL: cambio bloqueado (ver CLAUDE.md, restricciones legales):
+      [offensive-term] modo.py:1: «jamming» (REQ-LEG-001)
+3. commit con pilot_lat en un esquema PUBLIC     esperado=bloqueado  real=bloqueado 
+    GUARDARRAÍL: cambio bloqueado (ver CLAUDE.md, restricciones legales):
+      [pilot-public] pista.proto:2: «pilot_lat» debe ser FCSE_ONLY (REQ-LEG-007)
+4. commit limpio (vocabulario defensivo)         esperado=permitido  real=permitido 
+demo_guardrails: OK (4/4 como se esperaba)
+exit=0

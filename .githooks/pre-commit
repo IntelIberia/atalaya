@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Hook pre-commit de Atalaya: guardarraíles legales y de secretos (REQ-SEC-001).
+# Se activa con `make bootstrap` (git config core.hooksPath .githooks).
+exec "$(git rev-parse --show-toplevel)/scripts/guardrails.sh" --staged
