@@ -30,6 +30,7 @@ from __future__ import annotations
 import hashlib
 import re
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 DEFAULT_ROOT = Path(__file__).resolve().parent.parent
@@ -145,7 +146,9 @@ def parse_requirements(root: Path, errors: list[str]) -> dict[str, list[str]]:
     return reqs
 
 
-def parse_use_cases(root: Path, reqs: dict[str, list[str]], errors: list[str]) -> dict[str, set[str]]:
+def parse_use_cases(
+    root: Path, reqs: dict[str, list[str]], errors: list[str]
+) -> dict[str, set[str]]:
     cus: dict[str, set[str]] = {}
     current: str | None = None
     for line in (root / SPEC_REL).read_text(encoding="utf-8").splitlines():
@@ -230,7 +233,9 @@ def scan_legal(root: Path, errors: list[str]) -> tuple[int, list[str]]:
     return hits, proposals
 
 
-def run(root: Path = DEFAULT_ROOT, propose: bool = False, out=print) -> int:
+def run(
+    root: Path = DEFAULT_ROOT, propose: bool = False, out: Callable[[str], object] = print
+) -> int:
     errors: list[str] = []
     reqs = parse_requirements(root, errors)
     cus = parse_use_cases(root, reqs, errors)

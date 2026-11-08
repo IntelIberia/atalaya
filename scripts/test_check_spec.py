@@ -14,7 +14,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import check_spec  # noqa: E402
+import check_spec
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -51,7 +51,11 @@ class CheckSpecTest(unittest.TestCase):
 
     # --- requisitos -------------------------------------------------------------
     def test_must_sin_metodo_falla(self) -> None:
-        self.edit(check_spec.REQ_REL, "sin pérdidas ni duplicados | T | 1 |", "sin pérdidas ni duplicados |  | 1 |")
+        self.edit(
+            check_spec.REQ_REL,
+            "sin pérdidas ni duplicados | T | 1 |",
+            "sin pérdidas ni duplicados |  | 1 |",
+        )
         code, out = self.run_check()
         self.assertEqual(code, 1)
         self.assertIn("REQ-FUN-001: MUST sin método válido", out)
@@ -70,7 +74,11 @@ class CheckSpecTest(unittest.TestCase):
 
     # --- casos de uso y referencias --------------------------------------------
     def test_cu_con_requisito_inexistente_falla(self) -> None:
-        self.edit(check_spec.SPEC_REL, "**Requisitos:** REQ-LEG-008\n", "**Requisitos:** REQ-LEG-008, REQ-FUN-999\n")
+        self.edit(
+            check_spec.SPEC_REL,
+            "**Requisitos:** REQ-LEG-008\n",
+            "**Requisitos:** REQ-LEG-008, REQ-FUN-999\n",
+        )
         code, out = self.run_check()
         self.assertEqual(code, 1)
         self.assertIn("CU-15: referencia un requisito inexistente REQ-FUN-999", out)

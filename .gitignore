@@ -1,0 +1,35 @@
+# Secretos (Read denegado a Claude Code)
+.env
+.env.*
+!.env.example
+secrets/
+# Datos crudos y audio (el audio nunca se versiona salvo fixtures sintéticos)
+data/raw/
+*.wav
+*.flac
+*.mp3
+*.ogg
+*.m4a
+*.opus
+*.aac
+*.aiff
+!tests/fixtures/sinteticos/**
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+mutants/
+.hypothesis/
+reports/
+# SO / editores
+.DS_Store
+.idea/
+.vscode/
+# Claude Code local
+.claude/settings.local.json
