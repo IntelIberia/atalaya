@@ -40,3 +40,24 @@ f60d8305e57d11fa6969d21485f746a7c2683b2788356d1004c45d014c49a337  docs/PLAN-MAES
 884612828af490b3c4ad22fe52ef641c11c6028ab4721868d9b131e269974147  docs/PLAN-MAESTRO-DE-PRUEBAS.md  # | G-09 | El nodo acústico intenta escribir audio en disco (sistema de ficheros de solo lectura + espía de `ope
 2629f03490783985cdf6814604f81e4c31d2d3ded5ddccefd5541bc3b2f7722a  docs/RIESGOS.md  # | R-04 | Legal | Riesgo legal en RF, audio y datos de pilotos | 3 | 5 | 15 | Restricciones no negociables, hoo
 6d9d9e2aa67efcfc9c64534a30b018335107d58e7b4168bd482c5ee2c38f14a2  docs/RIESGOS.md  # | R-06 | Seguridad | Ataques a la propia red de sensores (suplantación de nodos, detecciones falsas, Remote ID
+# Revisión 2026-11-08 (T0.12): 20 menciones en ADR, amenazas, DPIA y plan FASE 0; todas son
+# prohibiciones, amenazas a detectar o descripción de guardarraíles.
+add2d221d91d0a7f50c15583b85c32180b95987efca62140fed6f1f42210f3e4  docs/adr/0001-arquitectura.md  # Opción 2. Los nodos emiten **eventos de detección** (Protobuf, nunca datos en bruto) por MQTT 5; el
+427a92c7aeef7ded4300ed2d195221ecfc1621d90c588de4a2fecfbf8b4fd1e1  docs/adr/0002-restricciones-legales.md  # Telecomunicaciones (equipos de interferencia), RGPD, normativa UAS de la UE (Remote ID).
+8e501b0f92d2280466be1f09fed77526fae02b70b2c35bea56f7982be17812a3  docs/adr/0002-restricciones-legales.md  # 3. **Prohibición de dependencias de SDR**: insuficiente (hay APIs de TX en librerías de RX).
+ec5e10c0cf02c100937ceae2d8bd2423b8ca24c2901e2012189b61c9af09825a  docs/adr/0002-restricciones-legales.md  # Opción 2 (implementada en la FASE 0, `scripts/guardrails.py`, ADR 0005): ningún camino de TX
+d28fad0ba2807c61eb36d47ecb3cb8ae29a176fdf5926bd7f560e095eaa076f3  docs/adr/0002-restricciones-legales.md  # (SDR, ESP32 Wi-Fi/BLE), sin demodulación de terceros ni protocolos propietarios, audio nunca a disco,
+f486240735a93aa3c6a897f314ba6c8294689773a1f65449ce588892ffc9f9d5  docs/adr/0002-restricciones-legales.md  # datos de piloto/operador `FCSE_ONLY`, sin atribución automática, licencias verificadas. Una petición
+6e1062dd286784cc25c2fb8004bc0a1badbe6a94885090a3460d532c8ba501ed  docs/adr/0005-guardarrail-lista-blanca.md  # `spoof_indicator`); cualquier otro identificador que contenga un término sensible se bloquea (test
+8bbb8e2368a223c448b8df4d6c95bbfb0806803185dabf88956ced3d19d1b70c  docs/adr/0005-guardarrail-lista-blanca.md  # G-04 con `spoof_remote_id`). Patrones y tests escritos por fragmentos para que el guardarraíl se
+1e0b5209f979422bc17455c1070a7d36cc974b89e44e9eebd2d859c282170801  docs/adr/0005-guardarrail-lista-blanca.md  # (`scripts/legal_allowlist.txt`, hash por línea). En `.claude/settings.json` las herramientas de TX
+016ea0818e89bdfd53ff02c0872a20bd5867163fd54555b88154191ea6019bed  docs/dpia/v0.md  # | T-02 | Recepción de Remote ID | Posición del piloto, número de operador, posición del dron | Pilotos y opera
+77f784aebf4493b91c7f2e12ed5b5b2b43861412563015461bd2d7e2e30e7498  docs/dpia/v0.md  # | Divulgación de datos de pilotos | Sensibilidad por campo, guardarraíl `pilot-public`, test generativo | Guar
+cf4d5f205aea1d8720bf977de9dbbc50ddb488922aeb9105ba58257d305ff797  docs/plans/FASE-0.md  # - (a) APIs y comandos de transmisión SDR (`hackrf_transfer -t`/`-c`, `writeStream` y `SOAPY_SDR_TX` de SoapySD
+e6a7017d26413c5ef63f4e7bc914525e915b201df780d38e15b6b2de0bf95e42  docs/plans/FASE-0.md  # - (b) términos ofensivos en código (`jamming`, `jammer`, `spoofing`, `deauth`, `takeover` y equivalentes en es
+bcaddb7f8480b53c3ac5e5d974f489c5ad611a83be07ef0b056faf85219ad426  docs/plans/FASE-0.md  # - **Prueba negativa:** cada muestra prohibida → exit 2 con el motivo; `detect_forged_remote_id` → exit 0; `spo
+cfdf38afd849f7e981c67aab79977f312d63b4a575b52462c974876d9006a066  docs/plans/FASE-0.md  # - **Verificación:** `scripts/demo_guardrails.sh` crea un repo temporal e intenta tres commits (un `.wav`; `jam
+a8601b40ac2ff21bea874676857fbe49444343d33a2a4390c3e58eef7aa6a9d3  docs/plans/FASE-0.md  # - **PreToolUse Bash** (`scripts/hooks/pre_bash.py`): bloquea comandos que tocan `.env`/`secrets/`, que transmi
+65a4da175394c2a305c33e2fdb8873409b584c5c931941cf8d21b968a446b2f1  docs/threat-model/v0.md  # | Suplantación | **Nodos suplantados** que publican como un nodo legítimo | F1 | mTLS por dispositivo con CA p
+77914fc2681f25280a6f5b8ea4006c9c54d0ec77c2b98c0cff7256e629487633  docs/threat-model/v0.md  # | Suplantación | **Remote ID falsificado** emitido por un tercero | F1 | Detección de incoherencias (REQ-FUN-0
+b4279dc01c5ac796980380caa46ebcb964006008c9f1f4f49ebd83fd2961a96e  docs/threat-model/v0.md  # | Suplantación | Operador suplantado en el dashboard | F2 | MFA y RBAC (REQ-SEC-006/007) | Planificado (F10) |

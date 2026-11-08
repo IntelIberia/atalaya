@@ -46,6 +46,19 @@ SCANNED_REL = [
     RISK_REL,
     "docs/requirements/ENTREVISTA-FASE--1.md",
 ]
+# Además, todos los .md de estos directorios (revisión legal línea a línea, ADR 0005).
+SCANNED_DIRS = ["docs/adr", "docs/threat-model", "docs/dpia", "docs/ens", "docs/plans"]
+
+
+def scanned_files(root: Path) -> list[str]:
+    extra = sorted(
+        p.relative_to(root).as_posix()
+        for d in SCANNED_DIRS
+        if (root / d).is_dir()
+        for p in (root / d).rglob("*.md")
+    )
+    return SCANNED_REL + extra
+
 
 ID_RE = re.compile(r"^REQ-(FUN|NFR|LEG|SEC|PRIV)-\d{3}$")
 REF_RE = re.compile(r"REQ-(?:FUN|NFR|LEG|SEC|PRIV)-\d{3}")
@@ -196,7 +209,7 @@ def parse_use_cases(
 
 
 def check_references(root: Path, reqs: dict[str, list[str]], errors: list[str]) -> None:
-    for rel in SCANNED_REL:
+    for rel in scanned_files(root):
         for n, line in enumerate((root / rel).read_text(encoding="utf-8").splitlines(), 1):
             for r in REF_RE.findall(line):
                 if r not in reqs:
@@ -243,7 +256,7 @@ def scan_legal(root: Path, errors: list[str]) -> tuple[int, list[str]]:
     allow = load_allowlist(root)
     hits = 0
     proposals: list[str] = []
-    for rel in SCANNED_REL:
+    for rel in scanned_files(root):
         for n, line in enumerate((root / rel).read_text(encoding="utf-8").splitlines(), 1):
             if not SENSITIVE.search(line):
                 continue

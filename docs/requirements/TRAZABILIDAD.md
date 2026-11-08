@@ -79,15 +79,15 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-NFR-011 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-012 | SHOULD | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-013 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-NFR-014 | MUST | 0 | 14 | verde | en curso |
-| REQ-NFR-015 | MUST | 0 | 1 | verde | en curso |
-| REQ-NFR-016 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-NFR-014 | MUST | 0 | 16 | verde | en curso |
+| REQ-NFR-015 | MUST | 0 | 2 | verde | en curso |
+| REQ-NFR-016 | MUST | 0 | 1 | verde | en curso |
 | REQ-NFR-017 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-018 | MUST | 0 | 3 | verde | en curso |
 | REQ-NFR-019 | SHOULD | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-020 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-021 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-LEG-001 | MUST | 0 | 17 | verde | en curso |
+| REQ-LEG-001 | MUST | 0 | 24 | verde | en curso |
 | REQ-LEG-002 | MUST | 0 | 16 | verde | en curso |
 | REQ-LEG-003 | MUST | 6 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-004 | MUST | 6 | 0 | sin tests | pendiente (fase abierta) |
@@ -118,18 +118,18 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-SEC-012 | MUST | 0 | 12 | verde | en curso |
 | REQ-SEC-013 | MUST | 12 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-014 | SHOULD | 12 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-SEC-015 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-SEC-016 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-SEC-015 | MUST | 0 | 10 | verde | en curso |
+| REQ-SEC-016 | MUST | 0 | 1 | verde | en curso |
 | REQ-SEC-017 | SHOULD | 3 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-018 | MUST | 3 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-019 | MUST | 12 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-001 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-002 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-PRIV-003 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-PRIV-003 | MUST | 0 | 17 | verde | en curso |
 | REQ-PRIV-004 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-005 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-PRIV-006 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-PRIV-007 | MUST | 0 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-PRIV-006 | MUST | 0 | 1 | verde | en curso |
+| REQ-PRIV-007 | MUST | 0 | 1 | verde | en curso |
 | REQ-PRIV-008 | MUST | 3 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-009 | MUST | 4 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-010 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
