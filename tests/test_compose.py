@@ -13,6 +13,14 @@ COMPOSE = Path("infra/compose/compose.yaml")
 SERVICIOS = {"mosquitto", "nats", "redis", "postgres"}
 SECRETO = re.compile(r"(?i)(pass|secret|token|key)")
 VAR_OBLIGATORIA = re.compile(r"^\$\{[A-Z0-9_]+:\?[^}]*\}$")
+# Imagen fijada por etiqueta Y digest: nombre:etiqueta@sha256:<64 hex> (revisión P5).
+IMAGEN_DIGEST = re.compile(r"^[a-z0-9./_-]+:[A-Za-z0-9._-]+@sha256:[0-9a-f]{64}$")
+# Contraseñas en la línea de órdenes (visibles en `ps` y `docker inspect`): opciones de contraseña o
+# una variable que compose interpola ($VAR / ${VAR}); `$$VAR` lo expande el sh del contenedor y en
+# argv solo queda el nombre literal de la variable.
+SECRETO_EN_ARGV = re.compile(
+    r"(?i:--pass\b|--password\b|--requirepass\b)|(?<!\$)\$\{?[A-Z0-9_]*PASS"
+)
 
 
 def cargar(repo: Path) -> dict[str, Any]:
@@ -30,6 +38,14 @@ def problemas(data: dict[str, Any], mosquitto_conf: str) -> list[str]:
         imagen = str(s.get("image", ""))
         if ":" not in imagen or imagen.endswith((":latest", ":2", ":alpine")):
             p.append(f"{nombre}: imagen sin versión fija ({imagen})")
+        if not IMAGEN_DIGEST.match(imagen):
+            p.append(f"{nombre}: imagen sin digest @sha256 ({imagen})")
+        cmd = s.get("command", "")
+        argv = " ".join(cmd) if isinstance(cmd, list) else str(cmd)
+        if nombre != "mosquitto" and SECRETO_EN_ARGV.search(argv):
+            # mosquitto: mosquitto_passwd recibe la contraseña en un proceso efímero que termina
+            # antes del exec del broker; su argv final no la lleva.
+            p.append(f"{nombre}: contraseña en argv del comando")
         for puerto in s.get("ports", []):
             if not str(puerto).startswith("127.0.0.1:"):
                 p.append(f"{nombre}: puerto expuesto fuera de localhost ({puerto})")
@@ -75,3 +91,42 @@ def test_postgres_sin_trust(repo: Path) -> None:
     assert any("99-endurecer-pg_hba.sh" in v for v in vols)
     script = (repo / "infra/compose/postgres/99-endurecer-pg_hba.sh").read_text()
     assert "scram-sha-256" in script
+
+
+@pytest.mark.req("REQ-SEC-005")
+def test_detecta_imagen_sin_digest(repo: Path) -> None:
+    data = cargar(repo)
+    data["services"]["nats"]["image"] = "nats:2.15.1-alpine"
+    data["services"]["redis"]["image"] = "redis:7.4.11-alpine@sha256:abc123"
+    conf = (repo / "infra/compose/mosquitto/mosquitto.conf").read_text()
+    p = problemas(data, conf)
+    assert "nats: imagen sin digest @sha256 (nats:2.15.1-alpine)" in p
+    assert "redis: imagen sin digest @sha256 (redis:7.4.11-alpine@sha256:abc123)" in p
+    assert not any(x.startswith(("mosquitto:", "postgres:")) for x in p)
+
+
+@pytest.mark.req("REQ-SEC-005")
+def test_detecta_contrasena_en_argv(repo: Path) -> None:
+    data = cargar(repo)
+    data["services"]["nats"]["command"] = ["-js", "--user", "u", "--pass", "${NATS_PASSWORD}"]
+    data["services"]["redis"]["command"] = [
+        "sh",
+        "-c",
+        'exec redis-server --requirepass "$$REDIS_PASSWORD"',
+    ]
+    conf = (repo / "infra/compose/mosquitto/mosquitto.conf").read_text()
+    p = problemas(data, conf)
+    assert "nats: contraseña en argv del comando" in p
+    assert "redis: contraseña en argv del comando" in p
+
+
+@pytest.mark.req("REQ-SEC-005")
+def test_nats_conf_toma_credenciales_del_entorno(repo: Path) -> None:
+    conf = (repo / "infra/compose/nats/nats.conf").read_text()
+    # Sin comillas: entre comillas NATS no sustituye la variable (docs.nats.io, «Variables»).
+    assert re.search(r"^\s*user:\s*\$NATS_USER\s*$", conf, re.MULTILINE)
+    assert re.search(r"^\s*password:\s*\$NATS_PASSWORD\s*$", conf, re.MULTILINE)
+    assert re.search(r'store_dir:\s*"/data"', conf)
+    assert re.search(r"^http_port:\s*8222\s*$", conf, re.MULTILINE)
+    vols = cargar(repo)["services"]["nats"]["volumes"]
+    assert "./nats/nats.conf:/etc/nats/nats-server.conf:ro" in vols
