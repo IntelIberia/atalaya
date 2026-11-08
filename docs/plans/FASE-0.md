@@ -1,6 +1,6 @@
 # Plan FASE 0 — Arranque, gobernanza y guardarraíles
 
-Versión 1 · 2026-11-08 · Estado: **pendiente de aprobación (STOP de plan, puerta P0)**
+Versión 1 · 2026-11-08 · Estado: **APROBADO por el usuario el 2026-11-08 (P0)**: «Inicia todo… Decide todo, te doy mi firme aceptación»
 
 ## 1. Objetivo
 Dejar el monorepo listo para construir con seguridad: estructura, herramientas, `make` con todos sus objetivos, CI, trazabilidad, evidencias reproducibles y **guardarraíles legales que no se puedan desactivar en silencio**. También gobernanza para Claude Code (CLAUDE.md, reglas, permisos, hooks, subagentes, skills) y los documentos v0 de arquitectura, legal, amenazas, DPIA y ENS.
