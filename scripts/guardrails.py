@@ -24,6 +24,7 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import re
 import subprocess
@@ -65,10 +66,35 @@ CODE_EXTENSIONS = frozenset(
         ".toml",
         ".json",
         ".sql",
+        ".ipynb",
+        ".grc",
+        ".cfg",
+        ".ini",
+        ".conf",
+        ".dockerfile",
     ]
 )
+CODE_NAMES = frozenset(["Makefile", "Dockerfile", "Containerfile", "Jenkinsfile"])
 AUDIO_EXTENSIONS = frozenset(
-    [".wav", ".flac", ".mp3", ".ogg", ".m4a", ".opus", ".aac", ".aiff", ".aif", ".wma"]
+    [
+        ".wav",
+        ".flac",
+        ".mp3",
+        ".ogg",
+        ".m4a",
+        ".opus",
+        ".aac",
+        ".aiff",
+        ".aif",
+        ".wma",
+        ".pcm",
+        ".raw",
+        ".amr",
+        ".caf",
+        ".3gp",
+        ".webm",
+        ".mka",
+    ]
 )
 AUDIO_FIXTURES_DIR = "tests/fixtures/sinteticos/"
 SCHEMA_EXTENSIONS = frozenset([".proto", ".json", ".yaml", ".yml"])
@@ -102,7 +128,7 @@ SDR_TX_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
 OFFENSIVE_PATTERN = re.compile(
     "|".join(
         (
-            "ja" + r"mm(?:ing|er|ers|ed)?",
+            r"(?<![A-Za-z])ja" + r"m(?:m\w*|_\w*)?(?![a-z])",
             "spo" + r"of\w*",
             r"de-?" + "auth\\w*",
             "take" + r"-?over\w*",
@@ -117,6 +143,8 @@ OFFENSIVE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 IDENT_RE = re.compile(r"\w+")
+# Letras de otros alfabetos visualmente idénticas a las latinas (evasión por homoglifos).
+CONFUSABLES = str.maketrans("аеорсухіјѕАЕОРСХІЈЅ", "aeopcyxijsAEOPCXIJS")
 
 # --- (c) audio ------------------------------------------------------------------------
 AUDIO_MAGIC: tuple[tuple[int, bytes], ...] = (
@@ -129,8 +157,10 @@ AUDIO_MAGIC: tuple[tuple[int, bytes], ...] = (
 )
 
 # --- (d) datos de piloto/operador -----------------------------------------------------
-PILOT_FIELD_RE = re.compile(r"\b(?:pilot_\w+|operator_\w+)\b")
-FCSE_ONLY_RE = re.compile(r"\bFCSE_ONLY\b")
+PILOT_FIELD_RE = re.compile(r"(?<![A-Za-z])(?:pilot|piloto|operator|operador)(?:_\w+|[A-Z]\w*)")
+# Debe declararse como sensibilidad, no basta mencionarlo (p. ej. en un comentario).
+FCSE_ONLY_RE = re.compile(r"sensitivity[\"')\]]*\s*[:=]\s*[\"']?FCSE_ONLY\b")
+COMMENT_RE = re.compile(r"\s(?://|#).*$")
 
 # --- (e) secretos ---------------------------------------------------------------------
 SECRET_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
@@ -143,18 +173,22 @@ SECRET_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
         r"\bxox[abprs]-[A-Za-z0-9-]{10,}",
         r"\bAIza[0-9A-Za-z_\-]{35}\b",
         r"\bsk-ant-[A-Za-z0-9_\-]{20,}",
-        r"(?i)\b(?:password|passwd|pwd|secret|api_?key|token)\b\s*[:=]\s*['\"][^'\"\s]{8,}['\"]",
+        r"(?i)\b(?:password|passwd|pwd|secret|api_?key|token)\b['\"]?\s*[:=]\s*['\"][^'\"\s]{8,}['\"]",
+        r"\b[A-Z0-9_]*(?:PASSWORD|SECRET|TOKEN|API_KEY)\s*[:=]\s*(?!['\"$?{-])[^\s#]{8,}",
     )
 )
-SECRET_FILE_RE = re.compile(r"(?:^|/)(?:\.env(?:\.(?!example$)[\w.-]+)?|secrets/.*)$")
+SECRET_FILE_RE = re.compile(r"(?:^|/)(?:\.env(?:\.(?!example$)[\w.-]+)?|\.envrc|secrets/.*)$")
 
 # --- comandos de shell (hook PreToolUse) ------------------------------------------------
 SECRET_PATH_IN_CMD = re.compile(
     r"(?:^|[\s/'\"=<>])(?:\.env(?:\.[\w.-]+)?(?=$|[\s'\";|&)<>/])|secrets/)"
 )
-FORCE_PUSH_RE = re.compile(r"\bgit\s+push\b[^\n;&|]*\s(?:--force(?:-with-lease)?|-f)\b")
+FORCE_PUSH_RE = re.compile(r"\bgit\s+push\b[^\n;&|]*\s(?:--force(?:-with-lease)?|-f\b|\+\S)")
 NO_VERIFY_RE = re.compile(
-    r"\bgit\b[^\n;&|]*\bcommit\b[^\n;&|]*\s(?:--no-verify\b|-[a-zA-Z]*n[a-zA-Z]*\b)"
+    r"\bgit\b[^\n;&|]*\bcommit\b[^\n;&|]*\s(?:--no-v\w*|-[a-zA-Z]*n[a-zA-Z]*\b)"
+    r"|\bgit\b[^\n;&|]*\bcommit-tree\b"
+    r"|\b(?:chmod|rm|mv|cp|ln|truncate|tee)\b[^\n;&|]*\.githooks"
+    r"|>\s*\.githooks/"
 )
 HOOKS_PATH_RE = re.compile(r"core\.hooksPath", re.IGNORECASE)
 HOOKS_PATH_READ_RE = re.compile(r"--get(?:-all)?\s+core\.hooksPath\b", re.IGNORECASE)
@@ -184,13 +218,15 @@ def load_allowlist(path: Path = ALLOWLIST_FILE) -> frozenset[str]:
 
 
 def _is_audio_bytes(data: bytes) -> bool:
+    if len(data) >= 2 and data[0] == 0xFF and data[1] & 0xE0 == 0xE0:  # trama MPEG sin ID3
+        return True
     return any(data[off : off + len(sig)] == sig for off, sig in AUDIO_MAGIC)
 
 
-def _decode(content: str | bytes) -> str | None:
+def _decode(content: str | bytes, force_text: bool = False) -> str | None:
     if isinstance(content, str):
         return content
-    if b"\x00" in content[:8192]:
+    if not force_text and b"\x00" in content[:8192]:
         return None  # binario
     try:
         return content.decode("utf-8")
@@ -218,7 +254,7 @@ def _settings_without_deny(text: str) -> str:
         return text
     if isinstance(data, dict) and isinstance(data.get("permissions"), dict):
         data["permissions"].pop("deny", None)
-    return json.dumps(data, indent=1, ensure_ascii=False)
+    return json.dumps(data, indent=1, ensure_ascii=False)  # una clave por línea; sin escapar
 
 
 def check_file(
@@ -240,13 +276,19 @@ def check_file(
             Violation(rel, "audio-file", f"audio fuera de {AUDIO_FIXTURES_DIR} (REQ-LEG-005)")
         )
 
-    text = _decode(content)
+    name = PurePosixPath(rel).name
+    shebang = raw.startswith(b"#!")
+    is_code = (
+        suffix in CODE_EXTENSIONS
+        or name in CODE_NAMES
+        or name.startswith("Dockerfile")
+        or (suffix == "" and shebang)
+    )
+    text = _decode(content, force_text=is_code)
     if text is None:
         return violations
     if rel == CLAUDE_SETTINGS:
         text = _settings_without_deny(text)
-
-    is_code = suffix in CODE_EXTENSIONS or PurePosixPath(rel).name == "Makefile"
     is_schema = suffix in SCHEMA_EXTENSIONS
     for n, line in enumerate(text.splitlines(), 1):
         if is_code:
@@ -256,15 +298,17 @@ def check_file(
                         Violation(rel, "sdr-tx", "transmisión por radio (REQ-LEG-002)", n)
                     )
                     break
-            for m in OFFENSIVE_PATTERN.finditer(line):
-                ident = _enclosing_identifier(line, m.start(), m.end())
+            folded = line.translate(CONFUSABLES)
+            for m in OFFENSIVE_PATTERN.finditer(folded):
+                ident = _enclosing_identifier(folded, m.start(), m.end())
                 if ident not in allow:
                     violations.append(
                         Violation(rel, "offensive-term", f"«{ident}» (REQ-LEG-001)", n)
                     )
         if is_schema:
-            for m in PILOT_FIELD_RE.finditer(line):
-                if not FCSE_ONLY_RE.search(line):
+            code = COMMENT_RE.sub("", line) if suffix != ".json" else line
+            for m in PILOT_FIELD_RE.finditer(code):
+                if not FCSE_ONLY_RE.search(code):
                     violations.append(
                         Violation(
                             rel,
@@ -280,12 +324,25 @@ def check_file(
     return violations
 
 
+def _glob_hits_secret(command: str) -> bool:
+    """Un comodín que podría expandirse a .env o secrets/ también cuenta como acceso."""
+    for token in command.split():
+        if any(c in token for c in "*?["):
+            parts = token.split("/")
+            if fnmatch.fnmatch(".env", parts[-1]) or any(
+                fnmatch.fnmatch("secrets", x) for x in parts[:-1]
+            ):
+                return True
+    return False
+
+
 def check_command(command: str) -> list[Violation]:
     """Comprueba un comando de shell antes de ejecutarlo (hook PreToolUse)."""
     found: list[Violation] = []
-    if SECRET_PATH_IN_CMD.search(command):
+    unquoted = re.sub(r"['\"\\]", "", command)
+    if SECRET_PATH_IN_CMD.search(unquoted) or _glob_hits_secret(unquoted):
         found.append(Violation("<bash>", "secret-file", "acceso a .env o secrets/"))
-    if any(p.search(command) for p in SDR_TX_PATTERNS):
+    if any(p.search(unquoted) for p in SDR_TX_PATTERNS):
         found.append(Violation("<bash>", "sdr-tx", "transmisión por radio (REQ-LEG-002)"))
     if FORCE_PUSH_RE.search(command):
         found.append(Violation("<bash>", "force-push", "git push forzado"))
@@ -337,6 +394,8 @@ def main(argv: list[str] | None = None) -> int:
     mode.add_argument("--paths", nargs="+")
     mode.add_argument("--command")
     args = ap.parse_args(argv)
+    if args.range is not None and ".." not in args.range:
+        ap.error("--range debe tener la forma A..B o A...B")
 
     try:
         if args.command is not None:

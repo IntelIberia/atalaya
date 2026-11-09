@@ -18,8 +18,12 @@ STRONG = re.compile(r"\bA?GPL\b|\bA?GPLv\d|GNU (?:Affero )?General Public Licens
 WEAK = re.compile(r"\bLGPL|Lesser General Public", re.IGNORECASE)
 
 
+SPLIT = re.compile(r"\s+(?:AND|OR|WITH)\s+|\s*\|\s*|[(),;]")
+
+
 def is_strong_copyleft(text: str) -> bool:
-    return bool(STRONG.search(text)) and not WEAK.search(text)
+    """True si CUALQUIER término de la expresión es copyleft fuerte (criterio conservador)."""
+    return any(STRONG.search(t) and not WEAK.search(t) for t in SPLIT.split(text) if t.strip())
 
 
 def parse_requirements(text: str) -> list[str]:
@@ -53,6 +57,8 @@ def evaluate(names: list[str], lookup: Callable[[str], str]) -> list[tuple[str, 
         lic = lookup(n)
         if not lic.strip():
             blocked.append((n, "(desconocida)"))
+        elif lic == NOT_INSTALLED:
+            blocked.append((n, lic))  # de ejecución y sin verificar: se bloquea
         elif is_strong_copyleft(lic):
             blocked.append((n, lic))
     return blocked

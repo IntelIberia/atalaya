@@ -114,6 +114,8 @@ def test_informe_de_mutacion(tmp_path: Path) -> None:
     meta.parent.mkdir(parents=True)
     codes = {"a": 1, "b": 1, "c": 1, "d": 0, "e": None, "f": 36}
     meta.write_text(json.dumps({"exit_code_by_key": codes}))
+    (tmp_path / "tests" / "guardrails").mkdir(parents=True)
+    (tmp_path / "tests" / "guardrails" / "t.py").write_text("x\n")
     rep = mr.report(tmp_path, "scripts/m.py")
     assert rep["killed"] == 3
     assert rep["survived"] == 1
@@ -122,6 +124,9 @@ def test_informe_de_mutacion(tmp_path: Path) -> None:
     assert rep["score"] == pytest.approx(0.6)
     assert rep["survivors"] == ["d"]
     assert rep["sha256"] == hashlib.sha256(b"x = 1\n").hexdigest()
+    assert rep["tests_sha256"] == mr.tests_digest(tmp_path)
+    (tmp_path / "tests" / "guardrails" / "t.py").write_text("y\n")
+    assert rep["tests_sha256"] != mr.tests_digest(tmp_path)
 
 
 @pytest.mark.req("REQ-NFR-018")
@@ -151,6 +156,8 @@ def evidencia_mutacion_problemas(repo: Path, fase: str) -> list[str]:
         actual = hashlib.sha256((repo / rel).read_bytes()).hexdigest()
         if entrada["sha256"] != actual:
             problemas.append(f"{rel}: evidencia obsoleta (el código cambió; ejecuta make mutation)")
+        if entrada.get("tests_sha256") != mr.tests_digest(repo):
+            problemas.append(f"{rel}: los tests cambiaron desde la última mutación (make mutation)")
         if entrada["score"] < float(cfg["mutation_threshold"]):
             problemas.append(f"{rel}: puntuación {entrada['score']:.3f} < umbral")
     return problemas

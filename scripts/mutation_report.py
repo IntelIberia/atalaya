@@ -18,6 +18,14 @@ ROOT = Path(__file__).resolve().parent.parent
 KILLED, SURVIVED = 1, 0
 
 
+def tests_digest(root: Path, tests_dir: str = "tests/guardrails") -> str:
+    """SHA-256 conjunto de los tests de mutación: si se debilitan, la evidencia caduca."""
+    h = hashlib.sha256()
+    for f in sorted((root / tests_dir).rglob("*.py")):
+        h.update(f.relative_to(root).as_posix().encode() + b"\0" + f.read_bytes())
+    return h.hexdigest()
+
+
 def report(root: Path, rel: str) -> dict[str, Any]:
     meta = json.loads((root / "mutants" / f"{rel}.meta").read_text(encoding="utf-8"))
     codes: dict[str, int | None] = meta["exit_code_by_key"]
@@ -27,6 +35,7 @@ def report(root: Path, rel: str) -> dict[str, Any]:
     total = len(run)
     return {
         "sha256": hashlib.sha256((root / rel).read_bytes()).hexdigest(),
+        "tests_sha256": tests_digest(root),
         "total": total,
         "killed": killed,
         "survived": len(survivors),

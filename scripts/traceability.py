@@ -30,6 +30,7 @@ from defusedxml import ElementTree as ET
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_REQS = ROOT / "docs/requirements/REQUIREMENTS.md"
 DEFAULT_JUNIT = ROOT / "reports/junit.xml"
+INTEGRATION_JUNIT = ROOT / "reports/junit-integracion.xml"
 DEFAULT_CLOSED = ROOT / "docs/requirements/FASES-CERRADAS.txt"
 DEFAULT_OUT = ROOT / "docs/requirements/TRAZABILIDAD.md"
 
@@ -87,9 +88,15 @@ def parse_closed(path: Path) -> set[int]:
     return closed
 
 
-def parse_junit(path: Path) -> tuple[dict[str, int], dict[str, int]]:
+def parse_junit(paths: Path | list[Path]) -> tuple[dict[str, int], dict[str, int]]:
     passed: dict[str, int] = {}
     failed: dict[str, int] = {}
+    for path in [paths] if isinstance(paths, Path) else paths:
+        _parse_one(path, passed, failed)
+    return passed, failed
+
+
+def _parse_one(path: Path, passed: dict[str, int], failed: dict[str, int]) -> None:
     root = ET.parse(path).getroot()
     if root is None:
         raise ValueError(f"JUnit XML vacío: {path}")
@@ -101,11 +108,13 @@ def parse_junit(path: Path) -> tuple[dict[str, int], dict[str, int]]:
         target = failed if bad else passed
         for rid in ids:
             target[rid] = target.get(rid, 0) + 1
-    return passed, failed
 
 
 def evaluate(
-    req_path: Path, junit_path: Path, closed_path: Path, extra_closed: list[int] | None = None
+    req_path: Path,
+    junit_path: Path | list[Path],
+    closed_path: Path,
+    extra_closed: list[int] | None = None,
 ) -> Result:
     reqs = parse_requirements(req_path)
     closed = parse_closed(closed_path) | set(extra_closed or [])
@@ -155,16 +164,21 @@ def render(res: Result) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Trazabilidad requisito → tests")
     ap.add_argument("--requirements", type=Path, default=DEFAULT_REQS)
-    ap.add_argument("--junit", type=Path, default=DEFAULT_JUNIT)
+    ap.add_argument("--junit", type=Path, action="append", default=None)
     ap.add_argument("--closed", type=Path, default=DEFAULT_CLOSED)
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--fase", type=int, action="append", default=[])
     args = ap.parse_args(argv)
 
-    if not args.junit.exists():
-        print(f"traceability: no existe {args.junit}; ejecuta antes los tests", file=sys.stderr)
+    junits = args.junit or [DEFAULT_JUNIT] + (
+        [INTEGRATION_JUNIT] if INTEGRATION_JUNIT.exists() else []
+    )
+    missing = [j for j in junits if not j.exists()]
+    if missing:
+        print(f"traceability: no existe {missing[0]}; ejecuta antes los tests", file=sys.stderr)
         return 1
-    res = evaluate(args.requirements, args.junit, args.closed, args.fase)
+    res = evaluate(args.requirements, junits, args.closed, args.fase)
+    print(f"traceability: informes JUnit: {[j.name for j in junits]}")
     out = args.out if args.out is not None else DEFAULT_OUT
     out.write_text(render(res), encoding="utf-8")
     must_closed = [r for r in res.requirements if r.priority == "MUST" and r.phase in res.closed]

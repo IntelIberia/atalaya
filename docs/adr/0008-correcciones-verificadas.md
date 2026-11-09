@@ -2,7 +2,7 @@
 
 - Estado: aceptado
 - Fecha: 2026-11-08
-- Decisores: Claude Code (con la autorización general del usuario para decidir); se presenta en el STOP de la FASE 0
+- Decisores: Claude Code; **aceptado por el usuario el 2026-11-08** (docs/requirements/DECISIONES-USUARIO.md)
 
 ## Contexto
 SPEC §11 listaba afirmaciones externas no verificadas. Un agente verificador las contrastó con

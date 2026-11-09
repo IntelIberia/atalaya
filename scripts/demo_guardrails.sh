@@ -26,7 +26,7 @@ intento() {  # $1 = descripción, $2 = esperado (bloqueado|permitido)
 printf 'RIFF\x24\x00\x00\x00WAVEfmt ' > grabacion.wav && git add -f grabacion.wav
 intento "1. commit con un .wav" bloqueado
 
-printf 'MODE = "%s"\n' "jam""ming" > modo.py && git add modo.py
+printf 'MODE = "%s"\n' "ja""mming" > modo.py && git add modo.py
 intento "2. commit con el término prohibido en código" bloqueado
 
 printf 'message Pista {\n  double pilot_lat = 1 [(atalaya.v1.sensitivity) = PUBLIC];\n}\n' > pista.proto && git add pista.proto

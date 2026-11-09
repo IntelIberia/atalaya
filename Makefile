@@ -78,8 +78,10 @@ up: ## Arranca el stack local (Docker Compose) y espera a que esté sano
 	@scripts/gen_local_secrets.sh
 	$(COMPOSE) up -d --wait
 
-smoke: ## Pruebas positivas y negativas de cada servicio del stack
-	@$(UV) python -m scripts.smoke_compose
+smoke: ## Tests de integración con el stack en marcha (JUnit para trazabilidad)
+	@mkdir -p reports
+	@$(UV) pytest -q -p no:cacheprovider -m integracion tests/integracion -s \
+		--junitxml=reports/junit-integracion.xml
 
 down: ## Para el stack (conserva los volúmenes)
 	$(COMPOSE) down

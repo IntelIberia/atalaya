@@ -18,8 +18,8 @@ REPO = Path(__file__).resolve().parents[2]
 
 # Muestras construidas por partes
 TERMINOS = {
-    "t01": "jam" + "ming",
-    "t02": "jam" + "mer",
+    "t01": "ja" + "mming",
+    "t02": "ja" + "mmer",
     "t03": "spo" + "ofing",
     "t04": "de" + "auth",
     "t05": "take" + "over",
@@ -87,18 +87,18 @@ def test_g03_termino_en_identificador_bloqueado() -> None:
     assert "offensive-term" in reglas("services/x.py", f"def start_{T01}() -> None: ...\n")
 
 
-@pytest.mark.req("REQ-SEC-001", "REQ-FUN-031")
+@pytest.mark.req("REQ-SEC-001")
 def test_g04_identificador_defensivo_en_lista_blanca_permitido() -> None:
     ident = "spo" + "of_indicator"
     assert reglas("services/fusion/x.py", f"{ident} = score > 0.8\n") == set()
 
 
-@pytest.mark.req("REQ-SEC-001", "REQ-FUN-031")
+@pytest.mark.req("REQ-SEC-001")
 def test_g04_vocabulario_defensivo_sin_terminos_permitido() -> None:
     assert reglas("services/x.py", "def detect_forged_remote_id(msg): ...\n") == set()
 
 
-@pytest.mark.req("REQ-SEC-001", "REQ-FUN-031")
+@pytest.mark.req("REQ-SEC-001")
 def test_g04_identificador_parecido_no_listado_bloqueado() -> None:
     ident = "spo" + "of_remote_id"
     assert "offensive-term" in reglas("services/x.py", f"def {ident}(): ...\n")
@@ -445,7 +445,7 @@ def test_check_command_exacto(comando: str, esperado: list[str]) -> None:
 
 
 # --- identificadores y lista blanca ------------------------------------------------
-@pytest.mark.req("REQ-SEC-001", "REQ-FUN-031")
+@pytest.mark.req("REQ-SEC-001")
 def test_lista_blanca_usa_el_identificador_completo() -> None:
     allow = frozenset({"remote_id_" + "spo" + "of_indicator"})
     ok = "x = remote_id_" + "spo" + "of_indicator\n"
@@ -463,8 +463,9 @@ def test_lista_blanca_con_varios_comentarios(tmp_path: Path) -> None:
 
 
 @pytest.mark.req("REQ-SEC-001")
-def test_binario_con_extension_de_codigo_no_se_analiza_como_texto() -> None:
-    assert reglas("x.py", b"\x00\x01\x02" + T01.encode()) == set()
+def test_binario_con_extension_de_codigo_se_analiza_igualmente() -> None:
+    # Antes este test daba por buena la evasión con un NUL (hallazgo P5): ahora se analiza.
+    assert "offensive-term" in reglas("x.py", b"\x00\x01\x02" + T01.encode())
 
 
 # --- fallo cerrado: si no se puede verificar, se bloquea -----------------------------
@@ -623,3 +624,190 @@ def test_settings_con_permissions_sin_deny() -> None:
 def test_hook_bypass_informe_exacto() -> None:
     got = [str(v) for v in g.check_command("git commit --no-verify -m x")]
     assert got == ["[hook-bypass] <bash>: evasión de los hooks de git"]
+
+
+# === Correcciones de la revisión P5 de la FASE 0 ======================================
+@pytest.mark.req("REQ-SEC-001")
+def test_p5_nul_en_fichero_de_codigo_no_anula_el_analisis() -> None:
+    contenido = b"/* \x00 */\nMODE = '" + T01.encode() + b"'\n"
+    assert "offensive-term" in reglas("edge/x.c", contenido)
+
+
+@pytest.mark.req("REQ-SEC-001")
+@pytest.mark.parametrize("ruta", ["tools/script", "Dockerfile", "nb.ipynb", "flujo.grc", "a.cfg"])
+def test_p5_mas_tipos_de_fichero_se_analizan(ruta: str) -> None:
+    contenido = ("#!/bin/sh\n" if ruta == "tools/script" else "") + f"modo={T01}\n"
+    assert "offensive-term" in reglas(ruta, contenido)
+
+
+@pytest.mark.req("REQ-SEC-001")
+def test_p5_homoglifo_cirilico() -> None:
+    assert "offensive-term" in reglas("x.py", "MODE = 'jа" + "mming'\n")
+
+
+@pytest.mark.req("REQ-SEC-001", "REQ-LEG-007")
+@pytest.mark.parametrize(
+    "linea",
+    [
+        "  string uas_operator_id = 1 [(atalaya.v1.sensitivity) = PUBLIC];",
+        "  string operatorId = 1;",
+        "  double piloto_lat = 2;",
+        "  double pilot_lat = 7 [(atalaya.v1.sensitivity) = PUBLIC]; // pasar a FCSE_ONLY",
+    ],
+)
+def test_p5_pilot_public_variantes(linea: str) -> None:
+    assert "pilot-public" in reglas("x.proto", linea + "\n")
+
+
+@pytest.mark.req("REQ-SEC-001", "REQ-LEG-007")
+@pytest.mark.parametrize(
+    ("ruta", "linea"),
+    [
+        ("x.proto", "  string uas_operator_id = 1 [(atalaya.v1.sensitivity) = FCSE_ONLY];"),
+        ("x.json", '{"pilot_lat": {"type": "number", "sensitivity": "FCSE_ONLY"}}'),
+        ("x.yaml", "pilot_lat: {type: number, sensitivity: FCSE_ONLY}"),
+    ],
+)
+def test_p5_pilot_fcse_only_real(ruta: str, linea: str) -> None:
+    assert reglas(ruta, linea + "\n") == set()
+
+
+@pytest.mark.req("REQ-SEC-001", "REQ-SEC-012")
+@pytest.mark.parametrize(
+    ("ruta", "linea"),
+    [
+        ("cfg.json", '{"password": "' + "S3cr3tPassw0rd!" + '"}'),
+        ("compose.yaml", "      POSTGRES_PASSWORD: " + "hunter2hunter2"),
+    ],
+)
+def test_p5_secretos_json_y_entorno(ruta: str, linea: str) -> None:
+    assert "secret" in reglas(ruta, linea + "\n")
+
+
+@pytest.mark.req("REQ-SEC-001")
+@pytest.mark.parametrize(
+    "linea",
+    [
+        "      MQTT_PASSWORD: ${MQTT_PASSWORD:?falta}",
+        "REDIS_PASSWORD=",
+        "password = os.environ['X']",
+    ],
+)
+def test_p5_referencias_a_secretos_no_son_secretos(linea: str) -> None:
+    assert reglas("c.yaml", linea + "\n") == set()
+
+
+@pytest.mark.req("REQ-SEC-001")
+def test_p5_envrc_es_fichero_de_secretos() -> None:
+    assert "secret-file" in reglas(".envrc", "export X=1\n")
+
+
+@pytest.mark.req("REQ-SEC-001", "REQ-LEG-005")
+@pytest.mark.parametrize(
+    ("ruta", "contenido"),
+    [
+        ("d.dat", b"\xff\xfb\x90\x64" + b"\x00" * 12),
+        ("a.pcm", b"\x01"),
+        ("a.webm", b"\x1a"),
+        ("a.amr", b"#"),
+    ],
+)
+def test_p5_audio_adicional(ruta: str, contenido: bytes) -> None:
+    assert "audio-file" in reglas(ruta, contenido)
+
+
+@pytest.mark.req("REQ-SEC-003")
+@pytest.mark.parametrize(
+    "comando",
+    [
+        "git commit --no-veri -m x",
+        "git commit-tree HEAD^{tree} -m x",
+        "chmod -x .githooks/pre-commit",
+        "rm -rf .githooks",
+        "git push origin +main",
+    ],
+)
+def test_p5_evasion_de_hooks_y_push(comando: str) -> None:
+    assert g.check_command(comando) != []
+
+
+@pytest.mark.req("REQ-SEC-002")
+@pytest.mark.parametrize("comando", ["cat .e*", "cat secret?/ca.key", "cat '.env'", 'cat ".env"'])
+def test_p5_acceso_a_secretos_con_comodines_o_comillas(comando: str) -> None:
+    assert {v.rule for v in g.check_command(comando)} == {"secret-file"}
+
+
+@pytest.mark.req("REQ-SEC-003")
+@pytest.mark.parametrize(
+    "comando", ["git push origin main", "ls *.py", "git commit -m 'no-verify'", "git commit -am x"]
+)
+def test_p5_comandos_legitimos(comando: str) -> None:
+    assert g.check_command(comando) == []
+
+
+@pytest.mark.req("REQ-SEC-002")
+def test_p5_settings_no_ascii_se_analiza() -> None:
+    import json
+
+    txt = json.dumps({"hooks": {"Stop": [{"hooks": [{"command": "tomó el con" + "trol"}]}]}})
+    assert "offensive-term" in reglas(".claude/settings.json", txt)
+
+
+@pytest.mark.req("REQ-SEC-002", "REQ-LEG-007")
+def test_p5_settings_pilot_y_fcse_en_otra_clave() -> None:
+    import json
+
+    txt = json.dumps({"a": {"pilot_lat": "PUBLIC"}, "b": "FCSE_ONLY"}, indent=2)
+    assert "pilot-public" in reglas(".claude/settings.json", txt)
+
+
+@pytest.mark.req("REQ-SEC-001")
+def test_p5_identificador_de_lista_blanca_que_empieza_por_el_termino() -> None:
+    ident = T01 + "_detector"
+    assert g.check_file("a.py", f"{ident} = 1\n", frozenset({ident})) == []
+
+
+@pytest.mark.req("REQ-SEC-003")
+def test_p5_rango_sin_dos_puntos_es_error_de_uso() -> None:
+    with pytest.raises(SystemExit) as exc:
+        g.main(["--range", "HEAD"])
+    assert exc.value.code == g.EXIT_USAGE
+
+
+# --- mutantes supervivientes tras las correcciones P5 ---------------------------------
+@pytest.mark.req("REQ-SEC-001", "REQ-SEC-012")
+def test_p5_texto_no_codigo_se_analiza_por_secretos() -> None:
+    assert "secret" in reglas("notas.txt", "aws_key = 'AKIA" + "ABCDEFGHIJKLMNOP'\n")
+
+
+@pytest.mark.req("REQ-SEC-001")
+def test_p5_binario_no_codigo_no_se_analiza_como_texto() -> None:
+    assert reglas("modelo.bin", b"\x00\x01" + T01.encode()) == set()
+
+
+@pytest.mark.req("REQ-SEC-001")
+def test_p5_dockerfile_con_sufijo() -> None:
+    assert "offensive-term" in reglas("infra/Dockerfile.prod", f"RUN echo {T01}\n")
+
+
+@pytest.mark.req("REQ-SEC-001")
+def test_p5_sin_extension_ni_shebang_no_es_codigo() -> None:
+    assert reglas("NOTAS", f"texto {T01}\n") == set()
+
+
+@pytest.mark.req("REQ-SEC-001", "REQ-LEG-007")
+def test_p5_comentario_que_imita_la_sensibilidad_no_cuenta() -> None:
+    linea = (
+        "  double pilot_lat = 7 [(atalaya.v1.sensitivity) = PUBLIC]; // sensitivity = FCSE_ONLY\n"
+    )
+    assert "pilot-public" in reglas("x.proto", linea)
+
+
+@pytest.mark.req("REQ-SEC-002")
+def test_p5_comodin_en_ruta_anidada_hacia_secrets() -> None:
+    assert {v.rule for v in g.check_command("cat infra/secret?/ca.key")} == {"secret-file"}
+
+
+@pytest.mark.req("REQ-SEC-001", "REQ-LEG-005")
+def test_p5_trama_mpeg_minima() -> None:
+    assert "audio-file" in reglas("x.dat", b"\xff\xfb")

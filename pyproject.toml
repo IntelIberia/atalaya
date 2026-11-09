@@ -28,11 +28,12 @@ package = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra --strict-markers"
+addopts = "-ra --strict-markers -m 'not integracion'"
 junit_family = "xunit1"
 markers = [
     "req(id): requisitos que verifica el test (trazabilidad)",
     "subproceso: lanza un script en otro proceso (se excluye de mutmut)",
+    "integracion: necesita el stack de compose en marcha (make up && make smoke)",
 ]
 
 [tool.ruff]

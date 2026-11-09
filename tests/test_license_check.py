@@ -56,3 +56,16 @@ def test_licencia_de_paquete_instalado() -> None:
 @pytest.mark.req("REQ-LEG-016")
 def test_paquete_no_instalado() -> None:
     assert lc.license_of("paquete-que-no-existe-xyz") == lc.NOT_INSTALLED
+
+
+@pytest.mark.req("REQ-LEG-016")
+@pytest.mark.parametrize(
+    "texto", ["GPL-3.0-only AND LGPL-2.1-only", "LGPL-2.1-or-later OR GPL-2.0-only", "MIT | GPLv3"]
+)
+def test_p5_licencias_combinadas_con_gpl_bloquean(texto: str) -> None:
+    assert lc.is_strong_copyleft(texto)
+
+
+@pytest.mark.req("REQ-LEG-016")
+def test_p5_dependencia_de_ejecucion_no_instalada_bloquea() -> None:
+    assert lc.evaluate(["x"], lambda _n: lc.NOT_INSTALLED) == [("x", lc.NOT_INSTALLED)]
