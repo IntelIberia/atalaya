@@ -67,3 +67,7 @@ d6495a36d54a1c73be78f6d8e60d8a159ed6b46e8d3a94b82abab9c49f8f0fd4  docs/requireme
 8631500cb5377023fd6f6c0d8223cdbfedd0a874bc3ce0376bdc2f20777bfe5b  docs/requirements/REQUIREMENTS.md  # | REQ-LEG-004 | MUST | Remote ID solo en su forma estándar (EN 4709-002 en la UE; ASTM F3411 en EE. UU., ADR 0
 69a8b3cf5737ad69b79cfbb0495224c89aa18e0761ff72357180e21ef286eb6b  docs/adr/0002-restricciones-legales.md  # tenencia, puesta en servicio o uso de equipos con funcionalidades para generar interferencias
 08226fe8d45316167f01936227ae90ae96e398785bcb5c6ff41fc93aae74b827  docs/adr/0008-correcciones-verificadas.md  # OpenDroneID también decodifica. Sin cambio de alcance.
+
+# 2026-11-09: decisión conservadora de Codex por delegación expresa del usuario; ver registro de decisiones.
+512473c148bdf6703d366d1ee93921a5d506121df28044a85d2713be83880ca5  docs/requirements/REQUIREMENTS.md  # | REQ-LEG-001 | MUST | Atalaya solo detecta, clasifica, localiza, sigue, predice y alerta. Nunca contiene códi
+fce6180f4daa5e1befa9edc003dcd528c8acc69d7fcfe270887a77eeb6767110  docs/RIESGOS.md  # | R-33 | Legal / técnico | El guardarraíl de TX no cubre todas las APIs y herramientas de transmisión existent
