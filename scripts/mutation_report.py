@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +38,7 @@ def report(root: Path, rel: str) -> dict[str, Any]:
         "sha256": hashlib.sha256((root / rel).read_bytes()).hexdigest(),
         "tests_sha256": tests_digest(root),
         "total": total,
+        "pending": len(codes) - total,
         "killed": killed,
         "survived": len(survivors),
         "other": total - killed - len(survivors),
@@ -51,11 +53,21 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("files", nargs="+")
     args = ap.parse_args(argv)
     data = {rel: report(ROOT, rel) for rel in args.files}
+    with (ROOT / "pyproject.toml").open("rb") as config:
+        threshold = float(tomllib.load(config)["tool"]["atalaya"]["mutation_threshold"])
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    failures = 0
     for rel, r in data.items():
         print(f"mutación {rel}: {r['killed']}/{r['total']} = {r['score']:.1%}")
-    return 0
+        if not r["total"] or r["pending"] or r["other"] or r["score"] < threshold:
+            failures += 1
+            print(
+                f"mutación {rel}: evidencia no válida; pendientes={r['pending']}, "
+                f"otros={r['other']}, umbral={threshold:.1%}",
+                file=sys.stderr,
+            )
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":
