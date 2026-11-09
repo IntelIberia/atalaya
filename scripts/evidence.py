@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 import shlex
 import subprocess
 import sys
@@ -34,7 +35,7 @@ def _header(repo: Path) -> str:
 
 
 def _files(directory: Path) -> list[Path]:
-    return sorted(p for p in directory.rglob("*") if p.is_file() and p.name != MANIFEST)
+    return sorted(p for p in directory.rglob("*") if p.is_file() and p != directory / MANIFEST)
 
 
 def _sha256(path: Path) -> str:
@@ -58,11 +59,20 @@ def verify_manifest(directory: Path) -> list[str]:
     if not path.exists():
         return [f"no existe {MANIFEST}"]
     listed: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line and not line.startswith("#"):
-            digest, name = line.split("  ", 1)
-            listed[name] = digest
     problems = []
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if line and not line.startswith("#"):
+            match = re.fullmatch(r"([0-9a-f]{64})  (.+)", line)
+            if match is None:
+                problems.append(f"línea {number}: formato de manifiesto inválido")
+                continue
+            digest, name = match.groups()
+            if Path(name).is_absolute() or ".." in Path(name).parts:
+                problems.append(f"línea {number}: ruta fuera del paquete")
+                continue
+            if name in listed:
+                problems.append(f"duplicado: {name}")
+            listed[name] = digest
     present = {p.relative_to(directory).as_posix(): p for p in _files(directory)}
     for name, digest in listed.items():
         if name not in present:
