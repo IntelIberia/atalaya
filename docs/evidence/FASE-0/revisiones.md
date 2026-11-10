@@ -17,3 +17,9 @@ Revisores sin contexto de implementación, solo lectura, siguiendo phase-close y
 | Legal | Dos entradas legales delegadas | Conservan política restrictiva. Registro explícito sin fingir aprobación P6 |
 
 La revisión final del conjunto y el análisis individual de los 58 supervivientes permanecen pendientes. Los informes de los revisores corresponden a inspecciones y reproducciones puntuales. Las ejecuciones de make check, smoke y mutación las realizó el agente principal y constan en el paquete.
+
+## Continuación del 10 de noviembre
+
+El cierre exige ahora identidad de la prueba de integración, resultado verde y SHA-256 vigente del smoke, la prueba, conftest, pyproject y configuración Compose. Las pruebas negativas cubren informe vacío, fallido, omitido y obsoleto. El auditor independiente confirmó la corrección con 18 pruebas puntuales. La CI limpia mantiene el recorrido ligero. Un informe obsoleto presente localmente exige ejecutar nuevamente make smoke.
+
+Se ampliaron las pruebas de mutación para límites binarios, diagnóstico JSON, campos vecinos, comentarios YAML y escapes de shell. La clasificación individual actual se registra en revision-supervivientes.md. La aprobación P6 sigue reservada al propietario.

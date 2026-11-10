@@ -837,3 +837,48 @@ def test_relevo_json_descriptor(sensitivity: str) -> None:
     assert ("pilot-public" in reglas("schema.json", json.dumps(descriptor))) == (
         sensitivity != "FCSE_ONLY"
     )
+
+
+@pytest.mark.req("REQ-SEC-012")
+def test_relevo_limite_binario_en_texto() -> None:
+    secret = b"aws_key = 'AKIA" + b"ABCDEFGHIJKLMNOP'\n"
+    assert "secret" not in reglas("notas.txt", b"\0" + secret)
+    assert "secret" in reglas("notas.txt", secret.ljust(8192, b" ") + b"\0")
+
+
+@pytest.mark.req("REQ-LEG-007")
+@pytest.mark.parametrize("descriptor", [False, True])
+def test_relevo_json_multilinea_y_diagnostico(descriptor: bool) -> None:
+    import json
+
+    field: object = (
+        {"name": "pilot_lat", "sensitivity": "PUBLIC"} if descriptor else {"pilot_lat": {}}
+    )
+    found = g.check_file("schema.json", json.dumps(field, indent=2))
+    assert found == [
+        g.Violation("schema.json", "pilot-public", "«pilot_lat» debe ser FCSE_ONLY (REQ-LEG-007)")
+    ]
+    protected = {"pilot_lat": {"type": "number", "sensitivity": "FCSE_ONLY"}}
+    assert g.check_file("schema.json", json.dumps(protected, indent=2)) == []
+
+
+@pytest.mark.req("REQ-LEG-007")
+@pytest.mark.parametrize(
+    ("path", "text"),
+    [
+        ("x.proto", "double pilot_lat = 1; double private_x = 2 [sensitivity = FCSE_ONLY];"),
+        ("x.yaml", "pilot_lat: {type: number}, private_x: {sensitivity: FCSE_ONLY}"),
+    ],
+)
+def test_relevo_campos_vecinos_en_una_linea(path: str, text: str) -> None:
+    assert "pilot-public" in reglas(path, text)
+
+
+@pytest.mark.req("REQ-LEG-007")
+def test_relevo_comentario_yaml_no_autoriza_campo() -> None:
+    assert "pilot-public" in reglas("x.yaml", "pilot_lat: number # sensitivity: FCSE_ONLY")
+
+
+@pytest.mark.req("REQ-SEC-002")
+def test_relevo_secreto_con_escape_shell() -> None:
+    assert {v.rule for v in g.check_command(r"cat \.env")} == {"secret-file"}

@@ -100,7 +100,7 @@ def closing_commands(fase: str) -> dict[str, list[str]]:
         "make-regress.txt": ["make", "regress"],
         "trazabilidad.txt": [
             *("uv", "run", "--frozen", "python", "-m", "scripts.traceability"),
-            *("--fase", fase, "--out", trace_out),
+            *("--fase", fase, "--out", trace_out, "--require-integration"),
             *("--junit", "reports/junit.xml", "--junit", "reports/junit-integracion.xml"),
         ],
         "clon-limpio.txt": ["scripts/verify_clean_clone.sh"],

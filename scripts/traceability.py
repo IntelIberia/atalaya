@@ -27,6 +27,8 @@ from pathlib import Path
 
 from defusedxml import ElementTree as ET
 
+from scripts import integration_evidence
+
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_REQS = ROOT / "docs/requirements/REQUIREMENTS.md"
 DEFAULT_JUNIT = ROOT / "reports/junit.xml"
@@ -168,6 +170,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--closed", type=Path, default=DEFAULT_CLOSED)
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--fase", type=int, action="append", default=[])
+    ap.add_argument("--require-integration", action="store_true")
     args = ap.parse_args(argv)
 
     junits = args.junit or [DEFAULT_JUNIT] + (
@@ -177,6 +180,14 @@ def main(argv: list[str] | None = None) -> int:
     if missing:
         print(f"traceability: no existe {missing[0]}; ejecuta antes los tests", file=sys.stderr)
         return 1
+    integration = [p for p in junits if p.name == INTEGRATION_JUNIT.name]
+    if args.require_integration and not integration:
+        print("traceability: falta evidencia de integración", file=sys.stderr)
+        return 1
+    for path in integration:
+        if not integration_evidence.verify(path):
+            print("traceability: integración ausente, fallida u obsoleta", file=sys.stderr)
+            return 1
     res = evaluate(args.requirements, junits, args.closed, args.fase)
     print(f"traceability: informes JUnit: {[j.name for j in junits]}")
     out = args.out if args.out is not None else DEFAULT_OUT

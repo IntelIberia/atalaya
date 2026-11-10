@@ -1,24 +1,9 @@
-# Mutación de guardrails — relevo 2026-11-10
+# Mutación verificada de la continuación del 10 de noviembre
 
-Ejecución real de `make mutation FASE=0` sobre el código y tests actuales.
-El JSON generado por scripts/mutation_report.py contiene los hashes del fuente y los tests.
-Resultado actual 476/535 = 88,97 %, frente al umbral aprobado del 80 %.
-58 supervivientes, 1 timeout, 0 pendientes y 0 errores no clasificados.
-El timeout es _json_pilot_fields__mutmut_4, que sustituye pending.pop() por None y
-provoca un bucle infinito. Se conserva en el denominador y queda fuera del numerador.
-La clasificación SIGXCPU se comprobó en el código instalado de mutmut/threading/timeout.py.
-
-La ejecución inicial tras añadir el parser JSON dio 460/517 con un timeout.
-Se repitió al corregir la regresión de descriptores JSON encontrada por privacidad.
-La orden inicial rechazó el timeout como error genérico. El informe ahora lo distingue
-explícitamente, manteniendo la puntuación conservadora y el mismo umbral.
-
-La afirmación anterior de que todos los supervivientes eran equivalentes queda retirada.
-El auditor demostró que _decode_5 omitía secretos en texto recibido como bytes.
-El test nuevo lo elimina en la ejecución actual.
-
-El diff de los 58 supervivientes está en relevo-2026-11-10/supervivientes.diff.txt.
-Los cambios de códec UTF-8 y LATIN-1, split sin límite sobre su primer elemento y textos
-cosméticos son candidatos a equivalencia. Los cambios de alcance de campo, detección de
-binario y datos de diagnóstico requieren pruebas adicionales y revisión individual.
-No se declara P5 resuelta hasta documentar esa revisión y validar los cambios finales.
+493/535 = 92,15 %. Umbral conservado 80 %.
+41 supervivientes y 1 timeout, cero pendientes y otros errores.
+Fuente y tests ligados mediante SHA-256 en mutacion.json.
+Clasificación individual en revision-supervivientes.md.
+Se eliminaron 17 de los 58 supervivientes del primer relevo mediante pruebas adicionales.
+El timeout se mantiene en el denominador y fuera del numerador.
+La revisión histórica de equivalencia general se retiró.
