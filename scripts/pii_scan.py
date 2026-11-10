@@ -17,7 +17,7 @@ from pathlib import Path
 DNI_LETTERS = "TRWAGMYFPDXBNJZSQVHLCKE"
 EMAIL = re.compile(r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b")
 EMAIL_OK = re.compile(
-    r"(?i)(noreply|no-reply)|@example\.(invalid|com|org)$|@users\.noreply\.github\.com$"
+    r"(?i)^(?:noreply|no-reply)@|@example\.(invalid|com|org)$|@users\.noreply\.github\.com$"
 )
 PHONE = re.compile(r"(?<![\w.])(?:\+34[ -]?)?[6789]\d{2}[ -]?\d{3}[ -]?\d{3}(?![\w.])")
 DNI = re.compile(r"\b(\d{8})-?([A-Z])\b")
@@ -47,7 +47,8 @@ def scan_text(text: str, path: str = "<texto>") -> list[Hit]:
         hits += [
             Hit(path, n, "telefono")
             for m in PHONE.finditer(line)
-            if not re.sub(r"\D", "", m.group(0)).endswith("0000")  # frecuencias en Hz
+            if not re.match(r"\s*(?:[kMG]?Hz\b|\([^)]*\b[kMG]?Hz\))", line[m.end() :], re.I)
+            and not re.search(r"\bhackrf(?:_transfer)?\b[^\n]*\s-f\s*$", line[: m.start()])
         ]
         hits += [Hit(path, n, "dni") for m in DNI.finditer(line) if _dni_ok(*m.groups())]
         for m in NIE.finditer(line):

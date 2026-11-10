@@ -60,3 +60,13 @@ def test_scan_tree_detecta(tmp_path: Path) -> None:
     (tmp_path / "log.json").write_text('{"msg": "alta de pepe@dominio.com"}\n')
     hits = ps.scan_tree(tmp_path)
     assert [(h.kind, h.line) for h in hits] == [("email", 1)]
+
+
+@pytest.mark.req("REQ-PRIV-003")
+def test_relevo_telefono_terminado_en_ceros() -> None:
+    assert {h.kind for h in ps.scan_text('{"telefono":"+34 612 340 000"}')} == {"telefono"}
+
+
+@pytest.mark.req("REQ-PRIV-003")
+def test_relevo_noreply_dentro_de_nombre_personal() -> None:
+    assert {h.kind for h in ps.scan_text('{"email":"ana.noreply@correo.es"}')} == {"email"}
