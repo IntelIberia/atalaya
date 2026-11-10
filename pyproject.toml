@@ -38,7 +38,7 @@ package = false
 testpaths = ["tests"]
 addopts = "-ra --strict-markers -m 'not integracion'"
 junit_family = "xunit1"
-pythonpath = ["proto/gen/python"]
+pythonpath = ["proto/gen/python", "proto/python"]
 markers = [
     "req(id): requisitos que verifica el test (trazabilidad)",
     "subproceso: lanza un script en otro proceso (se excluye de mutmut)",
@@ -61,7 +61,7 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 [tool.mypy]
 strict = true
 python_version = "3.12"
-mypy_path = "proto/gen/python"
+mypy_path = ["proto/gen/python", "proto/python"]
 exclude = ["third_party/", "mutants/"]
 
 [[tool.mypy.overrides]]
@@ -77,6 +77,6 @@ pytest_add_cli_args = ["-m", "not subproceso"]
 [tool.atalaya]
 # Umbrales de calidad (ADR 0006). Cambiarlos exige un ADR nuevo.
 coverage_branch_min = 90
-coverage_critical = ["scripts/guardrails.py", "scripts/traceability.py", "scripts/evidence.py", "scripts/mutation_report.py"]
+coverage_critical = ["scripts/guardrails.py", "scripts/traceability.py", "scripts/evidence.py", "scripts/mutation_report.py", "proto/python/atalaya_contracts/validate.py"]
 mutation_threshold = 0.80
 mutation_critical = ["scripts/guardrails.py"]

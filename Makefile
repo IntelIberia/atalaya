@@ -37,12 +37,12 @@ lint: ## Lint y formato (sin modificar ficheros)
 	@echo "lint: OK"
 
 typecheck: ## Tipos estrictos
-	@$(UV) mypy --strict scripts tests
+	@$(UV) mypy --strict scripts tests proto/python
 
 test: ## Tests (+ JUnit para trazabilidad y cobertura de ramas)
 	@mkdir -p reports
 	@$(UV) pytest -q -p no:cacheprovider --junitxml=reports/junit.xml \
-		--cov=scripts --cov-branch --cov-report=
+		--cov=scripts --cov=atalaya_contracts --cov-branch --cov-report=
 
 coverage: test ## Cobertura de ramas del código crítico ≥ umbral (ADR 0006)
 	@$(UV) coverage json --include="$(CRITICAL_COV)" -o reports/coverage-critical.json -q

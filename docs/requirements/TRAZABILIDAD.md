@@ -5,7 +5,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | Requisito | Prio | Fase | Tests | Resultado | Estado |
 |---|---|---|---|---|---|
 | REQ-FUN-001 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-FUN-002 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-FUN-002 | MUST | 1 | 2 | verde | en curso |
 | REQ-FUN-003 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-004 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-005 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
@@ -65,7 +65,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-FUN-059 | MUST | 3 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-060 | COULD | 7 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-061 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-FUN-062 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-FUN-062 | MUST | 1 | 57 | verde | en curso |
 | REQ-NFR-001 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-002 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-003 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
@@ -93,8 +93,8 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-LEG-004 | MUST | 6 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-005 | MUST | 5 | 15 | verde | en curso |
 | REQ-LEG-006 | MUST | 4 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-LEG-007 | MUST | 1 | 37 | verde | en curso |
-| REQ-LEG-008 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-LEG-007 | MUST | 1 | 39 | verde | en curso |
+| REQ-LEG-008 | MUST | 9 | 1 | verde | en curso |
 | REQ-LEG-009 | MUST | 4 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-010 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-011 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
@@ -123,7 +123,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-SEC-017 | SHOULD | 3 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-018 | MUST | 3 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-019 | MUST | 12 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-PRIV-001 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-PRIV-001 | MUST | 1 | 1 | verde | en curso |
 | REQ-PRIV-002 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-PRIV-003 | MUST | 0 | 19 | verde | OK |
 | REQ-PRIV-004 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
