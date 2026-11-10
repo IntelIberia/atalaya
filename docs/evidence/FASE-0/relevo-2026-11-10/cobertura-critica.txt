@@ -1,0 +1,8 @@
+Name                         Stmts   Miss Branch BrPart  Cover   Missing
+------------------------------------------------------------------------
+scripts/evidence.py             90      1     28      1    98%   141
+scripts/guardrails.py          217      1     98      1    99%   483
+scripts/mutation_report.py      95      1     24      1    98%   164
+scripts/traceability.py        138      2     44      2    98%   104, 208
+------------------------------------------------------------------------
+TOTAL                          540      5    194      5    99%

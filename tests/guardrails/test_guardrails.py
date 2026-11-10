@@ -887,3 +887,99 @@ def test_relevo_secreto_con_escape_shell() -> None:
 @pytest.mark.req("REQ-SEC-002")
 def test_relevo_comodin_con_tres_operadores() -> None:
     assert {v.rule for v in g.check_command("cat .e*?[v]")} == {"secret-file"}
+
+
+@pytest.mark.req("REQ-LEG-007")
+@pytest.mark.parametrize(
+    ("path", "text"),
+    [
+        ("x.proto", "string pilot_id = 1 /* sensitivity = FCSE_ONLY */;"),
+        ("x.proto", 'string pilot_id = 1 [description = "sensitivity = FCSE_ONLY"];'),
+        ("x.yaml", '{pilot_lat: PUBLIC, note: "sensitivity: FCSE_ONLY"}'),
+    ],
+)
+def test_review_annotation_must_be_real(path: str, text: str) -> None:
+    assert "pilot-public" in reglas(path, text)
+
+
+@pytest.mark.req("REQ-SEC-012")
+def test_review_deny_does_not_hide_secrets() -> None:
+    import json
+
+    content = json.dumps({"permissions": {"deny": ["AKIA" + "A" * 16]}})
+    assert "secret" in reglas(".claude/settings.json", content)
+
+
+@pytest.mark.req("REQ-SEC-002")
+def test_review_settings_preserves_key_boundaries() -> None:
+    import json
+
+    content = json.dumps({"a": "hackrf" + "_transfer", "b": " -t"})
+    assert g.check_file(".claude/settings.json", content) == []
+
+
+@pytest.mark.req("REQ-LEG-007")
+@pytest.mark.parametrize("note", ["'sensitivity: FCSE_ONLY'", "{sensitivity: FCSE_ONLY}"])
+def test_review_yaml_neighbor_does_not_classify_scalar(note: str) -> None:
+    assert "pilot-public" in reglas("x.yaml", "{pilot_lat: PUBLIC, note: " + note + "}")
+
+
+@pytest.mark.req("REQ-LEG-007")
+@pytest.mark.parametrize("text", ["/* comment */", "/* comment\nend */"])
+def test_review_block_comment_at_eof(text: str) -> None:
+    assert g.check_file("x.proto", text) == []
+
+
+@pytest.mark.req("REQ-LEG-007")
+@pytest.mark.parametrize("extension", ["yaml", "yml"])
+def test_review_yaml_annotations_and_quoted_notes(extension: str) -> None:
+    assert "pilot-public" in reglas(
+        "x." + extension, 'pilot_lat: {type: number, note: "sensitivity: FCSE_ONLY"}'
+    )
+    assert "pilot-public" in reglas("x." + extension, "pilot_lat: PUBLIC, sensitivity: FCSE_ONLY")
+    assert (
+        g.check_file("x." + extension, 'pilot_lat: {type: number, sensitivity: "FCSE_ONLY"}') == []
+    )
+
+
+@pytest.mark.req("REQ-LEG-007")
+def test_review_comment_preserves_field_line() -> None:
+    violations = g.check_file("x.proto", "/* comment\nend */\nstring pilot_id = 1;")
+    assert violations == [
+        g.Violation("x.proto", "pilot-public", "«pilot_id» debe ser FCSE_ONLY (REQ-LEG-007)", 3)
+    ]
+
+
+@pytest.mark.req("REQ-LEG-007")
+@pytest.mark.parametrize("extension", ["yaml", "yml"])
+def test_review_private_yaml_with_unrelated_neighbor(extension: str) -> None:
+    assert (
+        g.check_file("x." + extension, "pilot_lat: {sensitivity: FCSE_ONLY}, other: {type: number}")
+        == []
+    )
+
+
+@pytest.mark.req("REQ-SEC-001")
+def test_review_implicit_head_with_conflicting_branch(
+    repo_tmp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(repo_tmp)
+    (repo_tmp / "a.py").write_text("value = 1\n")
+    _git(repo_tmp, "add", ".")
+    _git(repo_tmp, "commit", "-qm", "base")
+    _git(repo_tmp, "branch", "head")
+    (repo_tmp / "a.py").write_text("value = 2\n")
+    _git(repo_tmp, "commit", "-am", "update")
+    assert g.range_files("HEAD~1..") == [("a.py", b"value = 2\n")]
+
+
+@pytest.mark.req("REQ-LEG-007")
+def test_review_comment_between_proto_annotation_tokens() -> None:
+    assert (
+        g.check_file("x.proto", "string pilot_id = 1 [sensitivity/* comment */=FCSE_ONLY];") == []
+    )
+
+
+@pytest.mark.req("REQ-LEG-007")
+def test_review_malformed_json_remains_conservative() -> None:
+    assert "pilot-public" in reglas("x.json", "invalid // pilot_id PUBLIC")

@@ -17,46 +17,70 @@ scripts.guardrails.x__git__mutmut_8
 scripts.guardrails.x__glob_hits_secret__mutmut_3
 -        if any((c in token for c in '*?[')):
 +        if any((c in token for c in 'XX*?[XX')):
-scripts.guardrails.x__settings_without_deny__mutmut_12
--    return json.dumps(data, indent=1, ensure_ascii=False)
-+    return json.dumps(data, indent=None, ensure_ascii=False)
 scripts.guardrails.x__settings_without_deny__mutmut_13
 -    return json.dumps(data, indent=1, ensure_ascii=False)
 +    return json.dumps(data, indent=1, ensure_ascii=None)
-scripts.guardrails.x__settings_without_deny__mutmut_15
--    return json.dumps(data, indent=1, ensure_ascii=False)
-+    return json.dumps(data, ensure_ascii=False)
 scripts.guardrails.x__settings_without_deny__mutmut_17
 -    return json.dumps(data, indent=1, ensure_ascii=False)
 +    return json.dumps(data, indent=2, ensure_ascii=False)
-scripts.guardrails.x_check_file__mutmut_129
--            code = COMMENT_RE.sub('', line) if suffix != '.json' else line
-+            code = COMMENT_RE.sub('XXXX', line) if suffix != '.json' else line
-scripts.guardrails.x_check_file__mutmut_131
--            code = COMMENT_RE.sub('', line) if suffix != '.json' else line
-+            code = COMMENT_RE.sub('', line) if suffix != 'XX.jsonXX' else line
-scripts.guardrails.x_check_file__mutmut_132
--            code = COMMENT_RE.sub('', line) if suffix != '.json' else line
-+            code = COMMENT_RE.sub('', line) if suffix != '.JSON' else line
-scripts.guardrails.x_check_file__mutmut_138
+scripts.guardrails.x_check_file__mutmut_167
+-            code = COMMENT_RE.sub('', schema_lines[n - 1]) if suffix != '.json' else line
++            code = COMMENT_RE.sub('XXXX', schema_lines[n - 1]) if suffix != '.json' else line
+scripts.guardrails.x_check_file__mutmut_184
+-                code = re.sub('"(?:\\\\.|[^"\\\\])*"', '""', code)
++                code = re.sub('"(?:\\\\.|[^"\\\\])*"', 'XX""XX', code)
+scripts.guardrails.x_check_file__mutmut_204
+-                code = re.sub('(?:"(?:\\\\.|[^"\\\\])*"|\'(?:\'\'|[^\'])*\')(?!\\s*:)', lambda m: m.group() if m.group()[1:-1] == 'FCSE_ONLY' else '""', code)
++                code = re.sub('(?:"(?:\\\\.|[^"\\\\])*"|\'(?:\'\'|[^\'])*\')(?!\\s*:)', lambda m: m.group() if m.group()[1:-1] == 'FCSE_ONLY' else 'XX""XX', code)
+scripts.guardrails.x_check_file__mutmut_210
 -                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
 +                field = code[m.start():].split(';', 1)[0].split('}')[0]
-scripts.guardrails.x_check_file__mutmut_143
+scripts.guardrails.x_check_file__mutmut_215
 -                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
 +                field = code[m.start():].split(';')[0].split('}', 1)[0]
-scripts.guardrails.x_check_file__mutmut_146
+scripts.guardrails.x_check_file__mutmut_218
 -                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
 +                field = code[m.start():].split(';', 2)[0].split('}', 1)[0]
-scripts.guardrails.x_check_file__mutmut_149
+scripts.guardrails.x_check_file__mutmut_221
 -                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
 +                field = code[m.start():].split(';', 1)[0].split('}', 2)[0]
+scripts.guardrails.x_check_file__mutmut_235
+-                    field = ''
++                    field = 'XXXX'
 scripts.guardrails.x_check_file__mutmut_26
 -    raw = content.encode('utf-8') if isinstance(content, str) else content
 +    raw = content.encode('UTF-8') if isinstance(content, str) else content
 scripts.guardrails.x_check_file__mutmut_32
 -    if not in_fixtures and (suffix in AUDIO_EXTENSIONS or _is_audio_bytes(raw[:16])):
 +    if not in_fixtures and (suffix in AUDIO_EXTENSIONS or _is_audio_bytes(raw[:17])):
-scripts.guardrails.x_check_file__mutmut_79
+scripts.guardrails.x_check_file__mutmut_70
+-        for n, line in enumerate(text.splitlines(), 1):
++        for n, line in enumerate(text.splitlines()):
+scripts.guardrails.x_check_file__mutmut_71
+-        for n, line in enumerate(text.splitlines(), 1):
++        for n, line in enumerate(text.splitlines(), 2):
+scripts.guardrails.x_check_file__mutmut_75
+-                violations.append(Violation(rel, 'secret', 'posible secreto', n))
++                violations.append(Violation(None, 'secret', 'posible secreto', n))
+scripts.guardrails.x_check_file__mutmut_77
+-                violations.append(Violation(rel, 'secret', 'posible secreto', n))
++                violations.append(Violation(rel, 'secret', None, n))
+scripts.guardrails.x_check_file__mutmut_78
+-                violations.append(Violation(rel, 'secret', 'posible secreto', n))
++                violations.append(Violation(rel, 'secret', 'posible secreto', None))
+scripts.guardrails.x_check_file__mutmut_81
+-                violations.append(Violation(rel, 'secret', 'posible secreto', n))
++                violations.append(Violation(rel, 'secret', n))
+scripts.guardrails.x_check_file__mutmut_82
+-                violations.append(Violation(rel, 'secret', 'posible secreto', n))
++                violations.append(Violation(rel, 'secret', 'posible secreto'))
+scripts.guardrails.x_check_file__mutmut_85
+-                violations.append(Violation(rel, 'secret', 'posible secreto', n))
++                violations.append(Violation(rel, 'secret', 'XXposible secretoXX', n))
+scripts.guardrails.x_check_file__mutmut_86
+-                violations.append(Violation(rel, 'secret', 'posible secreto', n))
++                violations.append(Violation(rel, 'secret', 'POSIBLE SECRETO', n))
+scripts.guardrails.x_check_file__mutmut_99
 -            is_schema = False
 +            is_schema = None
 scripts.guardrails.x_load_allowlist__mutmut_10

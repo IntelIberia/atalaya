@@ -1,52 +1,56 @@
-# Revisión individual de supervivientes
+# Supervivientes tras la segunda revisión
 
-Cada fila corresponde a un mutante inspeccionado mediante el diff AST guardado en el paquete. Las equivalencias se limitan a las plataformas y formatos soportados. El umbral conserva el denominador completo.
+Ejecución 573/622, 48 supervivientes y 1 timeout. Clasificación contrastada por un segundo agente mediante AST y reproducciones en memoria. Las últimas pruebas eliminaron las diferencias de comentario intercalado, reserva JSON y vecino YAML.
 
-| Mutante | Clasificación | Justificación |
+| Mutante | Clasificación | Alcance |
 |---|---|---|
-| `_changed__mutmut_23` | Justificado | Alias de códec UTF-8/LATIN-1 o cambio de docstring, sin cambio de decodificación. |
-| `_decode__mutmut_1` | Justificado | Cambia el valor predeterminado de force_text. El único consumidor de producción pasa force_text explícitamente, por lo que el valor predeterminado no participa en la ejecución. |
-| `_decode__mutmut_12` | Justificado | Alias de códec UTF-8/LATIN-1 o cambio de docstring, sin cambio de decodificación. |
-| `_decode__mutmut_9` | Justificado | Alias de códec UTF-8/LATIN-1 o cambio de docstring, sin cambio de decodificación. |
-| `_enclosing_identifier__mutmut_3` | Justificado | Cuando el término comienza con el identificador, el fragmento alternativo coincide con el identificador completo consumido por el patrón. |
-| `_git__mutmut_8` | Justificado | Equivalencia en APFS sin distinción de mayúsculas. En sistemas sensibles, el mutante rechaza por fallo de Git. El original conserva git y HEAD canónicos. |
-| `_glob_hits_secret__mutmut_3` | Justificado | El mutante amplía la evaluación de tokens. La comparación fnmatch y la detección literal de rutas mantienen el bloqueo efectivo. |
-| `_settings_without_deny__mutmut_12` | Justificado | Solo cambia la serialización o ensure_ascii=None equivalente a False. La sensibilidad JSON se comprueba por estructura. Puede variar el número de línea del diagnóstico. |
-| `_settings_without_deny__mutmut_13` | Justificado | Solo cambia la serialización o ensure_ascii=None equivalente a False. La sensibilidad JSON se comprueba por estructura. Puede variar el número de línea del diagnóstico. |
-| `_settings_without_deny__mutmut_15` | Justificado | Solo cambia la serialización o ensure_ascii=None equivalente a False. La sensibilidad JSON se comprueba por estructura. Puede variar el número de línea del diagnóstico. |
-| `_settings_without_deny__mutmut_17` | Justificado | Solo cambia la serialización o ensure_ascii=None equivalente a False. La sensibilidad JSON se comprueba por estructura. Puede variar el número de línea del diagnóstico. |
-| `check_file__mutmut_129` | Justificado | Sustitución del comentario por texto sin anotación, o condición redundante de JSON. JSON válido usa la ruta estructural. La prueba YAML elimina la inversión insegura de la condición. |
-| `check_file__mutmut_131` | Justificado | Sustitución del comentario por texto sin anotación, o condición redundante de JSON. JSON válido usa la ruta estructural. La prueba YAML elimina la inversión insegura de la condición. |
-| `check_file__mutmut_132` | Justificado | Sustitución del comentario por texto sin anotación, o condición redundante de JSON. JSON válido usa la ruta estructural. La prueba YAML elimina la inversión insegura de la condición. |
-| `check_file__mutmut_138` | Justificado | Variar el límite de split conserva el primer elemento seleccionado. |
-| `check_file__mutmut_143` | Justificado | Variar el límite de split conserva el primer elemento seleccionado. |
-| `check_file__mutmut_146` | Justificado | Variar el límite de split conserva el primer elemento seleccionado. |
-| `check_file__mutmut_149` | Justificado | Variar el límite de split conserva el primer elemento seleccionado. |
-| `check_file__mutmut_26` | Justificado | UTF-8 y UTF-8 en mayúsculas designan el mismo códec. |
-| `check_file__mutmut_32` | Justificado | Todas las firmas de audio consultadas terminan antes del byte 16. Añadir un byte al prefijo no cambia la decisión. |
-| `check_file__mutmut_79` | Justificado | None y False son falsos en la condición is_schema posterior. |
-| `load_allowlist__mutmut_10` | Justificado | Primer elemento de split idéntico, o códec UTF-8 explícito/por defecto en las plataformas soportadas. |
-| `load_allowlist__mutmut_13` | Justificado | Primer elemento de split idéntico, o códec UTF-8 explícito/por defecto en las plataformas soportadas. |
-| `load_allowlist__mutmut_3` | Justificado | Primer elemento de split idéntico, o códec UTF-8 explícito/por defecto en las plataformas soportadas. |
-| `load_allowlist__mutmut_5` | Justificado | Primer elemento de split idéntico, o códec UTF-8 explícito/por defecto en las plataformas soportadas. |
-| `main__mutmut_16` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_18` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_2` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_21` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_22` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_3` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_39` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_40` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_41` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_42` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_51` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_55` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `main__mutmut_58` | Justificado | Texto de ayuda/error sin cambiar el rechazo, o carga de la misma lista por el valor por defecto de check_file. |
-| `range_files__mutmut_12` | Justificado | Equivalencia en APFS sin distinción de mayúsculas. En sistemas sensibles, el mutante rechaza por fallo de Git. El original conserva git y HEAD canónicos. |
-| `range_files__mutmut_9` | Justificado | El rango admitido tiene dos extremos. Índices +1 y -1 seleccionan el mismo extremo final. |
+| `_changed__mutmut_23` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `_decode__mutmut_1` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `_decode__mutmut_12` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `_decode__mutmut_9` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `_enclosing_identifier__mutmut_3` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `_git__mutmut_8` | Diferencia observable | El ejecutable GIT cambia disponibilidad en sistemas sensibles a mayúsculas. |
+| `_glob_hits_secret__mutmut_3` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `_settings_without_deny__mutmut_13` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `_settings_without_deny__mutmut_17` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `check_file__mutmut_167` | Diferencia observable | El texto sustituto puede crear un identificador sensible y bloquear proto válido. |
+| `check_file__mutmut_184` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `check_file__mutmut_204` | Diferencia observable | El texto sustituto puede bloquear un escalar YAML válido. |
+| `check_file__mutmut_210` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `check_file__mutmut_215` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `check_file__mutmut_218` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `check_file__mutmut_221` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `check_file__mutmut_235` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `check_file__mutmut_26` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `check_file__mutmut_32` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `check_file__mutmut_70` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `check_file__mutmut_71` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `check_file__mutmut_75` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `check_file__mutmut_77` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `check_file__mutmut_78` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `check_file__mutmut_81` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `check_file__mutmut_82` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `check_file__mutmut_85` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `check_file__mutmut_86` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `check_file__mutmut_99` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `load_allowlist__mutmut_10` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `load_allowlist__mutmut_13` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `load_allowlist__mutmut_3` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `load_allowlist__mutmut_5` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `main__mutmut_16` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `main__mutmut_18` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `main__mutmut_2` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `main__mutmut_21` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `main__mutmut_22` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `main__mutmut_3` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `main__mutmut_39` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `main__mutmut_40` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `main__mutmut_41` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `main__mutmut_42` | Diagnóstico | Conserva el rechazo, altera ruta, línea, detalle o ayuda. |
+| `main__mutmut_51` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `main__mutmut_55` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `main__mutmut_58` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
+| `range_files__mutmut_12` | Diferencia observable | head puede resolver una rama distinta de HEAD según plataforma y estado de refs. |
+| `range_files__mutmut_9` | Equivalencia contextual | Alias de códec, primer elemento de split, serialización equivalente o argumento predeterminado sustituido por el consumidor. Limitada a formatos y entornos soportados. |
 
-El timeout _json_pilot_fields__mutmut_4 sustituye pop por None y deja la cola sin consumir. Se registra como timeout y se mantiene fuera del numerador.
-
-Las pruebas nuevas eliminaron supervivientes reales de límites binarios, comentarios YAML, escapes de shell, aislamiento de campos y diagnóstico JSON. Esta revisión retira la clasificación histórica general y conserva las diferencias de disponibilidad/diagnóstico expresamente descritas.
-
-El auditor independiente contrastó todas las filas. Su hallazgo sobre el comodín con tres operadores se resolvió añadiendo una prueba que elimina ese mutante. La justificación de force_text se corrigió conforme a los consumidores reales.
+El timeout elimina pop y deja la cola sin consumir. Se mantiene en el denominador y fuera del numerador. Las diferencias observables de disponibilidad quedan expresamente reconocidas y no se presentan como equivalencias universales.

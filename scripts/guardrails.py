@@ -318,6 +318,9 @@ def check_file(
     if text is None:
         return violations
     if rel == CLAUDE_SETTINGS:
+        for n, line in enumerate(text.splitlines(), 1):
+            if any(pattern.search(line) for pattern in SECRET_PATTERNS):
+                violations.append(Violation(rel, "secret", "posible secreto", n))
         text = _settings_without_deny(text)
     is_schema = suffix in SCHEMA_EXTENSIONS
     if suffix == ".json":
@@ -327,6 +330,8 @@ def check_file(
         except (ValueError, RecursionError):
             # JSON ilegible: se conserva la comprobación conservadora por línea.
             pass
+    schema_text = re.sub(r"/\*[\s\S]*?\*/", lambda m: re.sub(r"[^\r\n]", " ", m.group()), text)
+    schema_lines = schema_text.splitlines()
     for n, line in enumerate(text.splitlines(), 1):
         if is_code:
             for pat in SDR_TX_PATTERNS:
@@ -343,9 +348,21 @@ def check_file(
                         Violation(rel, "offensive-term", f"«{ident}» (REQ-LEG-001)", n)
                     )
         if is_schema:
-            code = COMMENT_RE.sub("", line) if suffix != ".json" else line
+            code = COMMENT_RE.sub("", schema_lines[n - 1]) if suffix != ".json" else line
+            if suffix == ".proto":
+                code = re.sub(r'"(?:\\.|[^"\\])*"', '""', code)
+            elif suffix in {".yaml", ".yml"}:
+                code = re.sub(
+                    r"""(?:"(?:\\.|[^"\\])*"|'(?:''|[^'])*')(?!\s*:)""",
+                    lambda m: m.group() if m.group()[1:-1] == "FCSE_ONLY" else '""',
+                    code,
+                )
             for m in PILOT_FIELD_RE.finditer(code):
                 field = code[m.start() :].split(";", 1)[0].split("}", 1)[0]
+                if suffix in {".yaml", ".yml"} and not re.match(
+                    r"""[\w]+['"]?\s*:\s*\{[^{}]*$""", field
+                ):
+                    field = ""
                 if not FCSE_ONLY_RE.search(field):
                     violations.append(
                         Violation(
@@ -355,10 +372,8 @@ def check_file(
                             n,
                         )
                     )
-        for pat in SECRET_PATTERNS:
-            if pat.search(line):
-                violations.append(Violation(rel, "secret", "posible secreto", n))
-                break
+        if rel != CLAUDE_SETTINGS and any(pattern.search(line) for pattern in SECRET_PATTERNS):
+            violations.append(Violation(rel, "secret", "posible secreto", n))
     return violations
 
 

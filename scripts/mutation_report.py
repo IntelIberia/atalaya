@@ -72,12 +72,77 @@ def valid_report(data: dict[str, Any], threshold: float) -> bool:
     )
 
 
+def input_state(root: Path, files: list[str]) -> dict[str, str]:
+    """Identifica los inputs antes de ejecutar mutmut, incluidos sus tests y configuración."""
+    paths = {root / rel for rel in files}
+    paths.update((root / "tests").rglob("*.py"))
+    paths.update(
+        root / name
+        for name in (
+            "pyproject.toml",
+            "uv.lock",
+            "conftest.py",
+            "scripts/guardrails_allowlist.txt",
+            "scripts/mutation_report.py",
+        )
+        if (root / name).is_file()
+    )
+    return {
+        path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+        for path in sorted(paths)
+    }
+
+
+def inputs_digest(root: Path, files: list[str]) -> str:
+    state = json.dumps(input_state(root, files), sort_keys=True).encode("utf-8")
+    return hashlib.sha256(state).hexdigest()
+
+
+def snapshot_inputs(root: Path, files: list[str], destination: Path) -> None:
+    """Solo inicia una ejecución nueva, nunca vuelve a fechar resultados existentes."""
+    if any((root / "mutants" / f"{rel}.meta").exists() for rel in files):
+        raise ValueError("elimina mutants antes de registrar los inputs de una ejecución nueva")
+    state = input_state(root, files)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+
+
+def verify_inputs(root: Path, files: list[str], snapshot: Path) -> None:
+    recorded = json.loads(snapshot.read_text(encoding="utf-8"))
+    if recorded != input_state(root, files):
+        raise ValueError("los inputs cambiaron desde el inicio de la ejecución de mutación")
+    for rel in files:
+        meta = root / "mutants" / f"{rel}.meta"
+        if meta.stat().st_mtime_ns < snapshot.stat().st_mtime_ns:
+            raise ValueError(f"{rel}: resultados anteriores al registro de inputs")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--out", type=Path, required=True)
+    mode = ap.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--out", type=Path)
+    mode.add_argument("--snapshot", type=Path)
+    ap.add_argument("--inputs", type=Path)
     ap.add_argument("files", nargs="+")
     args = ap.parse_args(argv)
+    try:
+        if args.snapshot is not None:
+            snapshot_inputs(ROOT, args.files, args.snapshot)
+            return 0
+        if args.inputs is None:
+            raise ValueError("--out exige --inputs registrado antes de ejecutar mutmut")
+        verify_inputs(ROOT, args.files, args.inputs)
+    except (OSError, ValueError) as exc:
+        print(f"mutación: procedencia no válida: {exc}", file=sys.stderr)
+        return 1
     data = {rel: report(ROOT, rel) for rel in args.files}
+    try:
+        verify_inputs(ROOT, args.files, args.inputs)
+    except (OSError, ValueError) as exc:
+        print(f"mutación: procedencia no válida: {exc}", file=sys.stderr)
+        return 1
+    for entry in data.values():
+        entry["inputs_sha256"] = inputs_digest(ROOT, args.files)
     with (ROOT / "pyproject.toml").open("rb") as config:
         threshold = float(tomllib.load(config)["tool"]["atalaya"]["mutation_threshold"])
     args.out.parent.mkdir(parents=True, exist_ok=True)

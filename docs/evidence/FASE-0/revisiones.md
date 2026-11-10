@@ -25,3 +25,7 @@ El cierre exige ahora identidad de la prueba de integración, resultado verde y 
 Se ampliaron las pruebas de mutación para límites binarios, diagnóstico JSON, campos vecinos, comentarios YAML y escapes de shell. La clasificación individual actual se registra en revision-supervivientes.md. La aprobación P6 sigue reservada al propietario.
 
 El auditor contrastó los 41 supervivientes por AST y reprodujo un hueco de comodines combinados. Se añadió su regresión y se eliminó el mutante. Los 40 restantes quedan justificados con la corrección de la explicación sobre force_text. No se encontraron otros huecos confirmados.
+
+## Segunda revisión solicitada por el usuario
+
+El agente segunda_revision_cobertura detectó escapes por comentarios/literales proto y YAML, secretos en permissions.deny, un IndexError al eliminar comentarios al EOF, cobertura combinada usada como ramas puras y metadatos de mutación reestampados sin procedencia. Se corrigieron y verificaron por regresiones. El agente comprobó las reproducciones corregidas y contrastó por AST la ejecución intermedia de 52 supervivientes. Cuatro diferencias identificadas se eliminaron posteriormente con pruebas, dejando 48. No encontró otro fallo de producción reproducible. Las diferencias restantes se clasifican por comportamiento y contexto.

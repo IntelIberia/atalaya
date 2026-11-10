@@ -44,7 +44,8 @@ test: ## Tests (+ JUnit para trazabilidad y cobertura de ramas)
 		--cov=scripts --cov-branch --cov-report=
 
 coverage: test ## Cobertura de ramas del código crítico ≥ umbral (ADR 0006)
-	@$(UV) coverage report --include="$(CRITICAL_COV)" --fail-under=$(COV_MIN) --format=total
+	@$(UV) coverage json --include="$(CRITICAL_COV)" -o reports/coverage-critical.json -q
+	@$(UV) python -m scripts.branch_coverage reports/coverage-critical.json $(COV_MIN)
 
 guard: ## Guardarraíles sobre todo el árbol versionable
 	@git ls-files -z --cached --others --exclude-standard | xargs -0 $(PY) scripts/guardrails.py --paths
@@ -67,8 +68,9 @@ evidence: ## Paquete de evidencias de la fase: make evidence FASE=N
 
 mutation: ## Mutation testing del código crítico (lento): make mutation FASE=N
 	rm -rf mutants
+	$(UV) python -m scripts.mutation_report --snapshot reports/mutation-inputs.json $(MUT_FILES)
 	$(UV) mutmut run --max-children 4 > reports/mutmut.log 2>&1 || true
-	$(UV) python -m scripts.mutation_report --out docs/evidence/FASE-$(FASE)/mutacion.json $(MUT_FILES)
+	$(UV) python -m scripts.mutation_report --inputs reports/mutation-inputs.json --out docs/evidence/FASE-$(FASE)/mutacion.json $(MUT_FILES)
 
 fmt: ## Formatea el código (modifica ficheros)
 	$(UV) ruff format .

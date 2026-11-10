@@ -158,6 +158,8 @@ def evidencia_mutacion_problemas(repo: Path, fase: str) -> list[str]:
             problemas.append(f"{rel}: evidencia obsoleta (el código cambió; ejecuta make mutation)")
         if entrada.get("tests_sha256") != mr.tests_digest(repo):
             problemas.append(f"{rel}: los tests cambiaron desde la última mutación (make mutation)")
+        if entrada.get("inputs_sha256") != mr.inputs_digest(repo, cfg["mutation_critical"]):
+            problemas.append(f"{rel}: inputs de mutación obsoletos (make mutation)")
         if entrada["score"] < float(cfg["mutation_threshold"]):
             problemas.append(f"{rel}: puntuación {entrada['score']:.3f} < umbral")
         if not mr.valid_report(entrada, float(cfg["mutation_threshold"])):
