@@ -5,7 +5,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | Requisito | Prio | Fase | Tests | Resultado | Estado |
 |---|---|---|---|---|---|
 | REQ-FUN-001 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-FUN-002 | MUST | 1 | 30 | verde | en curso |
+| REQ-FUN-002 | MUST | 1 | 35 | verde | en curso |
 | REQ-FUN-003 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-004 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-005 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |

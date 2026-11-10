@@ -10,7 +10,7 @@ COV_MIN := $(shell $(PY) -c "import tomllib;print(tomllib.load(open('pyproject.t
 MUT_FILES := $(shell $(PY) -c "import tomllib;print(' '.join(tomllib.load(open('pyproject.toml','rb'))['tool']['atalaya']['mutation_critical']))")
 
 .PHONY: help bootstrap doctor check lint typecheck test coverage guard spec trace regress \
-        evidence mutation fmt up smoke down proto
+        evidence mutation fmt up smoke down proto proto-breaking
 
 COMPOSE := docker compose --env-file .env -f infra/compose/compose.yaml
 
@@ -29,6 +29,9 @@ doctor: ## Comprueba las herramientas de desarrollo
 proto: ## Valida y genera los bindings Python de los contratos Protobuf
 	@buf lint
 	@$(UV) python -m scripts.proto_codegen
+
+proto-breaking: ## Comprueba cambios incompatibles de Protobuf contra origin/main
+	@scripts/proto_breaking.sh
 
 check: lint typecheck test coverage guard spec trace ## Verificación completa (la exige el hook Stop)
 	@echo "make check: OK"
