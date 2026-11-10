@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
+import signal
 import sys
 import tomllib
 from pathlib import Path
@@ -34,6 +36,7 @@ def report(root: Path, rel: str) -> dict[str, Any]:
     killed = sum(1 for v in run.values() if v == KILLED)
     survivors = sorted(k for k, v in run.items() if v == SURVIVED)
     total = len(run)
+    timed_out = sum(v == -signal.SIGXCPU for v in run.values())
     return {
         "sha256": hashlib.sha256((root / rel).read_bytes()).hexdigest(),
         "tests_sha256": tests_digest(root),
@@ -41,10 +44,32 @@ def report(root: Path, rel: str) -> dict[str, Any]:
         "pending": len(codes) - total,
         "killed": killed,
         "survived": len(survivors),
-        "other": total - killed - len(survivors),
+        "timed_out": timed_out,
+        "other": total - killed - len(survivors) - timed_out,
         "score": killed / total if total else 0.0,
         "survivors": survivors,
     }
+
+
+def valid_report(data: dict[str, Any], threshold: float) -> bool:
+    """Valida también informes almacenados de versiones anteriores (sin pending)."""
+    counts: list[Any] = [data.get(k) for k in ("total", "killed", "survived", "other")]
+    if any(type(n) is not int or n < 0 for n in counts):
+        return False
+    total, killed, survived, other = counts
+    score = data.get("score")
+    timed_out = data.get("timed_out", 0)
+    return bool(
+        total > 0
+        and type(timed_out) is int
+        and timed_out >= 0
+        and total == killed + survived + other + timed_out
+        and data.get("pending", 0) == 0
+        and other == 0
+        and isinstance(score, (int, float))
+        and math.isclose(score, killed / total)
+        and score >= threshold
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -60,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     failures = 0
     for rel, r in data.items():
         print(f"mutación {rel}: {r['killed']}/{r['total']} = {r['score']:.1%}")
-        if not r["total"] or r["pending"] or r["other"] or r["score"] < threshold:
+        if not valid_report(r, threshold):
             failures += 1
             print(
                 f"mutación {rel}: evidencia no válida; pendientes={r['pending']}, "

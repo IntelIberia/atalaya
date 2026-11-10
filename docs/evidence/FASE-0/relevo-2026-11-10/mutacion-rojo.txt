@@ -1,0 +1,124 @@
+FFF.F                                                                    [100%]
+=================================== FAILURES ===================================
+_______________________ test_mutation_cli_gate[codes0-1] _______________________
+
+tmp_path = PosixPath('/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1424/test_mutation_cli_gate_codes0_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10267d6d0>
+codes = [], expected = 1
+
+    @pytest.mark.req("REQ-NFR-018")
+    @pytest.mark.parametrize(
+        ("codes", "expected"),
+        [([], 1), ([1, None], 1), ([0], 1), ([1, 1, 1, 1, 0], 0), ([1, 36], 1)],
+    )
+    def test_mutation_cli_gate(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, codes: list[int | None], expected: int
+    ) -> None:
+        (tmp_path / "scripts").mkdir()
+        (tmp_path / "scripts/m.py").write_text("x = 1\n")
+        meta = tmp_path / "mutants/scripts/m.py.meta"
+        meta.parent.mkdir(parents=True)
+        meta.write_text(json.dumps({"exit_code_by_key": {str(i): c for i, c in enumerate(codes)}}))
+        (tmp_path / "pyproject.toml").write_text("[tool.atalaya]\nmutation_threshold = 0.80\n")
+        monkeypatch.setattr(mutation_report, "ROOT", tmp_path)
+>       assert mutation_report.main(["--out", str(tmp_path / "report.json"), "scripts/m.py"]) == expected
+E       AssertionError: assert 0 == 1
+E        +  where 0 = <function main at 0x1026ea980>(['--out', '/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1424/test_mutation_cli_gate_codes0_0/report.json', 'scripts/m.py'])
+E        +    where <function main at 0x1026ea980> = mutation_report.main
+
+tests/test_mutation_gate.py:26: AssertionError
+----------------------------- Captured stdout call -----------------------------
+mutación scripts/m.py: 0/0 = 0.0%
+_______________________ test_mutation_cli_gate[codes1-1] _______________________
+
+tmp_path = PosixPath('/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1424/test_mutation_cli_gate_codes1_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1025dffb0>
+codes = [1, None], expected = 1
+
+    @pytest.mark.req("REQ-NFR-018")
+    @pytest.mark.parametrize(
+        ("codes", "expected"),
+        [([], 1), ([1, None], 1), ([0], 1), ([1, 1, 1, 1, 0], 0), ([1, 36], 1)],
+    )
+    def test_mutation_cli_gate(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, codes: list[int | None], expected: int
+    ) -> None:
+        (tmp_path / "scripts").mkdir()
+        (tmp_path / "scripts/m.py").write_text("x = 1\n")
+        meta = tmp_path / "mutants/scripts/m.py.meta"
+        meta.parent.mkdir(parents=True)
+        meta.write_text(json.dumps({"exit_code_by_key": {str(i): c for i, c in enumerate(codes)}}))
+        (tmp_path / "pyproject.toml").write_text("[tool.atalaya]\nmutation_threshold = 0.80\n")
+        monkeypatch.setattr(mutation_report, "ROOT", tmp_path)
+>       assert mutation_report.main(["--out", str(tmp_path / "report.json"), "scripts/m.py"]) == expected
+E       AssertionError: assert 0 == 1
+E        +  where 0 = <function main at 0x1026ea980>(['--out', '/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1424/test_mutation_cli_gate_codes1_0/report.json', 'scripts/m.py'])
+E        +    where <function main at 0x1026ea980> = mutation_report.main
+
+tests/test_mutation_gate.py:26: AssertionError
+----------------------------- Captured stdout call -----------------------------
+mutación scripts/m.py: 1/1 = 100.0%
+_______________________ test_mutation_cli_gate[codes2-1] _______________________
+
+tmp_path = PosixPath('/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1424/test_mutation_cli_gate_codes2_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x102719880>
+codes = [0], expected = 1
+
+    @pytest.mark.req("REQ-NFR-018")
+    @pytest.mark.parametrize(
+        ("codes", "expected"),
+        [([], 1), ([1, None], 1), ([0], 1), ([1, 1, 1, 1, 0], 0), ([1, 36], 1)],
+    )
+    def test_mutation_cli_gate(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, codes: list[int | None], expected: int
+    ) -> None:
+        (tmp_path / "scripts").mkdir()
+        (tmp_path / "scripts/m.py").write_text("x = 1\n")
+        meta = tmp_path / "mutants/scripts/m.py.meta"
+        meta.parent.mkdir(parents=True)
+        meta.write_text(json.dumps({"exit_code_by_key": {str(i): c for i, c in enumerate(codes)}}))
+        (tmp_path / "pyproject.toml").write_text("[tool.atalaya]\nmutation_threshold = 0.80\n")
+        monkeypatch.setattr(mutation_report, "ROOT", tmp_path)
+>       assert mutation_report.main(["--out", str(tmp_path / "report.json"), "scripts/m.py"]) == expected
+E       AssertionError: assert 0 == 1
+E        +  where 0 = <function main at 0x1026ea980>(['--out', '/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1424/test_mutation_cli_gate_codes2_0/report.json', 'scripts/m.py'])
+E        +    where <function main at 0x1026ea980> = mutation_report.main
+
+tests/test_mutation_gate.py:26: AssertionError
+----------------------------- Captured stdout call -----------------------------
+mutación scripts/m.py: 0/1 = 0.0%
+_______________________ test_mutation_cli_gate[codes4-1] _______________________
+
+tmp_path = PosixPath('/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1424/test_mutation_cli_gate_codes4_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x102719940>
+codes = [1, 36], expected = 1
+
+    @pytest.mark.req("REQ-NFR-018")
+    @pytest.mark.parametrize(
+        ("codes", "expected"),
+        [([], 1), ([1, None], 1), ([0], 1), ([1, 1, 1, 1, 0], 0), ([1, 36], 1)],
+    )
+    def test_mutation_cli_gate(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, codes: list[int | None], expected: int
+    ) -> None:
+        (tmp_path / "scripts").mkdir()
+        (tmp_path / "scripts/m.py").write_text("x = 1\n")
+        meta = tmp_path / "mutants/scripts/m.py.meta"
+        meta.parent.mkdir(parents=True)
+        meta.write_text(json.dumps({"exit_code_by_key": {str(i): c for i, c in enumerate(codes)}}))
+        (tmp_path / "pyproject.toml").write_text("[tool.atalaya]\nmutation_threshold = 0.80\n")
+        monkeypatch.setattr(mutation_report, "ROOT", tmp_path)
+>       assert mutation_report.main(["--out", str(tmp_path / "report.json"), "scripts/m.py"]) == expected
+E       AssertionError: assert 0 == 1
+E        +  where 0 = <function main at 0x1026ea980>(['--out', '/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1424/test_mutation_cli_gate_codes4_0/report.json', 'scripts/m.py'])
+E        +    where <function main at 0x1026ea980> = mutation_report.main
+
+tests/test_mutation_gate.py:26: AssertionError
+----------------------------- Captured stdout call -----------------------------
+mutación scripts/m.py: 1/2 = 50.0%
+=========================== short test summary info ============================
+FAILED tests/test_mutation_gate.py::test_mutation_cli_gate[codes0-1] - Assert...
+FAILED tests/test_mutation_gate.py::test_mutation_cli_gate[codes1-1] - Assert...
+FAILED tests/test_mutation_gate.py::test_mutation_cli_gate[codes2-1] - Assert...
+FAILED tests/test_mutation_gate.py::test_mutation_cli_gate[codes4-1] - Assert...
+4 failed, 1 passed in 0.33s

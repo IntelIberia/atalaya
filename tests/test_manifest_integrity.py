@@ -31,3 +31,10 @@ def test_duplicate_manifest_entry_is_rejected(tmp_path: Path) -> None:
 def test_malformed_manifest_fails_cleanly(tmp_path: Path, line: str) -> None:
     (tmp_path / evidence.MANIFEST).write_text(line + "\n")
     assert evidence.main(["--verify", str(tmp_path)]) == 1
+
+
+@pytest.mark.req("REQ-NFR-014", "REQ-SEC-005")
+def test_phase_evidence_requires_integration_report() -> None:
+    command = evidence.closing_commands("0")["trazabilidad.txt"]
+    assert command.count("--junit") == 2
+    assert "reports/junit-integracion.xml" in command

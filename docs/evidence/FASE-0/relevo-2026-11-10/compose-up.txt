@@ -1,0 +1,34 @@
+gen_local_secrets: ya existe; no se modifica.
+docker compose --env-file .env -f infra/compose/compose.yaml up -d --wait
+ redis Pulling 
+ mosquitto Pulling 
+ nats Pulling 
+ mosquitto Pulled 
+ nats Pulled 
+ redis Pulled 
+ Network atalaya_default  Creating
+ Network atalaya_default  Created
+ Container atalaya-mosquitto-1  Creating
+ Container atalaya-postgres-1  Creating
+ Container atalaya-nats-1  Creating
+ Container atalaya-redis-1  Creating
+ Container atalaya-postgres-1  Created
+ Container atalaya-mosquitto-1  Created
+ Container atalaya-nats-1  Created
+ Container atalaya-redis-1  Created
+ Container atalaya-nats-1  Starting
+ Container atalaya-redis-1  Starting
+ Container atalaya-mosquitto-1  Starting
+ Container atalaya-postgres-1  Starting
+ Container atalaya-nats-1  Started
+ Container atalaya-redis-1  Started
+ Container atalaya-mosquitto-1  Started
+ Container atalaya-postgres-1  Started
+ Container atalaya-redis-1  Waiting
+ Container atalaya-postgres-1  Waiting
+ Container atalaya-mosquitto-1  Waiting
+ Container atalaya-nats-1  Waiting
+ Container atalaya-nats-1  Healthy
+ Container atalaya-redis-1  Healthy
+ Container atalaya-postgres-1  Healthy
+ Container atalaya-mosquitto-1  Healthy

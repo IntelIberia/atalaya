@@ -101,6 +101,7 @@ def closing_commands(fase: str) -> dict[str, list[str]]:
         "trazabilidad.txt": [
             *("uv", "run", "--frozen", "python", "-m", "scripts.traceability"),
             *("--fase", fase, "--out", trace_out),
+            *("--junit", "reports/junit.xml", "--junit", "reports/junit-integracion.xml"),
         ],
         "clon-limpio.txt": ["scripts/verify_clean_clone.sh"],
     }

@@ -160,6 +160,8 @@ def evidencia_mutacion_problemas(repo: Path, fase: str) -> list[str]:
             problemas.append(f"{rel}: los tests cambiaron desde la última mutación (make mutation)")
         if entrada["score"] < float(cfg["mutation_threshold"]):
             problemas.append(f"{rel}: puntuación {entrada['score']:.3f} < umbral")
+        if not mr.valid_report(entrada, float(cfg["mutation_threshold"])):
+            problemas.append(f"{rel}: informe de mutación incompleto o inconsistente")
     return problemas
 
 

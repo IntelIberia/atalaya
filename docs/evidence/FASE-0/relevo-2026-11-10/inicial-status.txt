@@ -1,0 +1,23 @@
+ M Makefile
+ M docs/RIESGOS.md
+ M docs/adr/0008-correcciones-verificadas.md
+ M docs/evidence/FASE-0/mutacion.json
+ M docs/evidence/FASE-0/mutmut-guardrails.txt
+ M docs/evidence/FASE-0/registro-tareas.md
+ M docs/requirements/REQUIREMENTS.md
+ M pyproject.toml
+ M scripts/demo_guardrails.sh
+ M scripts/guardrails.py
+ M scripts/hooks/post_edit.sh
+ M scripts/hooks/pre_bash.py
+ M scripts/license_check.py
+ M scripts/mutation_report.py
+ M scripts/traceability.py
+ M tests/conftest.py
+ M tests/guardrails/test_guardrails.py
+ M tests/hooks/test_hooks.py
+ M tests/test_evidence.py
+ M tests/test_license_check.py
+?? docs/requirements/DECISIONES-USUARIO.md
+?? tests/integracion/__init__.py
+?? tests/integracion/test_smoke_compose.py

@@ -1,0 +1,5 @@
+c99289d fix(infra): contraseñas fuera de argv e imágenes por digest (P5 FASE 0)
+f08c939 docs(governance): registrar decisión delegada sobre dos líneas legales
+eb58f4e fix(mutation): rechazar evidencia incompleta o bajo umbral [REQ-NFR-018]
+46945fd fix(evidence): verificar manifiestos anidados y rechazar duplicados [REQ-NFR-014]
+bfc0581 chore(relevo): preservar cambios locales heredados de FASE 0

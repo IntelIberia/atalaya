@@ -1,0 +1,75 @@
+FFF..                                                                    [100%]
+=================================== FAILURES ===================================
+_______________________ test_nested_manifest_is_verified _______________________
+
+tmp_path = PosixPath('/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1422/test_nested_manifest_is_verifi0')
+
+    @pytest.mark.req("REQ-NFR-014")
+    def test_nested_manifest_is_verified(tmp_path: Path) -> None:
+        nested = tmp_path / "sub" / evidence.MANIFEST
+        nested.parent.mkdir()
+        nested.write_text("original\n")
+        evidence.write_manifest(tmp_path)
+        nested.write_text("alterado\n")
+>       assert "modificado: sub/MANIFEST.sha256" in evidence.verify_manifest(tmp_path)
+E       AssertionError: assert 'modificado: sub/MANIFEST.sha256' in []
+E        +  where [] = <function verify_manifest at 0x10526ae80>(PosixPath('/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1422/test_nested_manifest_is_verifi0'))
+E        +    where <function verify_manifest at 0x10526ae80> = evidence.verify_manifest
+
+tests/test_manifest_integrity.py:17: AssertionError
+__________________ test_duplicate_manifest_entry_is_rejected ___________________
+
+tmp_path = PosixPath('/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1422/test_duplicate_manifest_entry_0')
+
+    @pytest.mark.req("REQ-NFR-014")
+    def test_duplicate_manifest_entry_is_rejected(tmp_path: Path) -> None:
+        (tmp_path / "a.txt").write_text("original")
+        manifest = evidence.write_manifest(tmp_path)
+        entry = manifest.read_text().splitlines()[-1]
+        manifest.write_text(manifest.read_text() + entry + "\n")
+>       assert evidence.main(["--verify", str(tmp_path)]) == 1
+E       AssertionError: assert 0 == 1
+E        +  where 0 = <function main at 0x10526b060>(['--verify', '/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1422/test_duplicate_manifest_entry_0'])
+E        +    where <function main at 0x10526b060> = evidence.main
+
+tests/test_manifest_integrity.py:26: AssertionError
+----------------------------- Captured stdout call -----------------------------
+evidence: manifiesto OK
+________________ test_malformed_manifest_fails_cleanly[broken] _________________
+
+tmp_path = PosixPath('/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1422/test_malformed_manifest_fails_0')
+line = 'broken'
+
+    @pytest.mark.req("REQ-NFR-014")
+    @pytest.mark.parametrize("line", ["broken", "not-a-hash  a.txt", "0" * 64 + "  ../a.txt"])
+    def test_malformed_manifest_fails_cleanly(tmp_path: Path, line: str) -> None:
+        (tmp_path / evidence.MANIFEST).write_text(line + "\n")
+>       assert evidence.main(["--verify", str(tmp_path)]) == 1
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_manifest_integrity.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/evidence.py:108: in main
+    problems = verify_manifest(args.verify)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+directory = PosixPath('/private/var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/pytest-of-veyron92i/pytest-1422/test_malformed_manifest_fails_0')
+
+    def verify_manifest(directory: Path) -> list[str]:
+        path = directory / MANIFEST
+        if not path.exists():
+            return [f"no existe {MANIFEST}"]
+        listed: dict[str, str] = {}
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line and not line.startswith("#"):
+>               digest, name = line.split("  ", 1)
+                ^^^^^^^^^^^^
+E               ValueError: not enough values to unpack (expected 2, got 1)
+
+scripts/evidence.py:63: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_manifest_integrity.py::test_nested_manifest_is_verified - A...
+FAILED tests/test_manifest_integrity.py::test_duplicate_manifest_entry_is_rejected
+FAILED tests/test_manifest_integrity.py::test_malformed_manifest_fails_cleanly[broken]
+3 failed, 2 passed in 0.66s

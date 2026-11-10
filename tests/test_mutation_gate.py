@@ -26,3 +26,22 @@ def test_mutation_cli_gate(
     assert (
         mutation_report.main(["--out", str(tmp_path / "report.json"), "scripts/m.py"]) == expected
     )
+
+
+@pytest.mark.req("REQ-NFR-018")
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"pending": 464},
+        {"other": 1},
+        {"total": 0},
+        {"score": 1.0},
+        {"killed": -1},
+        {"total": 999},
+    ],
+)
+def test_stored_mutation_report_rejected(changes: dict[str, int | float]) -> None:
+    report = {"total": 5, "killed": 4, "survived": 1, "other": 0, "score": 0.8}
+    assert mutation_report.valid_report(report, 0.8)
+    report.update(changes)
+    assert not mutation_report.valid_report(report, 0.8)
