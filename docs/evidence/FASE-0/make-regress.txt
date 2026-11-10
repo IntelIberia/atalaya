@@ -1,5 +1,6 @@
-# commit: 36c4f2064af67872b036daae470d5f42f3cfa353 · fecha UTC: 2026-11-10T07:17:21Z
+# commit: fa5a8973bf6b3291b02ae01e789101ebce0a3eea · fecha UTC: 2026-11-10T07:28:14Z
 $ make regress
 regress: fase -1 OK
+regress: fase 0 OK
 make regress: OK
 exit=0
