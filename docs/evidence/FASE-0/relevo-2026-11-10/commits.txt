@@ -1,3 +1,6 @@
+8c6a491 fix(quality): validar informes consumidos y registrar relevo [REQ-NFR-014]
+eaedde8 fix(privacy): acotar excepciones de correo y frecuencia [REQ-PRIV-003]
+f995e29 fix(guardrails): asociar sensibilidad JSON al campo [REQ-LEG-007]
 c99289d fix(infra): contraseñas fuera de argv e imágenes por digest (P5 FASE 0)
 f08c939 docs(governance): registrar decisión delegada sobre dos líneas legales
 eb58f4e fix(mutation): rechazar evidencia incompleta o bajo umbral [REQ-NFR-018]

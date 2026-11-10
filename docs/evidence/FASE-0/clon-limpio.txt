@@ -1,0 +1,7 @@
+# commit: 8c6a491f9fa85a0bcb68d5f577ee022efb0e7c51 · fecha UTC: 2026-11-10T06:46:26Z
+$ scripts/verify_clean_clone.sh
+verify_clean_clone: AVISO: hay cambios sin commit; se verifica solo HEAD (8c6a491).
+verify_clean_clone: clon en /var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/tmp.8nnnSVq2OK/atalaya (8c6a491)
+make check: OK
+verify_clean_clone: OK
+exit=0
