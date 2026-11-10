@@ -31,7 +31,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import NoReturn
+from typing import Any, NoReturn
 
 ALLOWLIST_FILE = Path(__file__).resolve().parent / "guardrails_allowlist.txt"
 
@@ -244,6 +244,36 @@ def _enclosing_identifier(line: str, start: int, end: int) -> str:
 CLAUDE_SETTINGS = ".claude/settings.json"
 
 
+def _json_pilot_fields(rel: str, text: str) -> list[Violation]:
+    """Asocia la sensibilidad al objeto del campo, incluso en JSON compacto."""
+    pending: list[Any] = [json.loads(text)]
+    violations = []
+    while pending:
+        value = pending.pop()
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if PILOT_FIELD_RE.search(key) and not (
+                    isinstance(child, dict) and child.get("sensitivity") == "FCSE_ONLY"
+                ):
+                    violations.append(
+                        Violation(rel, "pilot-public", f"«{key}» debe ser FCSE_ONLY (REQ-LEG-007)")
+                    )
+                if (
+                    isinstance(child, str)
+                    and PILOT_FIELD_RE.search(child)
+                    and value.get("sensitivity") != "FCSE_ONLY"
+                ):
+                    violations.append(
+                        Violation(
+                            rel, "pilot-public", f"«{child}» debe ser FCSE_ONLY (REQ-LEG-007)"
+                        )
+                    )
+                pending.append(child)
+        elif isinstance(value, list):
+            pending.extend(value)
+    return violations
+
+
 def _settings_without_deny(text: str) -> str:
     """En .claude/settings.json se pueden NOMBRAR herramientas de TX solo para denegarlas:
     se analiza todo el fichero excepto la lista permissions.deny. Si no es JSON válido,
@@ -290,6 +320,13 @@ def check_file(
     if rel == CLAUDE_SETTINGS:
         text = _settings_without_deny(text)
     is_schema = suffix in SCHEMA_EXTENSIONS
+    if suffix == ".json":
+        try:
+            violations.extend(_json_pilot_fields(rel, text))
+            is_schema = False
+        except (ValueError, RecursionError):
+            # JSON ilegible: se conserva la comprobación conservadora por línea.
+            pass
     for n, line in enumerate(text.splitlines(), 1):
         if is_code:
             for pat in SDR_TX_PATTERNS:
@@ -308,7 +345,8 @@ def check_file(
         if is_schema:
             code = COMMENT_RE.sub("", line) if suffix != ".json" else line
             for m in PILOT_FIELD_RE.finditer(code):
-                if not FCSE_ONLY_RE.search(code):
+                field = code[m.start() :].split(";", 1)[0].split("}", 1)[0]
+                if not FCSE_ONLY_RE.search(field):
                     violations.append(
                         Violation(
                             rel,

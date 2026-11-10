@@ -1,29 +1,24 @@
-# mutmut sobre scripts/guardrails.py · tras las correcciones P5 · 2026-11-09
-$ make mutation FASE=0
-Puntuación: 425/465 = 91,4 % (umbral ADR 0006: 80 %). Datos completos en mutacion.json
-(incluye SHA-256 del fuente y de tests/guardrails: la evidencia caduca si cambia cualquiera).
+# Mutación de guardrails — relevo 2026-11-10
 
-## Historial
-- 1.ª ejecución (T0.3): 223/336 = 66 % → los tests solo comprobaban QUÉ regla, no DÓNDE ni el mensaje.
-- T0.3 final: 317/340; T0.9: 351/380 (92,4 %).
-- Revisión P5 (test-auditor): 5 de los «equivalentes» declarados NO lo eran (ensure_ascii, indent,
-  identificador de lista blanca, rango sin «..», NUL en el byte 8192) → tests añadidos.
-- Tras las correcciones P5: 417/465 → 7 tests más para supervivientes reales → 425/465.
+Ejecución real de `make mutation FASE=0` sobre el código y tests actuales.
+El JSON generado por scripts/mutation_report.py contiene los hashes del fuente y los tests.
+Resultado actual 476/535 = 88,97 %, frente al umbral aprobado del 80 %.
+58 supervivientes, 1 timeout, 0 pendientes y 0 errores no clasificados.
+El timeout es _json_pilot_fields__mutmut_4, que sustituye pending.pop() por None y
+provoca un bucle infinito. Se conserva en el denominador y queda fuera del numerador.
+La clasificación SIGXCPU se comprobó en el código instalado de mutmut/threading/timeout.py.
 
-## 40 supervivientes, analizados como EQUIVALENTES o cosméticos
-- Códec "utf-8" → "UTF-8"/"LATIN-1"/None (load_allowlist_3/5, _decode_9/12, check_file_26, _changed_23): mismo códec.
-- load_allowlist_10/13: split("#", 1|2|∞)[0] → mismo primer elemento.
-- _decode_1/4/5/6: con force_text en código, la heurística de binario solo afecta a ficheros no-código;
-  mutantes residuales sobre el límite exacto de 8 KiB y la marca de binario (sin efecto en reglas de código).
-- _is_audio_bytes y check_file_32: raw[:16]→[:17] y longitud mínima: las firmas terminan antes del byte 12.
-- _settings_without_deny_12/13/15/17: formato de reserialización (indent 1/2/None con claves en líneas
-  separadas cubiertas por test; ensure_ascii=None ≡ False).
-- check_file_54-56: variantes de "Dockerfile" en mayúsculas — el test cubre «Dockerfile.prod».
-- check_file_57 y 119-122: tira de comentarios y caso .json: el test del comentario imitador cubre el
-  comportamiento; las variantes restantes no cambian el resultado de FCSE_ONLY_RE.
-- _glob_hits_secret_2/3, check_command_9: la expresión SECRET_PATH_IN_CMD ya cubre esos casos.
-- _enclosing_identifier_3: el patrón consume el identificador completo en todos los casos probados.
-- _git_8 ("GIT"): APFS no distingue mayúsculas; en Linux (CI) fallaría → fallo cerrado.
-- range_files_9/12: [+1]≡[-1] con 2 elementos; "head" ≡ "HEAD" en APFS.
-- main_2/3/16/18/21/22/39-42: textos de ayuda y de error de argparse.
-- main_51/55/58: allow=None → check_file carga la misma lista blanca por defecto.
+La ejecución inicial tras añadir el parser JSON dio 460/517 con un timeout.
+Se repitió al corregir la regresión de descriptores JSON encontrada por privacidad.
+La orden inicial rechazó el timeout como error genérico. El informe ahora lo distingue
+explícitamente, manteniendo la puntuación conservadora y el mismo umbral.
+
+La afirmación anterior de que todos los supervivientes eran equivalentes queda retirada.
+El auditor demostró que _decode_5 omitía secretos en texto recibido como bytes.
+El test nuevo lo elimina en la ejecución actual.
+
+El diff de los 58 supervivientes está en relevo-2026-11-10/supervivientes.diff.txt.
+Los cambios de códec UTF-8 y LATIN-1, split sin límite sobre su primer elemento y textos
+cosméticos son candidatos a equivalencia. Los cambios de alcance de campo, detección de
+binario y datos de diagnóstico requieren pruebas adicionales y revisión individual.
+No se declara P5 resuelta hasta documentar esa revisión y validar los cambios finales.

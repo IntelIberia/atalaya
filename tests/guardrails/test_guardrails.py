@@ -811,3 +811,29 @@ def test_p5_comodin_en_ruta_anidada_hacia_secrets() -> None:
 @pytest.mark.req("REQ-SEC-001", "REQ-LEG-005")
 def test_p5_trama_mpeg_minima() -> None:
     assert "audio-file" in reglas("x.dat", b"\xff\xfb")
+
+
+@pytest.mark.req("REQ-SEC-001", "REQ-SEC-012")
+def test_relevo_secretos_en_texto_bytes() -> None:
+    assert "secret" in reglas("notas.txt", b"aws_key = 'AKIA" + b"ABCDEFGHIJKLMNOP'\n")
+
+
+@pytest.mark.req("REQ-LEG-007")
+def test_relevo_json_sensibilidad_de_campo_vecino() -> None:
+    import json
+
+    data = {"pilot_lat": {"type": "number"}, "private_field": {"sensitivity": "FCSE_ONLY"}}
+    assert "pilot-public" in reglas("schema.json", json.dumps(data))
+    data["pilot_lat"]["sensitivity"] = "FCSE_ONLY"
+    assert "pilot-public" not in reglas("schema.json", json.dumps(data))
+
+
+@pytest.mark.req("REQ-LEG-007")
+@pytest.mark.parametrize("sensitivity", ["PUBLIC", "OPERATOR", "FCSE_ONLY"])
+def test_relevo_json_descriptor(sensitivity: str) -> None:
+    import json
+
+    descriptor = {"fields": [{"name": "pilot_lat", "sensitivity": sensitivity}]}
+    assert ("pilot-public" in reglas("schema.json", json.dumps(descriptor))) == (
+        sensitivity != "FCSE_ONLY"
+    )
