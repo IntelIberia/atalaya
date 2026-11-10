@@ -10,7 +10,7 @@ COV_MIN := $(shell $(PY) -c "import tomllib;print(tomllib.load(open('pyproject.t
 MUT_FILES := $(shell $(PY) -c "import tomllib;print(' '.join(tomllib.load(open('pyproject.toml','rb'))['tool']['atalaya']['mutation_critical']))")
 
 .PHONY: help bootstrap doctor check lint typecheck test coverage guard spec trace regress \
-        evidence mutation fmt up smoke down
+        evidence mutation fmt up smoke down proto
 
 COMPOSE := docker compose --env-file .env -f infra/compose/compose.yaml
 
@@ -25,6 +25,10 @@ bootstrap: ## Entorno completo: dependencias, hooks de git y secretos locales
 
 doctor: ## Comprueba las herramientas de desarrollo
 	@scripts/doctor.sh
+
+proto: ## Valida y genera los bindings Python de los contratos Protobuf
+	@buf lint
+	@$(UV) python -m scripts.proto_codegen
 
 check: lint typecheck test coverage guard spec trace ## Verificación completa (la exige el hook Stop)
 	@echo "make check: OK"
