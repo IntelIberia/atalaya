@@ -38,6 +38,7 @@ package = false
 testpaths = ["tests"]
 addopts = "-ra --strict-markers -m 'not integracion'"
 junit_family = "xunit1"
+pythonpath = ["proto/gen/python"]
 markers = [
     "req(id): requisitos que verifica el test (trazabilidad)",
     "subproceso: lanza un script en otro proceso (se excluye de mutmut)",
@@ -47,7 +48,7 @@ markers = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["third_party", "mutants"]
+extend-exclude = ["third_party", "mutants", "proto/gen/python"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
@@ -60,7 +61,12 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 [tool.mypy]
 strict = true
 python_version = "3.12"
+mypy_path = "proto/gen/python"
 exclude = ["third_party/", "mutants/"]
+
+[[tool.mypy.overrides]]
+module = ["atalaya.v1.*"]
+ignore_errors = true
 
 [tool.mutmut]
 paths_to_mutate = ["scripts/guardrails.py"]

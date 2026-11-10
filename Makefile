@@ -30,6 +30,7 @@ check: lint typecheck test coverage guard spec trace ## Verificación completa (
 	@echo "make check: OK"
 
 lint: ## Lint y formato (sin modificar ficheros)
+	@buf lint
 	@$(UV) ruff check -q .
 	@$(UV) ruff format --check -q .
 	@shellcheck scripts/*.sh scripts/hooks/*.sh scripts/regress.d/*.sh .githooks/*

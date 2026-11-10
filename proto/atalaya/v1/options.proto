@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "google/protobuf/descriptor.proto";
+
+enum Sensitivity {
+  SENSITIVITY_UNSPECIFIED = 0;
+  PUBLIC = 1;
+  OPERATOR = 2;
+  FCSE_ONLY = 3;
+}
+
+extend google.protobuf.FieldOptions {
+  Sensitivity sensitivity = 50001;
+  bool required = 50002;
+}

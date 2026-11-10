@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/options.proto";
+
+message GeoPoint {
+  optional double latitude_deg = 1 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double longitude_deg = 2 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double altitude_m = 3 [(atalaya.v1.sensitivity) = PUBLIC];
+}
+
+// Symmetric covariance matrix in local East-North-Up coordinates, in m².
+message PositionCovariance {
+  optional double east_east_m2 = 1 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double east_north_m2 = 2 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double east_up_m2 = 3 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double north_north_m2 = 4 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double north_up_m2 = 5 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double up_up_m2 = 6 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+}
+
+message ErrorEllipse {
+  optional double semi_major_axis_m = 1 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double semi_minor_axis_m = 2 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double orientation_deg = 3 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double confidence_level = 4 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+}
+
+message ClassScore {
+  optional string class_id = 1 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double probability = 2 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+}
+
+message TimeQuality {
+  optional bool pps_valid = 1 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double clock_offset_ms = 2 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double uncertainty_ms = 3 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+}
