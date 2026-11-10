@@ -65,7 +65,7 @@ mypy_path = "proto/gen/python"
 exclude = ["third_party/", "mutants/"]
 
 [[tool.mypy.overrides]]
-module = ["atalaya.v1.*"]
+module = ["atalaya.v1.*", "atalaya.sim.v1.*"]
 ignore_errors = true
 
 [tool.mutmut]

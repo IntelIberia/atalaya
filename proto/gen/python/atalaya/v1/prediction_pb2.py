@@ -27,7 +27,7 @@ from atalaya.v1 import options_pb2 as atalaya_dot_v1_dot_options__pb2
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1b\x61talaya/v1/prediction.proto\x12\natalaya.v1\x1a\x17\x61talaya/v1/common.proto\x1a\x18\x61talaya/v1/options.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xba\x01\n\x0fHorizonEstimate\x12 \n\thorizon_s\x18\x01 \x01(\x01\x42\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x00\x88\x01\x01\x12\x30\n\x08position\x18\x02 \x01(\x0b\x32\x14.atalaya.v1.GeoPointB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12\x45\n\x13position_covariance\x18\x03 \x01(\x0b\x32\x1e.atalaya.v1.PositionCovarianceB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x42\x0c\n\n_horizon_s\"\x86\x01\n\x16\x44\x65stinationProbability\x12%\n\x0e\x64\x65stination_id\x18\x01 \x01(\tB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x00\x88\x01\x01\x12\"\n\x0bprobability\x18\x02 \x01(\x01\x42\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x01\x88\x01\x01\x42\x11\n\x0f_destination_idB\x0e\n\x0c_probability\"\x9a\x02\n\nPrediction\x12\x1f\n\x08track_id\x18\x01 \x01(\tB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x00\x88\x01\x01\x12:\n\x0cgenerated_at\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12\x37\n\x08horizons\x18\x03 \x03(\x0b\x32\x1b.atalaya.v1.HorizonEstimateB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12K\n\x19\x64\x65stination_probabilities\x18\x04 \x03(\x0b\x32\".atalaya.v1.DestinationProbabilityB\x04\x88\xb5\x18\x02\x12\x1c\n\x0eorigin_heatmap\x18\x05 \x01(\x0c\x42\x04\x88\xb5\x18\x03\x42\x0b\n\t_track_idb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1b\x61talaya/v1/prediction.proto\x12\natalaya.v1\x1a\x17\x61talaya/v1/common.proto\x1a\x18\x61talaya/v1/options.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xba\x01\n\x0fHorizonEstimate\x12 \n\thorizon_s\x18\x01 \x01(\x01\x42\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x00\x88\x01\x01\x12\x30\n\x08position\x18\x02 \x01(\x0b\x32\x14.atalaya.v1.GeoPointB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12\x45\n\x13position_covariance\x18\x03 \x01(\x0b\x32\x1e.atalaya.v1.PositionCovarianceB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x42\x0c\n\n_horizon_s\"\x86\x01\n\x16\x44\x65stinationProbability\x12%\n\x0e\x64\x65stination_id\x18\x01 \x01(\tB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x00\x88\x01\x01\x12\"\n\x0bprobability\x18\x02 \x01(\x01\x42\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x01\x88\x01\x01\x42\x11\n\x0f_destination_idB\x0e\n\x0c_probability\"\x9e\x02\n\nPrediction\x12\x1f\n\x08track_id\x18\x01 \x01(\tB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x00\x88\x01\x01\x12:\n\x0cgenerated_at\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12\x37\n\x08horizons\x18\x03 \x03(\x0b\x32\x1b.atalaya.v1.HorizonEstimateB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12O\n\x19\x64\x65stination_probabilities\x18\x04 \x03(\x0b\x32\".atalaya.v1.DestinationProbabilityB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12\x1c\n\x0eorigin_heatmap\x18\x05 \x01(\x0c\x42\x04\x88\xb5\x18\x03\x42\x0b\n\t_track_idb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -51,7 +51,7 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_PREDICTION'].fields_by_name['horizons']._loaded_options = None
   _globals['_PREDICTION'].fields_by_name['horizons']._serialized_options = b'\210\265\030\002\220\265\030\001'
   _globals['_PREDICTION'].fields_by_name['destination_probabilities']._loaded_options = None
-  _globals['_PREDICTION'].fields_by_name['destination_probabilities']._serialized_options = b'\210\265\030\002'
+  _globals['_PREDICTION'].fields_by_name['destination_probabilities']._serialized_options = b'\210\265\030\002\220\265\030\001'
   _globals['_PREDICTION'].fields_by_name['origin_heatmap']._loaded_options = None
   _globals['_PREDICTION'].fields_by_name['origin_heatmap']._serialized_options = b'\210\265\030\003'
   _globals['_HORIZONESTIMATE']._serialized_start=128
@@ -59,5 +59,5 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_DESTINATIONPROBABILITY']._serialized_start=317
   _globals['_DESTINATIONPROBABILITY']._serialized_end=451
   _globals['_PREDICTION']._serialized_start=454
-  _globals['_PREDICTION']._serialized_end=736
+  _globals['_PREDICTION']._serialized_end=740
 # @@protoc_insertion_point(module_scope)

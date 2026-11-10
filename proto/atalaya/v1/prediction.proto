@@ -21,6 +21,6 @@ message Prediction {
   optional string track_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
   google.protobuf.Timestamp generated_at = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
   repeated HorizonEstimate horizons = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
-  repeated DestinationProbability destination_probabilities = 4 [(atalaya.v1.sensitivity) = OPERATOR];
+  repeated DestinationProbability destination_probabilities = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
   bytes origin_heatmap = 5 [(atalaya.v1.sensitivity) = FCSE_ONLY];
 }

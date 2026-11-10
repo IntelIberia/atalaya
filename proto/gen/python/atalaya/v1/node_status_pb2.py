@@ -27,7 +27,7 @@ from atalaya.v1 import options_pb2 as atalaya_dot_v1_dot_options__pb2
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1c\x61talaya/v1/node_status.proto\x12\natalaya.v1\x1a\x17\x61talaya/v1/common.proto\x1a\x18\x61talaya/v1/options.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xaa\x03\n\nNodeStatus\x12\x1e\n\x07site_id\x18\x01 \x01(\tB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x00\x88\x01\x01\x12\x1e\n\x07node_id\x18\x02 \x01(\tB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x01\x88\x01\x01\x12\x39\n\x0bobserved_at\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12\x30\n\x06health\x18\x04 \x01(\x0e\x32\x16.atalaya.v1.NodeHealthB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12,\n\x08location\x18\x05 \x01(\x0b\x32\x14.atalaya.v1.GeoPointB\x04\x88\xb5\x18\x02\x12\x37\n\x0ctime_quality\x18\x06 \x01(\x0b\x32\x17.atalaya.v1.TimeQualityB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12\"\n\x0f\x62\x61ttery_percent\x18\x07 \x01(\x01\x42\x04\x88\xb5\x18\x02H\x02\x88\x01\x01\x12#\n\x10software_version\x18\x08 \x01(\tB\x04\x88\xb5\x18\x02H\x03\x88\x01\x01\x42\n\n\x08_site_idB\n\n\x08_node_idB\x12\n\x10_battery_percentB\x13\n\x11_software_version*t\n\nNodeHealth\x12\x1b\n\x17NODE_HEALTH_UNSPECIFIED\x10\x00\x12\x17\n\x13NODE_HEALTH_HEALTHY\x10\x01\x12\x18\n\x14NODE_HEALTH_DEGRADED\x10\x02\x12\x16\n\x12NODE_HEALTH_FAILED\x10\x03\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1c\x61talaya/v1/node_status.proto\x12\natalaya.v1\x1a\x17\x61talaya/v1/common.proto\x1a\x18\x61talaya/v1/options.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xba\x03\n\nNodeStatus\x12\x1e\n\x07site_id\x18\x01 \x01(\tB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x00\x88\x01\x01\x12\x1e\n\x07node_id\x18\x02 \x01(\tB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x01\x88\x01\x01\x12\x39\n\x0bobserved_at\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.TimestampB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12\x35\n\x06health\x18\x04 \x01(\x0e\x32\x16.atalaya.v1.NodeHealthB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01H\x02\x88\x01\x01\x12,\n\x08location\x18\x05 \x01(\x0b\x32\x14.atalaya.v1.GeoPointB\x04\x88\xb5\x18\x02\x12\x37\n\x0ctime_quality\x18\x06 \x01(\x0b\x32\x17.atalaya.v1.TimeQualityB\x08\x88\xb5\x18\x02\x90\xb5\x18\x01\x12\"\n\x0f\x62\x61ttery_percent\x18\x07 \x01(\x01\x42\x04\x88\xb5\x18\x02H\x03\x88\x01\x01\x12#\n\x10software_version\x18\x08 \x01(\tB\x04\x88\xb5\x18\x02H\x04\x88\x01\x01\x42\n\n\x08_site_idB\n\n\x08_node_idB\t\n\x07_healthB\x12\n\x10_battery_percentB\x13\n\x11_software_version*t\n\nNodeHealth\x12\x1b\n\x17NODE_HEALTH_UNSPECIFIED\x10\x00\x12\x17\n\x13NODE_HEALTH_HEALTHY\x10\x01\x12\x18\n\x14NODE_HEALTH_DEGRADED\x10\x02\x12\x16\n\x12NODE_HEALTH_FAILED\x10\x03\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -50,8 +50,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_NODESTATUS'].fields_by_name['battery_percent']._serialized_options = b'\210\265\030\002'
   _globals['_NODESTATUS'].fields_by_name['software_version']._loaded_options = None
   _globals['_NODESTATUS'].fields_by_name['software_version']._serialized_options = b'\210\265\030\002'
-  _globals['_NODEHEALTH']._serialized_start=557
-  _globals['_NODEHEALTH']._serialized_end=673
+  _globals['_NODEHEALTH']._serialized_start=573
+  _globals['_NODEHEALTH']._serialized_end=689
   _globals['_NODESTATUS']._serialized_start=129
-  _globals['_NODESTATUS']._serialized_end=555
+  _globals['_NODESTATUS']._serialized_end=571
 # @@protoc_insertion_point(module_scope)
