@@ -1,2 +1,3 @@
 # Fases cerradas (una por línea). Lo usa scripts/traceability.py.
 -1
+0
