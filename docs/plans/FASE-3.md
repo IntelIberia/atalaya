@@ -1,6 +1,6 @@
 # Plan FASE 3 — Capa 2: app de avistamientos (sensor humano)
 
-Versión 1 · 2026-11-08 · Estado: **PENDIENTE DE APROBACIÓN (P0)**
+Versión 1.1 · 2026-11-10 · Estado: **PENDIENTE DE APROBACIÓN (P0)**
 
 ## 1. Objetivo
 Una app Android (Kotlin + Jetpack Compose) con la que un vigilante registra un avistamiento de dron en **3 toques como máximo**, con rumbo de brújula, altura y distancia asistidas y foto o vídeo con SHA-256 calculado en la captura. Funciona sin conexión gracias a una cola cifrada y se autentica ante el backend con **mTLS por dispositivo** (versión básica). El backend convierte cada avistamiento en `Detection(sensor_type=HUMAN)` con su incertidumbre, de modo que la fusión lo trata como un sensor más. Además añade contexto (zonas y NOTAM, aeronaves tripuladas, incidentes previos) y genera un **informe PDF para las FCSE** con evidencias, cadena de custodia, firma del supervisor y sello RFC 3161 de una **TSA local de prueba, sin valor probatorio y marcada así**.
@@ -28,7 +28,7 @@ Pruebas de guardarraíl del plan maestro que se activan: **G-14** (la app declar
 | JDK instalados: Oracle 21.0.8 (por defecto), Temurin 11 y 8 | `/usr/libexec/java_home -V` | AGP 9.5 exige **JDK 17** como mínimo. Se usa el 21 instalado, o Temurin 17/21 si el usuario prefiere un JDK libre (decisión 3, §8) |
 | `adb` 1.0.41 (platform-tools 37.0.1) ya está en `/usr/local/bin` | Medido | Sirve para el móvil; el SDK instalará otra copia, así que hay que fijar cuál va primero en el `PATH` |
 | Sin Android SDK, Gradle, ktlint ni detekt | `which` | Se instalan en T3.1-T3.2 |
-| `proto/atalaya/v1/` solo tiene un README; FASE 1 sin empezar; FASE 0 sin cerrar (faltan T0.12 y T0.13) | Repo | **Precondiciones** (T3.0). Ver §5 para lo que depende de la FASE 1 |
+| Diagnóstico histórico (2026-11-08): `proto/atalaya/v1/` solo tenía un README; FASE 1 no había empezado y FASE 0 seguía abierta | Repo | Ya no describe el estado actual. Al 2026-11-10, FASE 0 está cerrada (`fase-0-cerrada`); FASE 1 mantiene el P0 aprobado para la versión 3, tiene T1.3 con STOP aprobado y T1.0–T1.6 constan como OK en el registro de tareas. FASE 1 aún no está cerrada ni tiene P6. El contrato actual contiene `Sighting`, `Detection` y `Evidence`; su compatibilidad con las necesidades de FASE 3 queda abierta en §4.1. FASE 2 sigue como plan pendiente de P0 y no puede empezar hasta cerrar FASE 1. |
 | `check_spec.py` no analiza `docs/plans/`, pero este plan se ha escrito sin menciones sensibles y se comprobó con su misma expresión regular | Código | — |
 | `sdkmanager` figura como **deprecado** en la documentación oficial, que remite a la nueva «Android CLI» (`android sdk install`) | developer.android.com/tools/sdkmanager | El paquete oficial de command-line tools sigue publicado y es lo que se usa. Android CLI: no está documentado que funcione en Mac Intel → **NO VERIFICADO**, no se usa |
 | `androidx.security:security-crypto` 1.1.0: «Deprecated all APIs in favour of existing platform APIs and direct use of Android Keystore» | developer.android.com/jetpack/androidx/releases/security | No se usa. Cifrado con Android Keystore más Tink |
@@ -62,24 +62,49 @@ Las versiones se fijan en `gradle/libs.versions.toml` con *dependency locking*. 
 
 ## 4. Precondiciones y dependencias
 
-**FASE 0 cerrada** (etiqueta `fase-0-cerrada`): sin ella no empieza ninguna tarea.
+**FASE 0:** cerrada el 2026-11-10 (etiqueta `fase-0-cerrada`). Esta precondición está satisfecha.
+
+**Puertas de esta fase:** el P0 de FASE 3 sigue pendiente. No se inicia ninguna tarea hasta que el propietario apruebe explícitamente este plan. Además, la secuencia del proyecto exige el P6 de cada fase anterior antes de iniciar la implementación: FASE 1 y FASE 2 deben estar cerradas, con sus etiquetas y registros de cierre, aunque una tarea sea técnicamente independiente. La aprobación P0 de FASE 1 no aprueba este plan ni sustituye su P6.
+
+**Preparación paralela permitida:** mientras terminan las fases anteriores solo se puede revisar o preparar documentación de planificación, como esta matriz de dependencias y las preguntas abiertas de §4.1. No se instalan herramientas, se consulta el móvil, se ejecutan pruebas o se implementa código de FASE 3 antes del P0 propio y de los P6 de FASE 1 y 2.
 
 **FASE 1** (contratos Protobuf, bus e ingesta, simulador):
 
-| Tarea | Qué necesita de la FASE 1 | Si la FASE 1 no está cerrada |
+| Tarea | Qué necesita de la FASE 1 | Estado y puerta |
 |---|---|---|
-| T3.4 Bindings del contrato | `Sighting`, `Detection` con `sensor_type` que incluya `HUMAN`, `Evidence`, y la anotación de sensibilidad por campo en `proto/atalaya/v1` | **Bloqueada** |
-| T3.11 Backend de avistamientos | Publicar `Detection` en el bus (MQTT o NATS) e ingesta (REQ-FUN-001); `buf lint` y `buf breaking` | **Bloqueada** |
-| T3.12 Contexto (ADS-B) | ADS-B simulado o en replay (`.pb.zst`) | Solo fixtures; el adaptador ADS-B queda NO VERIFICADO |
-| T3.15 Demostración de extremo a extremo | Todo lo anterior | **Bloqueada** |
-| T3.1-T3.3, T3.5-T3.10, T3.13, T3.14 | Nada: la cola guarda bytes opacos (el `Sighting` serializado), la geometría es pura y la evidencia va detrás de interfaces | Se pueden hacer antes |
+| T3.4 Bindings del contrato | Contratos F1 estables y aprobados, bindings Kotlin/Python generados, y sensibilidad por campo | Los tipos base ya existen, pero FASE 1 sigue abierta y hay diferencias por resolver en §4.1. **Bloqueada hasta P6 y cierre de FASE 1.** |
+| T3.11 Backend de avistamientos | Contrato estable, publicación de `Detection` en el bus e ingesta de REQ-FUN-001; `buf lint` y `buf breaking` | FASE 1 sigue en curso; el backend y la integración del bus aún no están disponibles. **Bloqueada hasta P6 y cierre de FASE 1.** |
+| T3.12 Adaptador ADS-B | ADS-B simulado o en replay (`.pb.zst`) de FASE 1 | **Solo fixtures** hasta P6 y cierre de FASE 1; el adaptador ADS-B real queda NO VERIFICADO. El contexto de incidentes queda en fixtures hasta P6 y cierre de FASE 2. |
+| T3.15 Demostración de extremo a extremo | Todo lo anterior, además de la app/backend de FASE 3 | **Bloqueada** hasta P6 y cierre de FASE 1 y 2, y hasta completar las dependencias de FASE 3. |
+| T3.1-T3.3, T3.5-T3.10, T3.13 | No requieren contratos ni servicios de FASE 1; pueden usar interfaces locales | Técnicamente independientes de FASE 1, pero su ejecución también espera P0 de FASE 3 y P6/cierre de FASE 1 y 2. En paralelo solo se permite preparación documental. |
+| T3.14 Informe PDF | Datos de entrada, contexto y paquete de evidencias | En paralelo solo se puede revisar documentalmente el alcance con fixtures; no se genera el PDF. Implementación y verificación esperan P0 de FASE 3, P6/cierre de FASE 1 y 2, T3.12/T3.13 y la decisión sobre firma del supervisor. |
 
 **Lo que la FASE 3 necesita que contenga el contrato** (se lleva a la revisión del STOP de la FASE 1; si falta, se propone un ADR y se comprueba con `buf breaking`):
 - `Sighting`: UUID (idempotencia), hora UTC de captura, id del dispositivo, posición del observador con precisión, rumbo verdadero e incertidumbre, ángulo de elevación, rangos de distancia y de altura estimadas, clase estimada (C1-C9 o desconocida), número de drones, descripción, referencias a la evidencia (SHA-256, tipo MIME, tamaño, hora de captura) y rol del autor. Sensibilidad: la posición del observador y la evidencia, `OPERATOR`.
 - `Detection`: `sensor_type = HUMAN`, posición estimada con covarianza o elipse (o, si no hay distancia, una línea de rumbo con su incertidumbre), confianza, marcas de tiempo y referencia al `Sighting`.
 - `Evidence`: hash, entradas de la cadena de custodia y token de sello de tiempo.
 
-**FASE 2** (radar de incidentes): el contexto «incidentes previos cercanos» (REQ-FUN-021) lee la base del radar. Si la FASE 2 no está cerrada, solo con fixtures, marcado NO VERIFICADO.
+### 4.1 Compatibilidad abierta con los contratos actuales de FASE 1
+
+Contraste documental del plan con los `.proto` actuales de la rama de trabajo de FASE 1, consultados el 2026-11-10 (`sighting.proto`, `detection.proto`, `evidence.proto` y `common.proto`). La tabla no cambia el contrato ni aprueba nuevos campos; enumera asuntos que deben resolverse en el STOP de FASE 1. Las adiciones, si se proponen, requieren revisión de compatibilidad (`buf breaking`) y de sensibilidad antes de cerrar esa fase.
+
+| Necesidad de FASE 3 | Contrato actual de FASE 1 | Estado | Asunto abierto para la revisión de FASE 1 |
+|---|---|---|---|
+| Identidad e idempotencia del avistamiento; hora UTC; origen del dispositivo | `Sighting.sighting_id` (presencia requerida), `observed_at`; `Envelope.node_id` | Parcialmente cubierto | Confirmar formato UUID, semántica de idempotencia y si `observed_at` satisface la hora de captura solicitada. El ID de dispositivo está fuera de `Sighting`; decidir si basta `Envelope.node_id` y si el transporte de FASE 3 lleva `Envelope` o un `Sighting` aislado. |
+| Posición del observador y precisión | `Sighting.observer_position: GeoPoint` | Parcialmente cubierto | `GeoPoint` da coordenadas y altitud opcional, pero no expresa precisión/incertidumbre de la posición del observador. |
+| Rumbo, elevación, distancia y altura estimadas con incertidumbre | `bearing_deg`, `bearing_uncertainty_deg`, `estimated_altitude_m`, `estimated_distance_m` | Parcialmente cubierto | No hay ángulo de elevación ni rangos/intervalos de altura y distancia; las estimaciones actuales son escalares opcionales. |
+| Clase estimada y número de drones | `Sighting` no contiene estos datos; `Detection` admite `class_scores` | Pendiente | Determinar si son datos del avistamiento, de la detección derivada o no se recogen en v1. No asignar valores por defecto sin decisión. |
+| Descripción y referencias a evidencia | `Sighting.description`, `Sighting.evidence_ids` | Cubierto en estructura | Revisar que el flujo de evidencia vincule los IDs de forma verificable. |
+| Evidencia: hash, MIME, tamaño y hora de captura | `Evidence` contiene `sha256`, `media_type` y `captured_at` | Parcialmente cubierto | No hay tamaño de medio. Resolver si se añade al contrato o queda en el manifiesto/almacén de evidencia. |
+| Autor/rol y custodia | `Evidence.custodian_pseudonym` y `custody_signature`; no hay rol en `Sighting` ni eventos de custodia | Parcialmente cubierto | Definir si el rol se obtiene de autenticación del backend y si los eventos append-only viven solo en el servicio de evidencia. No duplicar identidad personal en el contrato. |
+| Sello RFC 3161 | No hay token de sello en `Evidence` | Pendiente de diseño | Resolver si el token se conserva como artefacto separado del mensaje Protobuf, junto con su hash y manifiesto. |
+| Detección humana derivada | `SensorType.SENSOR_TYPE_HUMAN`, `HumanObservation.sighting_id`, campos de posición/covarianza/elipse, rumbo/incertidumbre, `class_scores`, confianza y hora | Mayormente cubierto | T1.4 de FASE 1 está cerrado con validación de presencia e incertidumbre; confirmar que los casos de posición y línea de rumbo representan el criterio de FASE 3. |
+
+La tabla de sensibilidad aprobada en T1.3 cubre el esquema actual. `Sighting.description` tiene nivel `OPERATOR`; el usuario condicionó su uso a la sanitización del texto libre y a controles de acceso probados en T1.7. Todo consumidor debe aplicar esos controles antes de logs y salidas; la sensibilidad `OPERATOR` por sí sola no sanea el contenido. Cualquier campo nuevo debe recibir una sensibilidad explícita y seguir el proceso de revisión correspondiente; esta tabla no implica aprobación de cambios.
+
+**FASE 2** (radar de incidentes): el contexto «incidentes previos cercanos» (REQ-FUN-021) solo usa fixtures hasta cerrar FASE 2. Su plan sigue pendiente de P0 y T2.0 exige que FASE 1 esté cerrada antes de empezar FASE 2.
+
+La FASE 2 propone una API local de solo lectura (`GET /api/v1/incidentes`, `/api/v1/incidentes/{id}` y otras rutas, T2.15). El punto de integración propuesto para T3.12 es un adaptador de lectura sobre esa API y la vista que esta exponga; el contrato de consulta, los estados visibles, el filtro geográfico y la forma de expresar «incidente cercano» quedan por definir en la planificación/ADR de FASE 2. Se respetará su lista blanca de campos y filtros de privacidad. El acoplamiento directo a tablas internas de PostgreSQL no se presupone. La API aún no está implementada ni sus datos disponibles. La prueba con incidentes sintéticos de T3.12 se mantiene como fixture hasta que ambas fases estén cerradas.
 
 **Otras:** el móvil del usuario con la depuración USB activada (§8, pregunta 1). La validación con la Guardia Civil: **B-02**.
 
@@ -216,18 +241,19 @@ Convenciones:
   - Convierte el avistamiento en `Detection(sensor_type=HUMAN)` con posición y covarianza (T3.5) o, sin distancia, una línea de rumbo con su incertidumbre, y lo publica en el bus del contrato de la FASE 1.
   - **Autorización mínima** por rol: el vigilante crea; el supervisor valida y firma.
   - **Medios:** acceso por rol y retención configurable con borrado auditado y reloj simulado (REQ-PRIV-011).
-  - El texto libre lleva un aviso: no incluir datos que identifiquen o sitúen a quien maneja el dron, que son `FCSE_ONLY` (REQ-LEG-007); en la v1 la app no tiene ningún campo estructurado para ello (decisión 7).
+  - El texto libre lleva un aviso: no incluir datos que identifiquen o sitúen a quien maneja el dron, que son `FCSE_ONLY` (REQ-LEG-007). La decisión 7 (§8) sobre añadir un campo estructurado sigue pendiente; hasta resolverla no se crea ese campo. Si se elige recopilarlo como `FCSE_ONLY`, se actualizarán el alcance y los controles de RBAC/auditoría antes de recoger datos.
+  - Antes de registrar texto en logs o emitirlo a cualquier salida, aplicar la sanitización y los controles de acceso de T1.7 a `Sighting.description`. `OPERATOR` no sustituye a la sanitización. Si T1.7 no puede certificar una salida segura, rechazar la petición o suprimir el texto; no registrar ni emitir el contenido original.
 - **Requisitos:** REQ-FUN-020, REQ-FUN-018, REQ-PRIV-011, REQ-PRIV-003, REQ-LEG-007
 - **Verificación:** `make up && uv run pytest tests/sightings/test_ingest.py tests/sightings/test_to_detection.py -v` (integración con el bus de compose)
-- **Resultado esperado:** un avistamiento produce exactamente una `Detection` HUMAN en el bus, con la incertidumbre esperada para los vectores de T3.5; idempotente por UUID; logs JSON sin datos personales.
-- **Prueba negativa:** medio con hash distinto → 422 y nada publicado; el vigilante intenta firmar → 403; la retención vencida borra el medio y deja registro; un `Sighting` sin rumbo ni posición → rechazado, nunca una detección inventada.
+- **Resultado esperado:** un avistamiento produce exactamente una `Detection` HUMAN en el bus, con la incertidumbre esperada para los vectores de T3.5; idempotente por UUID; logs JSON sin datos personales. La descripción solo llega a logs o salidas tras pasar los controles de T1.7.
+- **Prueba negativa:** medio con hash distinto → 422 y nada publicado; el vigilante intenta firmar → 403; la retención vencida borra el medio y deja registro; un `Sighting` sin rumbo ni posición → rechazado, nunca una detección inventada; si la descripción no supera la sanitización/control de T1.7, no aparece en logs ni se emite a la detección o a otra salida.
 
 ### T3.12 — Contexto del avistamiento (REQ-FUN-021, SHOULD)
-- **Qué:** puerto `ContextProvider` con cuatro adaptadores; cada fuente real pasa antes por `dataset-intake` (licencia registrada):
+- **Qué:** puerto `ContextProvider` con cuatro adaptadores. Para cerrar T3.12 en FASE 3, todos se prueban con fixtures; no se habilitan fuentes reales en esta fase. La ingesta real queda diferida hasta que exista y esté disponible `dataset-intake` de FASE 4 (T4.4), y cada fuente deberá pasar por esa herramienta con sus términos verificados y archivados:
   - **Zonas UAS:** instantánea local del servicio WFS de ENAIRE de zonas geográficas UAS. **Licencia y términos NO VERIFICADOS**: sin verificar, solo se usan fixtures sintéticas.
   - **NOTAM:** no se ha encontrado una fuente a 0 € con términos verificados → **NO VERIFICADO**; solo fixtures.
-  - **ADS-B:** replay o simulador de la FASE 1. Sin fuente en vivo (SPEC D7).
-  - **Incidentes:** base local del radar de la FASE 2.
+  - **ADS-B:** replay o simulador de la FASE 1. Sin fuente en vivo (SPEC D7); hasta cerrar FASE 1, solo fixture y estado NO VERIFICADO.
+  - **Incidentes:** adaptador de lectura a la interfaz local de FASE 2 descrita en §4.1. Hasta cerrar FASE 2, solo fixtures; no consultar directamente su base de datos.
   
   Respuesta con lo que hay y **«fuente no disponible»** de forma explícita, nunca «sin restricciones» por falta de datos (principio de fallo visible).
 - **Requisitos:** REQ-FUN-021, REQ-LEG-009
@@ -248,7 +274,8 @@ Convenciones:
 
 ### T3.14 — Informe PDF para las FCSE
 - **Qué:**
-  - reportlab en modo invariante (salida reproducible). Contenido: hora UTC y local (zona del emplazamiento, p. ej. `Africa/Ceuta` o `Europe/Madrid`), posición del observador, rumbo con incertidumbre, altura y distancia estimadas (rangos), descripción, contexto (T3.12, con las fuentes no disponibles indicadas), evidencias con SHA-256, cadena de custodia y validación del supervisor.
+  - reportlab en modo invariante (salida reproducible). Contenido: hora UTC y local (zona del emplazamiento, p. ej. `Africa/Ceuta` o `Europe/Madrid`), posición del observador, rumbo con incertidumbre, altura y distancia estimadas (rangos), **solo la descripción ya sanitizada por los controles de T1.7**, contexto (T3.12, con las fuentes no disponibles indicadas), evidencias con SHA-256, cadena de custodia y validación del supervisor. No se copia el texto original directamente al PDF.
+  - Si T1.7 no puede certificar que la descripción es segura para ese destinatario, se falla cerrado y no se genera ni firma el informe; el control de acceso al rol no reemplaza la sanitización.
   - **Firma del supervisor** con pyHanko (PAdES) y sello de la TSA local. Marca visible en cada página: «Sello de tiempo de TSA LOCAL DE PRUEBA — SIN VALOR PROBATORIO».
   - Opción A, preferida: la clave del supervisor está en el Keystore del móvil y firma el resumen del documento (firma externa con pyHanko; viabilidad **NO VERIFICADA**, se prueba primero con un *spike* acotado).
   - Opción B, alternativa: certificado del supervisor expedido por la CA local y custodiado en el backend, con la aprobación del supervisor desde la app como entrada auditada de custodia.
@@ -259,7 +286,7 @@ Convenciones:
   - El texto extraído (pypdf) contiene todos los campos obligatorios y la marca de prueba.
   - La firma y el sello validan con pyHanko frente a la CA local.
   - **Inspección humana de la referencia** por el usuario, con la captura en la evidencia.
-- **Prueba negativa:** modificar un byte del PDF firmado → la firma no valida; un informe sin firma del supervisor o sin la marca de prueba → el generador se niega; firma con un certificado de vigilante → rechazada.
+- **Prueba negativa:** modificar un byte del PDF firmado → la firma no valida; un informe sin firma del supervisor o sin la marca de prueba → el generador se niega; firma con un certificado de vigilante → rechazada; descripción que no supera T1.7 → no se genera ni firma el PDF y el texto original no aparece en logs ni artefactos.
 
 ### T3.15 — Demostración en el móvil del usuario  *(depende de la FASE 1)*
 - **Qué:** guion `scripts/demo_fase3.sh`, ejecutado con el móvil por USB:
@@ -327,18 +354,22 @@ Memoria: Gradle a 1,5 GB, el *daemon* de Kotlin a 1 GB y Docker parado durante l
 
 | ID | Riesgo | Mitigación |
 |---|---|---|
-| R-30 (nuevo) | Gradle, AGP y Compose agotan los 8 GB de RAM o el disco (caché de Gradle en crecimiento) | Límites de memoria, sin paralelismo, Docker parado, `du` registrado; limpiar con `./gradlew clean` y la caché de Gradle si baja de 8 GB libres |
-| R-31 (nuevo) | El móvil del usuario es antiguo (API < 26), no tiene magnetómetro o su fabricante restringe el trabajo en segundo plano | T3.0 lo mide antes de programar; `minSdk` según el dato; rumbo manual sin magnetómetro; envío en primer plano al abrir la app |
-| R-32 (nuevo) | El rumbo de brújula de un móvil tiene errores grandes (perturbación magnética cerca de metal o vehículos, falta de calibración) y da una posición con aspecto preciso | Incertidumbre explícita en la `Detection` y en el PDF; aviso de calibración; error medido en T3.15 |
-| R-33 (nuevo) | Que el PDF o el sello de la TSA local se tomen por prueba válida | Marca en cada página, en el certificado y en la política de la TSA; TSA cualificada solo con ADR (SPEC D10) |
-| R-34 (nuevo) | Ventana en la que el vídeo está en claro en el almacenamiento privado de la app antes de cifrarse | Medirla; borrar justo después del hash; documentar; estudiar escribir a un descriptor cifrado (NO VERIFICADO) |
-| R-35 (nuevo) | Retraso de la FASE 1 o un contrato sin los campos que necesita la FASE 3 | Lista de campos llevada al STOP de la FASE 1; tareas independientes primero (§4) |
-| R-36 (nuevo) | Fuentes de contexto (zonas UAS, NOTAM, ADS-B) sin licencia verificada a 0 € | Solo fixtures hasta pasar `dataset-intake`; «fuente no disponible» visible |
-| R-37 (nuevo) | Un vigilante escribe en el texto libre datos que identifican o sitúan a quien maneja el dron | Aviso en la UI; texto libre `OPERATOR` con acceso restringido; revisión del supervisor; decisión 7 |
+| R-47 (provisional) | Gradle, AGP y Compose agotan los 8 GB de RAM o el disco (caché de Gradle en crecimiento) | Límites de memoria, sin paralelismo, Docker parado, `du` registrado; limpiar con `./gradlew clean` y la caché de Gradle si baja de 8 GB libres |
+| R-48 (provisional) | El móvil del usuario es antiguo (API < 26), no tiene magnetómetro o su fabricante restringe el trabajo en segundo plano | T3.0 lo mide antes de programar; `minSdk` según el dato; rumbo manual sin magnetómetro; envío en primer plano al abrir la app |
+| R-49 (provisional) | El rumbo de brújula de un móvil tiene errores grandes (perturbación magnética cerca de metal o vehículos, falta de calibración) y da una posición con aspecto preciso | Incertidumbre explícita en la `Detection` y en el PDF; aviso de calibración; error medido en T3.15 |
+| R-50 (provisional) | Que el PDF o el sello de la TSA local se tomen por prueba válida | Marca en cada página, en el certificado y en la política de la TSA; TSA cualificada solo con ADR (SPEC D10) |
+| R-51 (provisional) | Ventana en la que el vídeo está en claro en el almacenamiento privado de la app antes de cifrarse | Medirla; borrar justo después del hash; documentar; estudiar escribir a un descriptor cifrado (NO VERIFICADO) |
+| R-52 (provisional) | Retraso de la FASE 1 o un contrato sin los campos que necesita la FASE 3 | Lista de campos llevada al STOP de la FASE 1; no se implementa FASE 3 hasta P6 de las fases anteriores (§4) |
+| R-53 (provisional) | Fuentes de contexto (zonas UAS, NOTAM, ADS-B) sin licencia verificada a 0 € | Solo fixtures durante FASE 3; cualquier ingesta real se difiere hasta disponer de `dataset-intake` (FASE 4, T4.4) y verificar/archivar los términos; «fuente no disponible» visible |
+| R-54 (provisional) | Un vigilante escribe en el texto libre datos que identifican o sitúan a quien maneja el dron | Aplicar sanitización y control de acceso de T1.7 antes de logs/salidas; si no pasa, rechazar o suprimir la descripción. Aviso en la UI no sustituye al control (decisión 7) |
 | R-19 | Minutos de CI limitados | Compilación y tests de Android en local (`make android-check`), con la evidencia en el paquete; en CI solo licencias y guardarraíles (decisión 5) |
 | R-20 | Un único Android | Limitación declarada en el cierre: la app solo se ha probado en ese modelo |
 
+Los IDs R-47–R-54 son provisionales. No colisionan con los IDs actuales del registro global (R-01–R-33) ni con los rangos planificados para FASE 1 (R-34–R-39), FASE 2 (R-40–R-46) y FASE 4 (R-55–R-59). Se validarán otra vez su unicidad y su incorporación al registro global antes del cierre de FASE 3; este borrador no modifica dicho registro.
+
 ## 8. Decisiones y preguntas para el usuario
+
+**P0 pendiente, sin respuesta registrada:** ¿Apruebas este plan v1 de FASE 3 para iniciar T3.0? El estado no cambiará hasta recibir una aprobación explícita.
 
 1. **¿Qué móvil Android tienes?** Marca y modelo exactos (Ajustes → Información del teléfono), **versión de Android** y, si lo sabes, cuánto almacenamiento libre tiene. ¿Puedes activar las Opciones de desarrollador y la **depuración USB**, y tienes un cable USB de datos? ¿Me dejas consultar sus sensores con `adb` (T3.0)?
 2. Aprobar la instalación por línea de comandos (§6: ~3,5-6 GB, **sin** Android Studio ni emulador) y **aceptar las licencias del Android SDK** (`sdkmanager --licenses`; las acepta el usuario, no Claude).
@@ -346,12 +377,12 @@ Memoria: Gradle a 1,5 GB, el *daemon* de Kotlin a 1 GB y Docker parado durante l
 4. Cifrado de la cola: **Keystore + Tink** (recomendado; Apache-2.0, sin base de datos cifrada completa) o **SQLCipher** (BSD; cifra toda la base).
 5. CI: ¿compilar Android también en GitHub Actions (consume minutos de un repo privado, ADR 0007) o **solo en local con evidencia** (recomendado)?
 6. ¿Instalar **Accessibility Scanner** (app gratuita de Google) en tu móvil para la auditoría manual de REQ-NFR-010?
-7. Datos sobre quien maneja el dron en un avistamiento: **no recogerlos en la v1** (recomendado, minimización) o un campo estructurado `FCSE_ONLY` con auditoría (exigiría el RBAC de la FASE 10).
+7. **PENDIENTE — Datos sobre quien maneja el dron en un avistamiento:** no recogerlos en la v1 (recomendado, minimización) o añadir un campo estructurado `FCSE_ONLY` con auditoría (exigiría actualizar el alcance y contar con RBAC antes de recogerlos).
 8. Firma del supervisor: **opción A** (clave en el móvil, si el *spike* funciona) u **opción B** (clave en el backend local).
 9. Validación del informe con la Guardia Civil: **B-02**. Si consigues un contacto, el PDF de referencia de T3.14 es el documento que se le enseñaría.
 
 ## 9. Estimación
-**4-6 semanas de trabajo efectivo** (18 tareas, T3.0-T3.17), por encima del rango de la SPEC (3-5) por el mTLS básico, la TSA local y la puesta a punto del toolchain sin Android Studio; se reestima al cerrar T3.2. Coste: 0 €. Las tareas que dependen de la FASE 1 (T3.4, T3.11, T3.15 y el adaptador ADS-B de T3.12) no pueden cerrarse antes que ella.
+**4-6 semanas de trabajo efectivo** (18 tareas, T3.0-T3.17), por encima del rango de la SPEC (3-5) por el mTLS básico, la TSA local y la puesta a punto del toolchain sin Android Studio; se reestima al cerrar T3.2. Coste: 0 €. T3.4, T3.11, T3.15 y el adaptador ADS-B de T3.12 dependen del cierre de FASE 1. El adaptador de incidentes de T3.12 depende del cierre de FASE 2; según el plan actual, FASE 2 requiere previamente el cierre de FASE 1.
 
 ## 10. NO VERIFICADO en este plan
 - Tamaños instalados del SDK y de la caché de Gradle (solo descargas comprobadas).
