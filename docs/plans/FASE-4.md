@@ -1,6 +1,6 @@
 # Plan FASE 4 — Biblioteca de firmas y datos
 
-Versión 1 · 2026-11-08 · Estado: **pendiente de aprobación (STOP de plan, puerta P0)**
+Versión 2.1 · 2026-11-10 · Estado: **pendiente de aprobación (STOP de plan, puerta P0)**
 
 ## 1. Objetivo
 Al cerrar la fase quedará demostrado, con evidencia ejecutable y a 0 €, que:
@@ -12,7 +12,7 @@ Al cerrar la fase quedará demostrado, con evidencia ejecutable y a 0 €, que:
 - hay un **protocolo y una herramienta de grabación** (sesión autorizada, consentimiento, VAD de voz, metadatos e importación del registro de vuelo), probados sobre una sesión sintética;
 - `docs/DATOS-HUECOS.md` dice qué falta, cómo se cubrirá y qué alianzas se proponen.
 
-Base de la fase: `docs/data-cards/INVESTIGACION-LICENCIAS.md` (investigación del 2026-11-08).
+Base documental: `docs/data-cards/INVESTIGACION-LICENCIAS.md`, investigación histórica del 2026-11-08. Sus estados de licencia, tamaños y disponibilidad son **NO VERIFICADOS a fecha de este plan** y no autorizan descarga, ingesta ni uso. La licencia aplicable de cada fuente se volverá a comprobar y archivar desde la fuente original antes de cualquier intake (T4.4); hasta entonces `production_allowed: false`.
 
 ## 2. Requisitos que cubre
 - **MUST:** REQ-FUN-023, REQ-FUN-024, REQ-FUN-025, REQ-LEG-006, REQ-LEG-009, REQ-LEG-014, REQ-PRIV-009.
@@ -24,42 +24,47 @@ Base de la fase: `docs/data-cards/INVESTIGACION-LICENCIAS.md` (investigación de
 
 | Hallazgo | Efecto |
 |---|---|
-| **Al-Emadi prohíbe cualquier uso con fines de seguridad o defensa**, comercial o no, incluida la detección y el seguimiento de drones con esos fines | Excluido del proyecto, también para investigación. Nuevo riesgo R-33 |
-| **DADS contiene Al-Emadi y no guarda la fuente de cada fichero**; además mezcla 5 fuentes NC y tiene un solo split | **DADS no se descarga** (decisión D2). Su análisis de fugas se sustituye por el análisis de los datasets que sí se ingieren y por pruebas con fugas sintéticas inyectadas. Las partes con licencia comercial se bajan de su fuente original |
-| Hay datos con licencia comercial para C1 y confusores: Salford (CC BY 4.0), DroneAudioSet `drone-only` (MIT), Yi et al. (CC BY 4.0), Svanström (CC0-1.0), ESC-10 (CC BY) | Base de producción de la v1. Dominio sesgado (cámara anecoica, micrófonos a bordo, interiores): se documenta en las data cards (R-35) |
-| **NASA sUAS Flyover: dos aviones RC de gasolina (pistón), tres multirrotores, RTK y meteorología**, pero **sin licencia declarada** | Fuente real de equivalentes de C6 y de prueba real de la importación del registro de vuelo. Entra como **solo investigación** hasta confirmación escrita de la NASA (D3) |
-| **Disco: 24 GB libres** (`df -h /`), por debajo de los ~30 GB de la SPEC; RF (40-299 GB), Tegler (19 GB) y visión no caben | Presupuesto de datos de la fase: **≤ 8 GB** con subconjuntos y descarga secuencial con limpieza (§4, T4.6-T4.7). RF, visión y Tegler, solo registrados |
-| Ninguna fase posterior a la -1 está cerrada (`FASES-CERRADAS.txt`); el enum `SignatureClass` de la FASE 1 aún no existe | La FASE 4 empieza tras cerrar la 0. Si la FASE 1 no ha cerrado, la taxonomía C1-C9 vive en `ml/signatures/taxonomy.py` con un test que la comparará con el `.proto` cuando exista |
+| La investigación de 2026-11-08 registra restricciones de Al-Emadi para usos de seguridad o defensa; DADS contiene Al-Emadi y no guarda la fuente de cada fichero | Se aplica la decisión vigente del propietario: ambos quedan **bloqueados por licencia y sin ingesta**; se pueden citar resultados publicados y siguen previstas cartas a autores. Sin permiso escrito, el estado no cambia. Nuevo riesgo provisional R-55 |
+| La investigación del 2026-11-08 reportó candidatos con licencias comerciales para C1 y confusores: Salford, DroneAudioSet `drone-only`, Yi et al., Svanström y ESC-10 | Solo candidatos para revalidación; no habilitan producción hasta completar el intake. El dominio observado es sesgado (cámara anecoica, micrófonos a bordo, interiores) y se documentará en data cards (R-57) |
+| La investigación del 2026-11-08 registró que NASA sUAS Flyover no declara licencia y contiene aviones RC de pistón, multirrotores, RTK y meteorología | Solo podría servir como investigación y equivalente de C6 si se aprueba D3 y se verifican y archivan sus términos/licencia y cualquier permiso escrito exigible; la investigación histórica no autoriza su ingesta |
+| Medición histórica del 2026-11-08: 24 GB libres (`df -h /`); RF, Tegler y visión exceden el presupuesto de esa medición | El límite de ≤ 8 GB es provisional. Volver a medir disco antes de cualquier adquisición; RF, visión y Tegler solo se registran en esta fase |
 | `docs/plans/` lo analiza `check_spec.py`; `.yaml`, `.json` y `.py` los analiza el guardarraíl de código; el audio solo puede ir a git en `tests/fixtures/sinteticos/` | Ningún audio real va a git: todo por DVC. Los tests generan audio sintético en `tmp_path` |
-| `.claude/settings.json` deniega `Edit(/evals/frozen/**)` y `ml.md` prohíbe tocar `evals/frozen/` | La creación única de `evals/frozen/v1` la hace un script, con aprobación expresa del usuario (D6); después, un test garantiza la inmutabilidad |
+| `evals/frozen/` es una ruta protegida | La creación única de `evals/frozen/v1` requiere aprobación expresa pendiente (D6); después, un test garantiza la inmutabilidad. No se crea ni modifica el conjunto antes de esa aprobación |
 | La CI de GitHub no tiene acceso al remoto local de DVC | Los tests de `make check` y de CI usan datos sintéticos. Las verificaciones con datos reales van en `make data-check` (local) y su salida se guarda en el paquete de evidencias |
-| ADR libres a partir del **0009**; riesgos a partir del **R-33** | Numeración del plan |
+| El registro actual contiene ADR hasta 0013; T1.8 de FASE 1 tiene una propuesta de ADR 0014 pendiente de STOP/decisión del usuario y FASE 2 revisará la numeración al resolverla. Los riesgos de FASE 1–3 tienen rangos provisionales | Los números de ADR de FASE 4 quedan pendientes: al iniciar T4.1 se revisarán `docs/adr/` y las reservas aprobadas, y se asignarán dos números libres consecutivos tras resolver las propuestas pendientes. No asumir que 0014 o 0015 están reservados. Los IDs de riesgos de FASE 4 se proponen como R-55–R-59 y se cotejan con el registro global y los rangos de FASE 1–3 antes del cierre. |
 
-### Distribución prevista de los datos (≤ 8 GB)
+### 3.1 Estado y dependencias con las FASES 0–3 (2026-11-10)
+
+- **FASE 0:** cerrada por P6 el 2026-11-10; `fase-0-cerrada` figura en el registro de fases cerradas.
+- **FASE 1:** P0 aprobado para la versión 3 el 2026-11-10; T1.0–T1.6 constan como OK en el registro de tareas, pero la fase sigue abierta y no aparece cerrada en `docs/requirements/FASES-CERRADAS.txt`. El contrato actual define `SignatureClassCode` C1–C9 en `proto/atalaya/v1/signature_class.proto` en la raíz del proyecto. T4.9–T4.10 deben alinearse con ese contrato; no crear una taxonomía paralela. T4.14 puede usar la propagación del simulador de FASE 1 o la de T4.11.
+- **FASES 2 y 3:** sus planes están en worktrees separados y siguen pendientes de P0; ninguna figura cerrada. La FASE 2 no es una dependencia técnica directa de la biblioteca de firmas. La FASE 3 consume la taxonomía/contratos de FASE 1 y prevé usar `dataset-intake` para fuentes reales; coordinar su política de licencias y la actualización compartida de la DPIA (REQ-PRIV-006), sin considerar verificada una fuente por aparecer en otro plan.
+- **Puertas de ejecución:** este plan sigue pendiente de su propio P0 (D1). Además, por la secuencia del proyecto, la implementación de FASE 4 espera el P6 y cierre de todas las fases anteriores (FASES 0–3), con sus etiquetas y registros de cierre, aunque una tarea no tenga dependencia técnica directa. P0 de FASE 4 no sustituye esos P6. Mientras las fases anteriores terminan, en paralelo solo se permite revisar este plan, sus dependencias y las decisiones de P0; no se adelantan los entregables documentales de las tareas de FASE 4. No se ejecuta código, `dvc init`, pruebas técnicas, instalaciones ni descargas/intake de datos. Los artefactos protegidos, la congelación de evaluación y cualquier grabación conservan además sus puertas específicas.
+
+### Distribución prevista de los datos (≤ 8 GB; estimación histórica, sujeta a revalidación y decisiones pendientes)
 
 | Dataset | Licencia | Qué se guarda | Tamaño | Uso |
 |---|---|---|---|---|
-| DroneNoise Database (Salford) | CC BY 4.0 | Completo | 0,74 GB | C1, producción |
-| Svanström et al. 2021 | CC0-1.0 | Completo (el vídeo se conserva para la FASE 9) | 0,31 GB | C1, C8 y fondo, producción |
-| ESC-10 (dentro de ESC-50) | CC BY | Solo ESC-10, sin estornudo ni llanto; el resto de ESC-50 se borra tras extraerlo | ~0,15 GB | C8 (helicóptero) y C9, producción |
-| DroneAudioSet `drone-only` | MIT | Subconjunto de ~1,5 GB (parquets elegidos por dron y acelerador, con semilla) | ~1,5 GB | C1, producción |
-| Yi et al. (KAIST) | CC BY 4.0 | Un TAR (dron A), solo estado sin fallo | ~2,5 GB (temporal), ~1 GB final | C1, producción |
-| NASA sUAS Flyover | No declarada | Completo | 1,69 GB | C1, C2 y equivalente de C6; **solo investigación** hasta D3 |
-| **Total** | | | **≈ 5,4-6 GB** | |
+| DroneNoise Database (Salford) | CC BY 4.0 (según investigación histórica) | Completo | 0,74 GB (estimación histórica) | C1, candidato a producción tras revalidación e intake |
+| Svanström et al. 2021 | CC0-1.0 (según investigación histórica) | Completo (el vídeo se conserva para la FASE 9) | 0,31 GB (estimación histórica) | C1, C8 y fondo, candidato a producción tras revalidación e intake |
+| ESC-10 (dentro de ESC-50) | CC BY (según investigación histórica) | Solo ESC-10, sin estornudo ni llanto; el resto de ESC-50 se borra tras extraerlo | ~0,15 GB (estimación histórica) | C8 (helicóptero) y C9, candidato a producción tras revalidación e intake |
+| DroneAudioSet `drone-only` | MIT (según investigación histórica) | Subconjunto de ~1,5 GB (parquets elegidos por dron y acelerador, con semilla) | ~1,5 GB (estimación histórica) | C1, candidato a producción tras revalidación e intake |
+| Yi et al. (KAIST) | CC BY 4.0 (según investigación histórica) | Un TAR (dron A), solo estado sin fallo | ~2,5 GB temporal / ~1 GB final (estimación histórica) | C1, candidato a producción tras revalidación e intake |
+| NASA sUAS Flyover | No declarada según investigación histórica | Completo | 1,69 GB (estimación histórica) | C1, C2 y equivalente de C6; solo investigación si se aprueba D3 y se verifican/archivan los términos y cualquier permiso escrito exigible |
+| **Total estimado** | | | **≈ 5,4-6 GB si se aprueba y admite NASA; menor si D3 se rechaza o no se verifican sus términos** | |
 
 ## 4. Tareas
 
 Orden estricto. Cada tarea: TDD (primero el test que falla), verificación y prueba negativa registradas en `docs/evidence/FASE-4/registro-tareas.md` y un commit con los IDs. **Un FALLO bloquea la tarea siguiente.** Todos los tests llevan `@pytest.mark.req(...)`. `make check` debe seguir por debajo de ~60 s: lo pesado va a `make data-check`.
 
-### T4.1 — Decisiones de base y dependencias (ADR 0009 y 0010)
+### T4.1 — Decisiones de base y dependencias (dos ADR; numeración pendiente)
 - **Qué:**
-  - **ADR 0009 — Datos de terceros:** clases de licencia (`commercial_ok`, `research_only`, `excluded`, `unknown`), regla `production_allowed` (solo `commercial_ok` con licencia verificada), etiquetas `osint_conflict`, `site_sensitive`, `synthetic` y `personal_data`, exclusión de Al-Emadi y DADS, y política de `evals/frozen/v1` (D6).
-  - **ADR 0010 — Dependencias de datos y audio:** DVC, numpy, scipy, soundfile, pyarrow, h5py y un VAD con licencia permisiva (candidatos: `webrtcvad-wheels`, MIT, o Silero VAD, MIT, con onnxruntime). Antes de fijarlas: comprobar que hay ruedas x86_64 para macOS (problema conocido con `libcst`) y la licencia con `scripts/license_check.py`. Todas en el grupo de desarrollo o de datos, nunca en un componente distribuido sin revisar.
+  - **ADR — Datos de terceros:** clases de licencia (`commercial_ok`, `research_only`, `excluded`, `unknown`), regla `production_allowed` (solo `commercial_ok` con licencia verificada), etiquetas `osint_conflict`, `site_sensitive`, `synthetic` y `personal_data`, y estado de ingesta separado. Para DADS y Al-Emadi se registra `blocked_by_license`/sin ingesta conforme a la decisión vigente; un permiso escrito no cambia automáticamente el estado hasta completar el intake. También fija la política de `evals/frozen/v1` (D6).
+  - **ADR — Dependencias de datos y audio:** DVC, numpy, scipy, soundfile, pyarrow, h5py y un VAD con licencia permisiva (candidatos: `webrtcvad-wheels`, MIT, o Silero VAD, MIT, con onnxruntime). Antes de fijarlas: comprobar que hay ruedas x86_64 para macOS (problema conocido con `libcst`) y la licencia con `scripts/license_check.py`. Todas en el grupo de desarrollo o de datos, nunca en un componente distribuido sin revisar. Los dos números se asignan consecutivamente al ejecutar T4.1, tras consultar el registro real y las reservas de ADR de fases anteriores; no se fijan en este borrador.
   - Estructura: `ml/__init__.py`, `ml/datasets/`, `ml/signatures/`, `ml/recording/` como paquete importable; tests en `tests/ml/`.
 - **Requisitos:** REQ-LEG-009, REQ-LEG-016, REQ-NFR-016
 - **Verificación:** `uv sync --frozen && uv run python -m scripts.license_check && uv run pytest tests/test_documentos.py tests/ml/test_estructura_ml.py -v`
-- **Resultado esperado:** ningún bloqueo de licencia; los ADR 0009 y 0010 con Estado, Contexto, Decisión y Consecuencias; el test de estructura encuentra los paquetes de `ml/`.
-- **Prueba negativa:** en una copia, añadir una dependencia GPL al grupo de ejecución → `license_check` sale con 1 nombrándola; quitar «Consecuencias» del ADR 0009 → el test de documentos falla.
+- **Resultado esperado:** ningún bloqueo de licencia; los dos ADR con Estado, Contexto, Decisión y Consecuencias y números consecutivos libres; el test de estructura encuentra los paquetes de `ml/`.
+- **Prueba negativa:** en una copia, añadir una dependencia GPL al grupo de ejecución → `license_check` sale con 1 nombrándola; quitar «Consecuencias» del primer ADR de T4.1 → el test de documentos falla.
 
 ### T4.2 — DVC con remoto local (0 €) y medida de disco
 - **Qué:** `dvc init`; `cache.type = reflink,hardlink,copy` (APFS admite reflink; **NO VERIFICADO** que DVC lo use en este Mac: se mide); remoto local en el directorio que decida el usuario (D5; por defecto `~/atalaya-dvc-remote`, fuera del repo). `make data-pull` y `make data-push`. `scripts/regress.d/fase4.sh`: si el remoto existe, `dvc pull` y verificación completa; si no (CI, clon limpio), verificación solo de los manifiestos y aviso **NO VERIFICADO** explícito.
@@ -70,20 +75,20 @@ Orden estricto. Cada tarea: TDD (primero el test que falla), verificación y pru
 
 ### T4.3 — Registro de licencias y puerta de producción (G-13)
 - **Qué:**
-  - `ml/datasets/registry.yaml`: una entrada por dataset de `INVESTIGACION-LICENCIAS.md` (incluidos los excluidos y los no ingeridos) con `id`, URL de la fuente, SPDX o texto, clase de licencia, `verified_at`, URL de evidencia, `production_allowed`, `osint_conflict`, `personal_data` y notas.
+  - `ml/datasets/registry.yaml`: una entrada por dataset de `INVESTIGACION-LICENCIAS.md` (incluidos los bloqueados y no ingeridos) con `id`, URL de la fuente, SPDX o texto, clase de licencia, estado de ingesta, `verified_at`, URL de evidencia, `production_allowed`, `osint_conflict`, `personal_data` y notas. La investigación del 2026-11-08 se conserva como antecedente histórico; `verified_at` solo se rellena tras comprobar y archivar la fuente original en esta fase.
   - `ml/datasets/gate.py`: `assert_production_allowed(manifest)` rechaza cualquier fichero cuyo dataset no sea `commercial_ok` verificado, o que lleve `osint_conflict` o `synthetic` sin la marca de uso permitido; `assert_cloud_upload_allowed(manifest)` rechaza `site_sensitive` (REQ-PRIV-009) y todo lo no público.
   - CLI: `uv run python -m ml.datasets.gate --production <manifest>` y `--cloud <manifest>`.
 - **Requisitos:** REQ-LEG-009, REQ-LEG-014, REQ-PRIV-009
 - **Verificación:** `uv run pytest tests/ml/test_gate.py tests/ml/test_registry.py -v`
-- **Resultado esperado:** ≥ 15 tests en verde; el registro valida contra su esquema y tiene las 28 entradas de la investigación (ESC-10 aparte de ESC-50); Al-Emadi y DADS figuran como `excluded`.
+- **Resultado esperado:** ≥ 15 tests en verde; el registro valida contra su esquema y tiene las 28 entradas de la investigación (ESC-10 aparte de ESC-50); DADS y Al-Emadi figuran `blocked_by_license`, sin ingesta y con `production_allowed: false`. Se pueden citar resultados publicados y preparar cartas a autores; sin permiso escrito no cambia su estado.
 - **Prueba negativa:** manifiestos de prueba con (a) un fichero UrbanSound8K (NC), (b) uno NASA (`unknown`), (c) uno con `osint_conflict: true`, (d) uno `site_sensitive` hacia la nube y (e) un dataset que no está en el registro → todos rechazados con exit 1 y el motivo; un manifiesto solo con Salford → exit 0.
 
 ### T4.4 — Herramienta de intake y data cards
-- **Qué:** `ml/datasets/intake.py` implementa la skill `dataset-intake`: descarga desde la URL del registro a un directorio nuevo y vacío, archiva `LICENSE-fuente.txt` (texto, URL y fecha), genera `MANIFEST.sha256` por fichero, registra versión y fecha de descarga, hace `dvc add`, lanza `scripts/pii_scan.py` sobre los metadatos de texto y crea la data card `docs/data-cards/<id>.md` desde una plantilla (licencia, procedencia, distribución de clases, sesiones y emplazamientos, datos personales, limitaciones y muestra revisada con semilla). Se niega a ingerir un dataset `excluded` o que no esté en el registro. Los ficheros descargados se tratan como no confiables (lectura con `python -I`, nada se ejecuta desde ellos).
+- **Qué:** `ml/datasets/intake.py` implementa la skill `dataset-intake`: descarga desde la URL del registro a un directorio nuevo y vacío, archiva `LICENSE-fuente.txt` (texto, URL y fecha), genera `MANIFEST.sha256` por fichero, registra versión y fecha de descarga, hace `dvc add`, lanza `scripts/pii_scan.py` sobre los metadatos de texto y crea la data card `docs/data-cards/<id>.md` desde una plantilla (licencia, procedencia, distribución de clases, sesiones y emplazamientos, datos personales, limitaciones y muestra revisada con semilla). Se niega a ingerir un dataset no autorizado para intake, `blocked_by_license`, `excluded` o que no esté en el registro. Los ficheros descargados se tratan como no confiables (lectura con `python -I`, nada se ejecuta desde ellos).
 - **Requisitos:** REQ-LEG-009, REQ-FUN-023
 - **Verificación:** `uv run pytest tests/ml/test_intake.py tests/ml/test_data_cards.py -v`
 - **Resultado esperado:** intake de un dataset sintético local (servido desde `tmp_path`) de punta a punta: manifiesto correcto, `.dvc` creado y data card con todas las secciones obligatorias.
-- **Prueba negativa:** intake de `al-emadi` o `dads` → rechazado; un fichero alterado tras la descarga → el manifiesto no verifica; una data card sin la sección «Licencia» o «Limitaciones» → el test falla.
+- **Prueba negativa:** intake de `al-emadi` o `dads` → rechazado mientras su estado sea `blocked_by_license`; un fichero alterado tras la descarga → el manifiesto no verifica; una data card sin la sección «Licencia» o «Limitaciones» → el test falla.
 
 ### T4.5 — Análisis de fugas
 - **Qué:** `ml/datasets/leakage.py`:
@@ -104,14 +109,14 @@ Orden estricto. Cada tarea: TDD (primero el test que falla), verificación y pru
 - **Prueba negativa:** la puerta rechaza ESC-50 completo (NC) si se intenta registrar; el intake falla si la licencia archivada no coincide con la del registro.
 
 ### T4.7 — Intake del lote 2 (subconjuntos) y de la NASA
-- **Qué:** **DroneAudioSet `drone-only`** (subconjunto de ~1,5 GB elegido con semilla; nunca `drone-with-source` ni `source-only`, que tienen voz y material de terceros), **Yi et al.** (dron A, estado sin fallo; se borra el resto tras extraer) y, si el usuario aprueba D3, **NASA sUAS Flyover** como `research_only`, convirtiendo los `.mat` a WAV con la posición RTK alineada por UTC. Descarga **secuencial**: una por una, con `df` antes y después.
+- **Qué:** **DroneAudioSet `drone-only`** (subconjunto de ~1,5 GB elegido con semilla; nunca `drone-with-source` ni `source-only`, que tienen voz y material de terceros) y **Yi et al.** (dron A, estado sin fallo; se borra el resto tras extraer). Añadir **NASA sUAS Flyover** como `research_only` solo si el usuario aprueba D3 y, antes de descargar o ingerirla, se verifican y archivan sus términos/licencia y cualquier permiso escrito exigible; si no se cumplen esas condiciones, se omite. Al incorporarla, convertir los `.mat` a WAV con la posición RTK alineada por UTC. Descarga **secuencial**: una por una, con `df` antes y después.
 - **Requisitos:** REQ-LEG-009, REQ-FUN-023
-- **Verificación:** `make data-check DATASETS="droneaudioset-droneonly yi-kaist-2023 nasa-suas-flyover"`
-- **Resultado esperado:** manifiestos verificados; NASA marcada `production_allowed: false`; disco total de datos ≤ 8 GB y ≥ 12 GB libres al terminar; análisis de fugas entre todos los datasets ingeridos registrado.
+- **Verificación:** `make data-check DATASETS="droneaudioset-droneonly yi-kaist-2023"`; añadir `nasa-suas-flyover` solo si D3 está aprobada y sus términos/permiso están verificados y archivados.
+- **Resultado esperado:** manifiestos verificados; si se ingiere NASA bajo esas condiciones, marcada `production_allowed: false`; disco total de datos ≤ 8 GB y ≥ 12 GB libres al terminar; análisis de fugas entre todos los datasets ingeridos registrado.
 - **Prueba negativa:** la puerta de producción rechaza cualquier fichero NASA; un intento de ingerir `drone-with-source` falla porque no está en el registro como permitido.
 
 ### T4.8 — Registro de los datasets no ingeridos
-- **Qué:** data card corta para cada dataset que **no** se descarga en esta fase (DADS, Al-Emadi, UrbanSound8K, TUT 2017, DREGON, SPCup19, DNC, AUDROK, arXiv 2509.04715, Tegler, DroneRF, CardRF, CageDroneRF, RFUAV, Anti-UAV, Anti-UAV410, DUT Anti-UAV, CST Anti-UAV, MMAUD, DIAT-μSAT y SIPRI): licencia, motivo de no ingesta, fase en la que se reconsidera y qué falta (carta a autores, disco). Actualización de SPEC §7 y §11 y de RIESGOS (R-03 y R-33 a R-37) con lo verificado.
+- **Qué:** data card corta para cada dataset que **no** se descarga en esta fase (DADS, Al-Emadi, UrbanSound8K, TUT 2017, DREGON, SPCup19, DNC, AUDROK, arXiv 2509.04715, Tegler, DroneRF, CardRF, CageDroneRF, RFUAV, Anti-UAV, Anti-UAV410, DUT Anti-UAV, CST Anti-UAV, MMAUD, DIAT-μSAT y SIPRI): licencia, motivo de no ingesta, fase en la que se reconsidera y qué falta (carta a autores, disco). Actualización de SPEC §7 y §11 y de RIESGOS (R-03 y R-55 a R-59) con lo verificado.
 - **Requisitos:** REQ-LEG-009
 - **Verificación:** `uv run pytest tests/ml/test_data_cards.py -v && python3 -I scripts/check_spec.py`
 - **Resultado esperado:** una data card por cada entrada del registro (28); cada una enlaza la URL de la fuente y su fecha de verificación; check_spec en verde (las líneas sensibles nuevas se revisan a mano antes de añadirlas a la lista blanca).
@@ -125,7 +130,7 @@ Orden estricto. Cada tarea: TDD (primero el test que falla), verificación y pru
 - **Prueba negativa:** una entrada sin `license_class`, sin `distance_m` y sin `distance_reason`, con `class: C10`, con `model` sin confianza, con un campo `country` o una entrada de audio de clase C4 → rechazada con el campo culpable.
 
 ### T4.10 — Biblioteca de firmas C1-C9
-- **Qué:** `ml/signatures/build.py` genera `ml/signatures/catalog.jsonl` (solo metadatos y hashes; el audio sigue en DVC) desde los datasets ingeridos, con características ligeras calculadas en el Mac (frecuencia fundamental y armónicos estimados, bandas de energía, SNR) y `ml/signatures/clases/C1.md` … `C9.md` con el resumen por clase y el origen de los datos (real, equivalente, sintético o **sin datos**). Mapeo previsto: C1 (Salford, DroneAudioSet, Yi, Svanström, NASA Phantom 2), C2 (NASA Hex Flyer, investigación), C3 y C5 (**sin datos con licencia**), C4 (solo fusión), C6 (equivalente NASA, investigación, y sintético), C7 (sintético), C8 (helicópteros de Svanström y ESC-10), C9 (fondos de Svanström y ESC-10).
+- **Qué:** `ml/signatures/build.py` genera `ml/signatures/catalog.jsonl` (solo metadatos y hashes; el audio sigue en DVC) desde los datasets ingeridos, con características ligeras calculadas en el Mac (frecuencia fundamental y armónicos estimados, bandas de energía, SNR) y `ml/signatures/clases/C1.md` … `C9.md` con el resumen por clase y el origen de los datos (real, equivalente, sintético o **sin datos**). Mapeo previsto: C1 (Salford, DroneAudioSet, Yi, Svanström y, solo si D3 y las condiciones de T4.7 se cumplen, NASA Phantom 2), C2 (NASA Hex Flyer, investigación y solo bajo las mismas condiciones), C3 y C5 (**sin datos con licencia**), C4 (solo fusión), C6 (equivalente NASA solo bajo esas condiciones, y sintético), C7 (sintético), C8 (helicópteros de Svanström y ESC-10), C9 (fondos de Svanström y ESC-10).
 - **Requisitos:** REQ-FUN-023
 - **Verificación:** `make data-check STEP=signatures && uv run pytest tests/ml/test_catalog.py -v`
 - **Resultado esperado:** el 100 % de las entradas pasa el validador de T4.9; las 9 clases tienen ficha y cada una declara su origen; los recuentos por clase se generan por script.
@@ -137,16 +142,16 @@ Orden estricto. Cada tarea: TDD (primero el test que falla), verificación y pru
   - **C7 (reactor o turbina):** tonos ligados al régimen del eje más ruido de banda ancha;
   - **propagación:** divergencia esférica, absorción atmosférica según ISO 9613-1 (temperatura, humedad, presión), reflexión en el suelo y Doppler opcionales, y ruido de fondo;
   - parámetros genéricos por familia con rangos marcados **NO VERIFICADO** y su fuente; ningún modelo concreto;
-  - metadatos `synthetic=true`, `generator_version` y `seed`. Si se aprueba D3, se compara la estructura armónica del sintético de pistón con los aviones de gasolina de la NASA (análisis, no métrica de detección).
+  - metadatos `synthetic=true`, `generator_version` y `seed`. Solo si D3 está aprobada y se han verificado/archivado los términos y permisos exigibles, se compara la estructura armónica del sintético de pistón con los aviones de gasolina de la NASA (análisis, no métrica de detección).
 - **Requisitos:** REQ-FUN-024
 - **Verificación:** `uv run pytest tests/ml/test_synth.py -v`
 - **Resultado esperado:** para RPM y palas en una rejilla con `hypothesis`, el pico fundamental medido por FFT coincide con RPM × palas / 60 con un error ≤ 1 % o ≤ 1 Hz; la atenuación a 1 km coincide con la fórmula ISO 9613-1 calculada de forma independiente con un error ≤ 0,5 dB; misma semilla ⇒ mismo hash; todas las salidas con `synthetic=true`.
 - **Prueba negativa:** RPM ≤ 0 o palas < 1 → error; la puerta de producción rechaza el uso de sintéticos como métrica de detección real; una salida sin `synthetic=true` → el validador la rechaza.
 
-### T4.12 — `evals/frozen/v1`
-- **Qué:** `ml/eval/freeze.py` crea, una sola vez y con aprobación expresa (D6), `evals/frozen/v1/` con dos pistas separadas:
+### T4.12 — `evals/frozen/v1` *(D6 pendiente; no crear antes de aprobación expresa)*
+- **Qué:** cuando D6 se apruebe, `ml/eval/freeze.py` crea una sola vez `evals/frozen/v1/` con dos pistas separadas:
   - **`production/`:** solo ficheros `production_allowed`, por clase, con confusores (C8 y C9);
-  - **`research/`:** NASA (equivalentes de C6) y sintéticos de C6/C7 marcados, que **nunca** se usan para afirmar rendimiento comercial.
+  - **`research/`:** sintéticos de C6/C7 marcados y, solo si D3 fue aprobada y los términos/licencia y cualquier permiso escrito exigible fueron verificados y archivados antes del intake, NASA como equivalente de C6. Si NASA no supera esas condiciones, no se descarga ni se incluye. Esta pista **nunca** se usa para afirmar rendimiento comercial.
   
   División **por sesión y emplazamiento** (nunca por clip), con semilla registrada; el análisis de fugas de T4.5 entre `evals/frozen/v1` y el resto de datos debe salir limpio. Audio en DVC; en git, `MANIFEST.sha256`, `FROZEN.lock` (hash del manifiesto) y `README.md` con la composición. «Confusores locales» de Ceuta: **no existen a 0 €** sin grabaciones; v1 usa sustitutos genéricos (olas, lluvia, motor) y lo declara. `scripts/check_frozen.py` recalcula los hashes antes de cualquier evaluación.
 - **Requisitos:** REQ-FUN-025, REQ-LEG-009
@@ -165,17 +170,17 @@ Orden estricto. Cada tarea: TDD (primero el test que falla), verificación y pru
 - **Qué:** `ml/recording/`:
   - `session.py`: una grabación solo empieza con una sesión autorizada abierta (fichero firmado con hash, fechas de validez y emplazamiento) y un registro de consentimiento asociado; si no, error y nada se escribe;
   - `vad.py`: los segmentos con voz (más un margen) se eliminan **antes** de escribir nada; un segmento dudoso se elimina;
-  - `flightlog.py`: importa formatos abiertos (CSV con columnas documentadas, GPX, PX4 ULog si se aprueba la dependencia y el formato NED-RTK de la NASA) y etiqueta cada ventana con la distancia 3D al micrófono por interpolación en UTC; los formatos propietarios cifrados no se leen;
+  - `flightlog.py`: importa formatos abiertos (CSV con columnas documentadas, GPX, PX4 ULog si se aprueba la dependencia y el formato NED-RTK de la NASA); solo procesa datos NASA si D3 y las condiciones de verificación/permiso de T4.7 se cumplen. Etiqueta cada ventana con la distancia 3D al micrófono por interpolación en UTC; los formatos propietarios cifrados no se leen;
   - metadatos obligatorios por grabación y etiqueta `site_sensitive` cuando el emplazamiento es de cliente.
   
   El audio de prueba lo genera el test: sesión sintética con dron simulado (trayectoria conocida, propagación de la FASE 1 o de T4.11) y voz sintética por formantes generada en `tmp_path`, sin voces reales.
 - **Requisitos:** REQ-FUN-026, REQ-LEG-006, REQ-PRIV-009
-- **Verificación:** `uv run pytest tests/ml/test_recording.py -v` y, si D3 está aprobada, `make data-check STEP=flightlog-nasa`
-- **Resultado esperado:** en la sesión sintética, la distancia etiquetada coincide con la verdadera con un error ≤ 1 m (≤ 0,5 % a más de 200 m); ≥ 95 % de las ventanas con voz sintética eliminadas y 0 ventanas con voz escritas por encima del umbral; cada grabación con todos sus metadatos. Con la NASA: distancia RTK reproducida para un vuelo real.
+- **Verificación:** `uv run pytest tests/ml/test_recording.py -v`; ejecutar `make data-check STEP=flightlog-nasa` solo si D3 está aprobada y se han verificado/archivado los términos y permisos exigibles.
+- **Resultado esperado:** en la sesión sintética, la distancia etiquetada coincide con la verdadera con un error ≤ 1 m (≤ 0,5 % a más de 200 m); ≥ 95 % de las ventanas con voz sintética eliminadas y 0 ventanas con voz escritas por encima del umbral; cada grabación con todos sus metadatos. Si NASA cumple las condiciones de intake, su distancia RTK se reproduce para un vuelo real.
 - **Prueba negativa:** grabar sin sesión → error; con la sesión caducada o de otro emplazamiento → error; sin consentimiento → error; un registro de vuelo con saltos de tiempo o sin UTC → rechazado; un fichero `site_sensitive` → `gate --cloud` lo rechaza.
 
 ### T4.15 — `docs/DATOS-HUECOS.md` y alianzas
-- **Qué:** por clase, qué falta (C3 y C5 sin datos con licencia; C2 escaso; C4 solo fusión; C6 y C7 sin datos reales públicos; fondos locales de 50-100 h por emplazamiento), cómo se cubrirá (equivalentes legales: avionetas y ultraligeros en aeródromos, aeromodelos de gasolina en clubes, motoparapentes; FPV propio o prestado; síntesis marcada) y qué alianzas se proponen: Zvook (arXiv 2608.14287 confirma un corpus de más de 300.000 clips), Sky Fortress y Brave1 vía Ministerio de Defensa o DIANA, INTA, Universidad de Lund (Tegler), Universidad de Salford, Universidad Militar de Tecnología de Varsovia (Sensors 2025), Fraunhofer IVI (AUDROK) y KAIST. Plantillas de carta a autores para las licencias pendientes (NASA, Lund, RFUAV, Fraunhofer, Anti-UAV, DUT y arXiv 2509.04715), que envía el usuario.
+- **Qué:** por clase, qué falta (C3 y C5 sin datos con licencia; C2 escaso; C4 solo fusión; C6 y C7 sin datos reales públicos; fondos locales de 50-100 h por emplazamiento), cómo se cubrirá (equivalentes legales: avionetas y ultraligeros en aeródromos, aeromodelos de gasolina en clubes, motoparapentes; FPV propio o prestado; síntesis marcada) y qué alianzas se proponen: Zvook (arXiv 2608.14287 confirma un corpus de más de 300.000 clips), Sky Fortress y Brave1 vía Ministerio de Defensa o DIANA, INTA, Universidad de Lund (Tegler), Universidad de Salford, Universidad Militar de Tecnología de Varsovia (Sensors 2025), Fraunhofer IVI (AUDROK) y KAIST. Mantener las cartas a los autores de DADS y Al-Emadi previstas por la decisión vigente; preparar además plantillas para licencias pendientes (NASA, Lund, RFUAV, Fraunhofer, Anti-UAV, DUT y arXiv 2509.04715). El usuario decide y envía las cartas.
 - **Requisitos:** REQ-FUN-023 (huecos de la biblioteca), REQ-NFR-016
 - **Verificación:** `uv run pytest tests/test_documentos.py -v -k huecos && python3 -I scripts/check_spec.py`
 - **Resultado esperado:** las 9 clases aparecen con su estado; cada alianza tiene vía de contacto y qué se pide; ninguna afirmación externa sin fuente o sin la marca NO VERIFICADO.
@@ -193,23 +198,25 @@ Orden estricto. Cada tarea: TDD (primero el test que falla), verificación y pru
 | ID | Riesgo | Mitigación |
 |---|---|---|
 | R-03 (se materializa) | Licencias incompatibles: la mayoría de los datasets de audio de la tabla son NC, sin licencia o con conflicto | Registro y puerta G-13; base de producción solo con CC0, CC BY y MIT verificados; cartas a autores |
-| R-33 (nuevo) | Licencias que prohíben usos de seguridad (Al-Emadi) y agregados que las arrastran sin poder filtrarlas (DADS y sus copias en Hugging Face) | Exclusión total; el intake rechaza agregados sin fuente por fichero; huella acústica para detectar clips de Al-Emadi que lleguen por otra vía |
-| R-34 (nuevo) | Disco insuficiente (24 GB libres) para datos, caché DVC y remoto | Presupuesto ≤ 8 GB; descarga secuencial con limpieza; medida del reflink (T4.2); remoto en disco externo (D5) |
-| R-35 (nuevo) | Sesgo de dominio de los datos comerciales (cámara anecoica, micrófonos a bordo, interiores, sin viento de Ceuta) | Data cards con limitaciones; fondos reales en cuanto haya sesiones autorizadas; la FASE 5 reporta por dominio |
-| R-36 (nuevo) | Los sintéticos C6/C7 o los equivalentes se confunden con rendimiento real | `synthetic=true`; pista `research/` separada; REQ-NFR-020 en la FASE 5; la puerta rechaza sintéticos como métrica real |
-| R-37 (nuevo) | El VAD no detecta toda la voz y quedan datos personales en una grabación | Umbral conservador y eliminación de lo dudoso; revisión manual de una muestra; DPIA; ninguna grabación real en esta fase sin D7 |
+| R-55 (provisional) | Restricciones de licencia de Al-Emadi y falta de procedencia por fichero en DADS y sus copias | Estado `blocked_by_license`, no ingesta ni producción sin permiso escrito; citar resultados publicados y mantener las cartas a autores. El intake bloquea ambos mientras no cambie el estado; la detección de contaminación se limita a fuentes con procedencia verificable |
+| R-56 (provisional) | Disco insuficiente (24 GB libres) para datos, caché DVC y remoto | Presupuesto ≤ 8 GB; descarga secuencial con limpieza; medida del reflink (T4.2); remoto en disco externo (D5) |
+| R-57 (provisional) | Sesgo de dominio de los datos comerciales (cámara anecoica, micrófonos a bordo, interiores, sin viento de Ceuta) | Data cards con limitaciones; fondos reales en cuanto haya sesiones autorizadas; la FASE 5 reporta por dominio |
+| R-58 (provisional) | Los sintéticos C6/C7 o los equivalentes se confunden con rendimiento real | `synthetic=true`; pista `research/` separada; REQ-NFR-020 en la FASE 5; la puerta rechaza sintéticos como métrica real |
+| R-59 (provisional) | El VAD no detecta toda la voz y quedan datos personales en una grabación | Umbral conservador y eliminación de lo dudoso; revisión manual de una muestra; DPIA; ninguna grabación real en esta fase sin D7 |
 | R-17 | La IA da por buena una licencia que no lo es | Investigación con URL y fecha; revisión del usuario en el STOP; cartas a autores para todo lo dudoso |
 
+Los IDs R-55–R-59 son provisionales. No colisionan con los IDs actuales del registro global (R-01–R-33) ni con los rangos planificados para FASE 1 (R-34–R-39), FASE 2 (R-40–R-46) y FASE 3 (R-47–R-54). Se validarán otra vez su unicidad y su incorporación al registro global antes del cierre de FASE 4; este borrador no modifica dicho registro.
+
 ## 6. Estimación
-**3-5 semanas de trabajo efectivo** (16 tareas), en línea con la SPEC §8. Coste: **0 €**. Descargas: ≈ 6 GB (≈ 8 GB de pico con temporales). Las grabaciones propias no entran en la estimación: dependen de D7 y, para drones, del hito v1+. Las tareas más inciertas son T4.2 (comportamiento real de DVC con reflink), T4.5 (umbral de la huella acústica) y T4.14 (VAD sobre voz sintética frente a voz real).
+**3-5 semanas de trabajo efectivo** (16 tareas), en línea con la SPEC §8. Coste: **0 €**. Descargas: hasta ≈ 6 GB (≈ 8 GB de pico con temporales) si se aprueba e ingiere NASA; menos si D3 se rechaza o no se verifican sus términos. Las grabaciones propias no entran en la estimación: dependen de D7 y, para drones, del hito v1+. Las tareas más inciertas son T4.2 (comportamiento real de DVC con reflink), T4.5 (umbral de la huella acústica) y T4.14 (VAD sobre voz sintética frente a voz real).
 
 ## 7. Decisiones que necesita el usuario
-1. **D1 — Aprobar este plan** (P0) y `INVESTIGACION-LICENCIAS.md`.
-2. **D2 — Excluir Al-Emadi y DADS por completo** (recomendado), en lugar de pedir permiso a la autora (que, según su licencia, no cubriría usos de defensa). Consecuencia: el análisis de fugas del MEGAPROMPT sobre DADS se sustituye por el de los datasets ingeridos y fugas inyectadas.
-3. **D3 — NASA sUAS Flyover:** ingerirla como **solo investigación** mientras se pide confirmación escrita de su licencia (recomendado), o no ingerirla.
-4. **D4 — Enviar las cartas a autores** (NASA, Lund, RFUAV, Fraunhofer IVI, Anti-UAV, DUT y arXiv 2509.04715). Claude Code las redacta; las envía el usuario.
-5. **D5 — Ubicación del remoto DVC:** disco externo (recomendado si lo hay) o directorio en el mismo disco tras medir el consumo real en T4.2.
-6. **D6 — Autorizar la creación única de `evals/frozen/v1`** (ruta protegida) con dos pistas: `production/` (solo datos con licencia comercial) y `research/` (NASA y sintéticos, nunca para afirmaciones comerciales).
-7. **D7 — Grabaciones de fondo con el Android:** no grabar nada real en esta fase (recomendado; la herramienta se prueba con sesiones sintéticas), o autorizar sesiones de fondo sin personas tras actualizar la DPIA.
-8. **D8 — Dependencias nuevas** del ADR 0010 (DVC, numpy, scipy, soundfile, pyarrow, h5py y un VAD) tras comprobar sus licencias.
-9. **D9 — SIPRI:** no usarlo en el producto sin licencia (recomendado); como mucho, una consulta manual puntual para priorizar clases, si el usuario la considera uso justo.
+1. **D1 — Aprobar este plan (P0) — PENDIENTE.** `INVESTIGACION-LICENCIAS.md` es un antecedente histórico, no una verificación vigente ni una autorización de uso.
+2. **D2 — Aplicar la decisión ya registrada en `DECISIONES-USUARIO.md`.** No se aprueba la exclusión total: DADS y Al-Emadi quedan registrados como `blocked_by_license`, sin descarga ni ingesta; se pueden citar resultados publicados y siguen previstas cartas a autores. Sin permiso escrito, su estado no cambia. Si llega permiso, se reevalúa por `dataset-intake`; no implica autorización automática de ingesta o producción.
+3. **D3 — NASA sUAS Flyover: PENDIENTE.** Autorizar su ingesta como solo investigación únicamente después de verificar y archivar sus términos/licencia y cualquier permiso escrito exigible, o no ingerirla. No descargarla mientras esos requisitos estén pendientes; la investigación histórica no cuenta como permiso.
+4. **D4 — Cartas a autores: PENDIENTE.** Se mantienen las cartas a los autores de DADS y Al-Emadi previstas por la decisión vigente, además de las cartas de licencia propuestas para NASA, Lund, RFUAV, Fraunhofer IVI, Anti-UAV, DUT y arXiv 2509.04715. El usuario decide y las envía; no se enviará ninguna carta desde esta fase.
+5. **D5 — Ubicación del remoto DVC: PENDIENTE.** Disco externo o directorio en el mismo disco, sujeto a medir consumo y espacio disponible en T4.2.
+6. **D6 — Autorizar la creación única de `evals/frozen/v1`: PENDIENTE.** Ruta protegida con dos pistas: `production/` (solo datos con licencia comercial verificada) y `research/` (sintéticos y NASA solo si D3 se aprueba y sus términos/licencia y cualquier permiso escrito exigible están verificados y archivados; nunca para afirmaciones comerciales). Si NASA no cumple esas condiciones, `research/` contiene solo sintéticos. No crear ni modificar el conjunto antes de la aprobación expresa.
+7. **D7 — Grabaciones de fondo con el Android: PENDIENTE.** Recomendación: no grabar datos reales en esta fase y probar la herramienta con sesiones sintéticas; cualquier autorización requiere actualizar la DPIA.
+8. **D8 — Dependencias nuevas: PENDIENTE.** DVC, numpy, scipy, soundfile, pyarrow, h5py y un VAD, después de comprobar licencias y disponibilidad de ruedas Mac Intel.
+9. **D9 — SIPRI: PENDIENTE.** No usarlo en el producto sin licencia. El posible uso manual puntual para priorizar clases queda sin decidir; no ingerir ni incorporar datos de SIPRI mientras tanto.
