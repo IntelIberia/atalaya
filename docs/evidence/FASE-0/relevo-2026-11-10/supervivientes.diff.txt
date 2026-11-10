@@ -5,12 +5,6 @@ scripts.guardrails.x__decode__mutmut_1
 scripts.guardrails.x__decode__mutmut_12
 -        return content.decode('latin-1')
 +        return content.decode('LATIN-1')
-scripts.guardrails.x__decode__mutmut_4
--    if not force_text and b'\x00' in content[:8192]:
-+    if not force_text and b'XX\x00XX' in content[:8192]:
-scripts.guardrails.x__decode__mutmut_6
--    if not force_text and b'\x00' in content[:8192]:
-+    if not force_text and b'\x00' in content[:8193]:
 scripts.guardrails.x__decode__mutmut_9
 -        return content.decode('utf-8')
 +        return content.decode('UTF-8')
@@ -20,24 +14,9 @@ scripts.guardrails.x__enclosing_identifier__mutmut_3
 scripts.guardrails.x__git__mutmut_8
 -    return subprocess.run(['git', *args], check=True, capture_output=True).stdout
 +    return subprocess.run(['GIT', *args], check=True, capture_output=True).stdout
-scripts.guardrails.x__glob_hits_secret__mutmut_2
--        if any((c in token for c in '*?[')):
-+        if any((c not in token for c in '*?[')):
 scripts.guardrails.x__glob_hits_secret__mutmut_3
 -        if any((c in token for c in '*?[')):
 +        if any((c in token for c in 'XX*?[XX')):
-scripts.guardrails.x__json_pilot_fields__mutmut_16
--                    violations.append(Violation(rel, 'pilot-public', f'«{key}» debe ser FCSE_ONLY (REQ-LEG-007)'))
-+                    violations.append(Violation(None, 'pilot-public', f'«{key}» debe ser FCSE_ONLY (REQ-LEG-007)'))
-scripts.guardrails.x__json_pilot_fields__mutmut_18
--                    violations.append(Violation(rel, 'pilot-public', f'«{key}» debe ser FCSE_ONLY (REQ-LEG-007)'))
-+                    violations.append(Violation(rel, 'pilot-public', None))
-scripts.guardrails.x__json_pilot_fields__mutmut_34
--                    violations.append(Violation(rel, 'pilot-public', f'«{child}» debe ser FCSE_ONLY (REQ-LEG-007)'))
-+                    violations.append(Violation(None, 'pilot-public', f'«{child}» debe ser FCSE_ONLY (REQ-LEG-007)'))
-scripts.guardrails.x__json_pilot_fields__mutmut_36
--                    violations.append(Violation(rel, 'pilot-public', f'«{child}» debe ser FCSE_ONLY (REQ-LEG-007)'))
-+                    violations.append(Violation(rel, 'pilot-public', None))
 scripts.guardrails.x__settings_without_deny__mutmut_12
 -    return json.dumps(data, indent=1, ensure_ascii=False)
 +    return json.dumps(data, indent=None, ensure_ascii=False)
@@ -50,15 +29,9 @@ scripts.guardrails.x__settings_without_deny__mutmut_15
 scripts.guardrails.x__settings_without_deny__mutmut_17
 -    return json.dumps(data, indent=1, ensure_ascii=False)
 +    return json.dumps(data, indent=2, ensure_ascii=False)
-scripts.guardrails.x_check_command__mutmut_9
--    unquoted = re.sub('[\'\\"\\\\]', '', command)
-+    unquoted = re.sub('XX[\'\\"\\\\]XX', '', command)
 scripts.guardrails.x_check_file__mutmut_129
 -            code = COMMENT_RE.sub('', line) if suffix != '.json' else line
 +            code = COMMENT_RE.sub('XXXX', line) if suffix != '.json' else line
-scripts.guardrails.x_check_file__mutmut_130
--            code = COMMENT_RE.sub('', line) if suffix != '.json' else line
-+            code = COMMENT_RE.sub('', line) if suffix == '.json' else line
 scripts.guardrails.x_check_file__mutmut_131
 -            code = COMMENT_RE.sub('', line) if suffix != '.json' else line
 +            code = COMMENT_RE.sub('', line) if suffix != 'XX.jsonXX' else line
@@ -68,24 +41,12 @@ scripts.guardrails.x_check_file__mutmut_132
 scripts.guardrails.x_check_file__mutmut_138
 -                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
 +                field = code[m.start():].split(';', 1)[0].split('}')[0]
-scripts.guardrails.x_check_file__mutmut_139
--                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
-+                field = code[m.start():].split(';', 1)[0].rsplit('}', 1)[0]
 scripts.guardrails.x_check_file__mutmut_143
 -                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
 +                field = code[m.start():].split(';')[0].split('}', 1)[0]
-scripts.guardrails.x_check_file__mutmut_144
--                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
-+                field = code[m.start():].rsplit(';', 1)[0].split('}', 1)[0]
-scripts.guardrails.x_check_file__mutmut_145
--                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
-+                field = code[m.start():].split('XX;XX', 1)[0].split('}', 1)[0]
 scripts.guardrails.x_check_file__mutmut_146
 -                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
 +                field = code[m.start():].split(';', 2)[0].split('}', 1)[0]
-scripts.guardrails.x_check_file__mutmut_148
--                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
-+                field = code[m.start():].split(';', 1)[0].split('XX}XX', 1)[0]
 scripts.guardrails.x_check_file__mutmut_149
 -                field = code[m.start():].split(';', 1)[0].split('}', 1)[0]
 +                field = code[m.start():].split(';', 1)[0].split('}', 2)[0]
@@ -95,24 +56,9 @@ scripts.guardrails.x_check_file__mutmut_26
 scripts.guardrails.x_check_file__mutmut_32
 -    if not in_fixtures and (suffix in AUDIO_EXTENSIONS or _is_audio_bytes(raw[:16])):
 +    if not in_fixtures and (suffix in AUDIO_EXTENSIONS or _is_audio_bytes(raw[:17])):
-scripts.guardrails.x_check_file__mutmut_71
--    if suffix == '.json':
-+    if suffix != '.json':
-scripts.guardrails.x_check_file__mutmut_72
--    if suffix == '.json':
-+    if suffix == 'XX.jsonXX':
-scripts.guardrails.x_check_file__mutmut_73
--    if suffix == '.json':
-+    if suffix == '.JSON':
-scripts.guardrails.x_check_file__mutmut_75
--            violations.extend(_json_pilot_fields(rel, text))
-+            violations.extend(_json_pilot_fields(None, text))
 scripts.guardrails.x_check_file__mutmut_79
 -            is_schema = False
 +            is_schema = None
-scripts.guardrails.x_check_file__mutmut_80
--            is_schema = False
-+            is_schema = True
 scripts.guardrails.x_load_allowlist__mutmut_10
 -        token = raw.split('#', 1)[0].strip()
 +        token = raw.split('#')[0].strip()

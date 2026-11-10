@@ -105,7 +105,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-LEG-016 | MUST | 0 | 20 | verde | OK |
 | REQ-LEG-017 | MUST | 0 | 7 | verde | OK |
 | REQ-SEC-001 | MUST | 0 | 122 | verde | OK |
-| REQ-SEC-002 | MUST | 0 | 40 | verde | OK |
+| REQ-SEC-002 | MUST | 0 | 41 | verde | OK |
 | REQ-SEC-003 | MUST | 0 | 54 | verde | OK |
 | REQ-SEC-004 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-005 | MUST | 0 | 15 | verde | OK |
