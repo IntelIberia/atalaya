@@ -1,6 +1,6 @@
 # Plan FASE 2 — Capa 1: radar de incidentes (solo local)
 
-Versión 1 · 2026-11-08 · Estado: **pendiente de aprobación (STOP de plan, puerta P0)**
+Versión 1.1 · 2026-11-10 · Estado: **pendiente de aprobación (STOP de plan, puerta P0)**
 
 ## 1. Objetivo
 Construir y probar **en local** el radar de incidentes con drones en España y Europa a partir de fuentes
@@ -10,8 +10,10 @@ para LLM, estados Reportado / Probable / Confirmado / Descartado con fiabilidad 
 obligatoria para «Confirmado», exportación STIX 2.1, API de solo lectura con límite de peticiones y web con
 mapa (MapLibre), cronología y metodología.
 
-En la v1 **nada se publica en Internet** (SPEC §2 y §4, D8, REQ-LEG-013): el servidor solo escucha en
-`127.0.0.1` y no existe ningún mecanismo de despliegue. Coste: 0 €.
+En la v1 **nada se publica en Internet** (decisión D8 de `docs/SPEC.md` §10, REQ-LEG-013): el servidor
+solo escucha en `127.0.0.1` y no existe ningún mecanismo de despliegue. Esta es la decisión global sobre
+alojamiento; no debe confundirse con D-8 de FASE 1, que limita a coordenadas ficticias los escenarios del
+simulador. Coste: 0 €.
 
 ## 2. Requisitos que cubre
 - **MUST de la FASE 2:** REQ-FUN-007, REQ-FUN-008, REQ-FUN-009, REQ-FUN-010, REQ-FUN-011, REQ-FUN-012,
@@ -27,18 +29,19 @@ En la v1 **nada se publica en Internet** (SPEC §2 y §4, D8, REQ-LEG-013): el s
   ya un registro de revisiones encadenado por hash y una retención corta del material de las fuentes, sin
   darlos por cumplidos.
 
-## 3. Hallazgos de la exploración (2026-11-08)
+## 3. Hallazgos de la exploración (snapshot inicial 2026-11-08; estado actualizado 2026-11-10)
 
 | Hallazgo | Efecto |
 |---|---|
-| `main` en 372797c: FASE 0 con T0.12 hecha (ADR 0001-0008, STRIDE, DPIA, ENS, `scripts/pii_scan.py`) y regresión de cierre añadida, pero **sin etiqueta `fase-0-cerrada`**. La FASE 1 no tiene plan ni código | **T2.0 bloquea** la fase hasta que existan `fase-0-cerrada` y `fase-1-cerrada` (convención de sensibilidad `PUBLIC/OPERATOR/FCSE_ONLY` de la FASE 1) |
-| `apps/incident-radar/` y `services/ingest/` solo tienen un README | Código nuevo. `services/ingest/` queda para la ingesta de sensores; el radar vive entero en `apps/incident-radar/` (backend Python y web TypeScript) |
+| **Estado actualizado al 2026-11-10** (árbol principal `codex/relevo-2026-11-09`, HEAD `069a4c7`; T1.6 ya integrada y publicada en la rama de trabajo): FASE 0 aprobada por P6 y con etiqueta `fase-0-cerrada`; la FASE 1 mantiene el P0 aprobado para la versión 3 y el plan actual v3.1 documenta la instalación de Buf, corrige los IDs de riesgos y registra el STOP de T1.8; decisiones D-1–D-8 registradas. T1.0–T1.6 constan como OK en el registro de tareas. La FASE 1 sigue abierta: no existe `fase-1-cerrada` ni está incluida `1` en `FASES-CERRADAS.txt`. | El hallazgo de 2026-11-08 sobre la FASE 0 abierta y la falta de plan/código de FASE 1 es histórico. **T2.0 sigue bloqueando** hasta que FASE 1 se cierre y se registren su etiqueta y estado. D-8 de FASE 1 trata de coordenadas ficticias en el simulador; la decisión global D8 de SPEC §10 mantiene el radar solo local |
+| **FASE 1 ya establece contratos y sensibilidad**: existen los `.proto`, bindings y `docs/contracts/SENSIBILIDAD.md`; el STOP T1.3 aprobó 437 rutas. T1.7 debe probar sanitización de texto libre y controles de acceso antes de logs y salidas; ese trabajo aún no figura como cerrado | El radar debe heredar la convención y los controles aprobados; `OPERATOR` por sí solo no sanea datos personales. No dar por disponible el control de T1.7 hasta que FASE 1 lo cierre |
+| En el snapshot actual, `apps/incident-radar/` y `services/ingest/` solo tienen un README. FASE 1 prevé implementar en `services/ingest/` la ingesta de sensores por MQTT | El radar de fuentes públicas sigue siendo nuevo y vivirá en `apps/incident-radar/` (backend Python y web TypeScript); mantenerlo separado del servicio de ingesta de sensores |
 | `scripts/check_spec.py` revisa también `docs/plans/*.md`, `docs/adr`, `docs/dpia`, `docs/ens` y `docs/threat-model` | Este plan y los documentos de la fase se redactan sin menciones sensibles no revisadas |
 | El guardarraíl trata `.yaml`, `.json`, `.toml` y `.sql` como código y bloquea términos ofensivos | Los fixtures del radar serán **sintéticos y neutros**; los titulares reales (que pueden contener vocabulario bloqueado) solo existen en la base de datos local, nunca en git |
 | `scripts/license_check.py` solo mira dependencias Python | Hay que extenderlo a npm (G-12) antes de instalar el frontend |
 | `scripts/pii_scan.py` detecta correos, teléfonos, DNI/NIE, IBAN e IP públicas | Se reutiliza en logs y salidas (REQ-PRIV-003); falta un detector de **nombres de persona** (REQ-PRIV-004) |
 | Node 24.9 y npm 11.6 instalados; navegadores de Playwright en caché (chromium-1187, versión distinta a la que se fijará) | Habrá que descargar el Chromium de la versión fijada (~150-250 MB, NO VERIFICADO el tamaño) |
-| Disco: 23 GB libres; RAM 8 GB | Suficiente; sin modelos LLM locales por defecto (un modelo de 7B no cabe con holgura en RAM) |
+| **Snapshot histórico (2026-11-08):** disco 23 GB libres; RAM 8 GB | La capacidad se mide de nuevo en T2.0; sin modelos LLM locales por defecto (un modelo de 7B no cabe con holgura en RAM) |
 | `make check` debe quedar por debajo de ~60 s (hook Stop) | Las pruebas web (vitest, eslint) y el e2e van en objetivos aparte (`make radar-web`, `make radar-e2e`), obligatorios en las puertas de fase |
 
 ### 3.1 Fuentes propuestas y estado de sus términos (consultado el 2026-11-08)
@@ -49,10 +52,10 @@ se respeta `robots.txt` y su `Content-Signal`.
 
 | Fuente | Acceso | Términos | Propuesta |
 |---|---|---|---|
-| **Plataforma de Contratación del Sector Público** (licitaciones, Ministerio de Hacienda) | ATOM diario verificado en datos.gob.es: `contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_643/licitacionesPerfilesContratanteCompleto3.atom` | **VERIFICADO.** Aviso legal de Hacienda (Ley 37/2007, RD 1495/2011): reutilización comercial permitida; citar «Origen de los datos: Ministerio de Hacienda»; no desnaturalizar; indicar la última actualización; no sugerir respaldo oficial | **Activa.** Capa «contratación pública», separada de los incidentes |
-| **BOE, API de datos abiertos** (sumario diario; anuncios de licitación y normativa) | `boe.es/datosabiertos/api/boe/sumario/{aaaammdd}` (XML/JSON) verificado en su documentación | **VERIFICADO.** Aviso legal de la AEBOE: reutilización comercial permitida; «Basado en datos de la Agencia Estatal Boletín Oficial del Estado» para obras derivadas; enlace a boe.es; no desnaturalizar; fecha de actualización | **Activa** |
-| **AESA** (noticias) | RSS verificado en `seguridadaerea.gob.es/es/rss.xml` (10 elementos; el último del 2026-10-30) | **VERIFICADO.** Aviso legal: se permite la reproducción citando la fuente | **Activa** (pocas noticias de incidentes; valor de contexto) |
-| **GDELT DOC 2.0** (descubre artículos de medios por consulta) | API `api.gdeltproject.org/api/v2/doc/doc`, salida JSON/RSS, ventana de 3 meses; sin clave según su documentación (límite de uso NO VERIFICADO) | **VERIFICADO.** Uso comercial gratuito con cita a The GDELT Project y enlace a gdeltproject.org | **Activa.** Vía principal para medios: solo URL, dominio, fecha y titular (interno) |
+| **Plataforma de Contratación del Sector Público** (licitaciones, Ministerio de Hacienda) | ATOM diario verificado en datos.gob.es: `contrataciondelsectorpublico.gob.es/sindicacion/sindicacion_643/licitacionesPerfilesContratanteCompleto3.atom` | **VERIFICADO en la consulta del 2026-11-08; debe archivarse en T2.3.** Aviso legal de Hacienda (Ley 37/2007, RD 1495/2011): reutilización comercial permitida; citar «Origen de los datos: Ministerio de Hacienda»; no desnaturalizar; indicar la última actualización; no sugerir respaldo oficial | **Candidata**, pendiente de aprobación del usuario y archivo/hash de términos; capa «contratación pública», separada de los incidentes |
+| **BOE, API de datos abiertos** (sumario diario; anuncios de licitación y normativa) | `boe.es/datosabiertos/api/boe/sumario/{aaaammdd}` (XML/JSON) verificado en su documentación | **VERIFICADO en la consulta del 2026-11-08; debe archivarse en T2.3.** Aviso legal de la AEBOE: reutilización comercial permitida; «Basado en datos de la Agencia Estatal Boletín Oficial del Estado» para obras derivadas; enlace a boe.es; no desnaturalizar; fecha de actualización | **Candidata**, pendiente de aprobación del usuario y archivo/hash de términos |
+| **AESA** (noticias) | RSS verificado en `seguridadaerea.gob.es/es/rss.xml` (10 elementos; el último del 2026-10-30) | **VERIFICADO en la consulta del 2026-11-08; debe archivarse en T2.3.** Aviso legal: se permite la reproducción citando la fuente | **Candidata**, pendiente de aprobación del usuario y archivo/hash de términos (pocas noticias de incidentes; valor de contexto) |
+| **GDELT DOC 2.0** (descubre artículos de medios por consulta) | API `api.gdeltproject.org/api/v2/doc/doc`, salida JSON/RSS, ventana de 3 meses; sin clave según su documentación (límite de uso NO VERIFICADO) | **VERIFICADO en la consulta del 2026-11-08; debe archivarse en T2.3.** Uso comercial gratuito con cita a The GDELT Project y enlace a gdeltproject.org | **Candidata**, pendiente de aprobación del usuario y archivo/hash de términos; propuesta como vía para medios con solo URL, dominio, fecha y titular interno |
 | **ENAIRE, NOTAM Geospatial Service** (registro EUR SWIM) | REST JSON/GeoJSON; **requiere autorización previa** y credenciales | Parciales (uso operativo e informativo); licencia de redistribución y coste **NO VERIFICADOS** | **Pendiente de autorización.** Adaptador probado solo con NOTAM sintéticos; desactivado |
 | **ENAIRE, web** (notas de prensa) | Accesible | **Restrictivos:** prohíbe reproducir contenidos y enlazar más allá de la portada sin autorización escrita | **No se ingiere.** El registro marca `enlace_profundo: false` |
 | **Ministerio del Interior** | La web devuelve 403 a clientes automáticos; RSS **NO VERIFICADO** | `robots.txt` con `Content-Signal: search=yes, ai-train=no, use=reference`; aviso legal **NO VERIFICADO** | **Solo entrada manual** del analista (hechos + enlace); su contenido nunca va a un LLM |
@@ -119,13 +122,12 @@ un commit por tarea con los IDs. **Un FALLO bloquea la tarea siguiente.** Rutas:
 - **Qué:** comprobar que las FASES 0 y 1 están cerradas, que `make check` y `make regress` están en verde,
   que hay ≥ 10 GB libres y que Node cumple el rango de Vite. Volver a comprobar las versiones de §3.2.
 - **Requisitos:** REQ-NFR-014, REQ-NFR-015
-- **Verificación:** `git tag -l 'fase-0-cerrada' 'fase-1-cerrada' && make check && make regress && df -h ~ && node --version`
-- **Resultado esperado:** las dos etiquetas listadas; check y regress con exit 0; ≥ 10 GB libres; Node ≥ 22.12.
-- **Prueba negativa:** si falta una etiqueta, la tarea se registra como FALLO y la fase **se detiene** (no se
-  empieza el código).
+- **Verificación:** `git show-ref --tags --verify --quiet refs/tags/fase-0-cerrada && git show-ref --tags --verify --quiet refs/tags/fase-1-cerrada && grep -qx '0' docs/requirements/FASES-CERRADAS.txt && grep -qx '1' docs/requirements/FASES-CERRADAS.txt && python3 -c 'import pathlib,shutil,sys; sys.exit(0 if shutil.disk_usage(pathlib.Path.home()).free >= 10_000_000_000 else 1)' && node -e 'const [major, minor] = process.versions.node.split(".").map(Number); process.exit(major > 22 || (major === 22 && minor >= 12) ? 0 : 1)' && make check && make regress`
+- **Resultado esperado:** ambas etiquetas y ambos registros de cierre presentes; `make check` y `make regress` con exit 0; al menos 10 GB (10.000.000.000 bytes) disponibles; Node ≥ 22.12. La cadena de comprobaciones termina con error ante cualquier incumplimiento.
+- **Prueba negativa:** en un clon temporal sin cualquiera de las etiquetas o sin la fila correspondiente en `FASES-CERRADAS.txt`, la cadena falla antes de `make check`; con menos de 10 GB libres (10.000.000.000 bytes) o Node < 22.12, falla la comprobación correspondiente. No se empieza el código.
 
 ### T2.1 — ADR de la fase
-- **Qué:** ADR (MADR, numeración siguiente a la última existente):
+- **Qué:** ADR (MADR; asignar el siguiente número libre después de resolver la propuesta 0014 de T1.8, con revisión técnica independiente, pendiente de revisión jurídica y decisión del usuario, y comprobar `docs/adr/` antes de crearla):
   - stack del frontend (§3.3) y mapa base local;
   - ubicación del código, almacenamiento (PostgreSQL del compose con asyncpg y migraciones SQL propias) y
     puertos/adaptadores (repositorio en memoria para tests unitarios);
@@ -372,15 +374,18 @@ un commit por tarea con los IDs. **Un FALLO bloquea la tarea siguiente.** Rutas:
 
 | ID | Riesgo | Mitigación |
 |---|---|---|
-| R-33 (nuevo) | Los términos de una fuente cambian o una fuente oficial bloquea el acceso automatizado (Interior ya lo hace) | Hash de los términos y revisión en cada cierre; fallo cerrado; entrada manual; estado de fuente visible |
-| R-34 (nuevo) | Fuentes envenenadas o inyección de instrucciones en el LLM | LLM desactivado por defecto; salida validada; nunca decide el estado; revisión humana para publicar |
-| R-35 (nuevo) | Datos personales en noticias (nombres de detenidos o de quien pilota) | Sin campos de persona en el modelo; detector de nombres; extractos internos borrados a los 30 días; nada al LLM sin filtrar |
-| R-36 (nuevo) | Nombres de persona dentro de nombres de instalaciones | Etiquetas públicas curadas; el detector se aplica también a esas etiquetas |
-| R-37 (nuevo) | Pocos incidentes reales: muestra de evaluación pequeña e intervalos anchos | Muestra ≥ 150 elementos (incluidos negativos); métricas con intervalo; se reevalúa en cada cierre |
-| R-38 (nuevo) | Fixtures con vocabulario que bloquea el guardarraíl | Fixtures sintéticos y neutros; datos reales solo en la base de datos local |
-| R-39 (nuevo) | Cadena de suministro npm | Versiones exactas ≥ 14 días, `npm ci`, licencias comprobadas, SBOM y grype en CI |
+| R-40 (nuevo, ID de trabajo del borrador) | Los términos de una fuente cambian o una fuente oficial bloquea el acceso automatizado (Interior ya lo hace) | Hash de los términos y revisión en cada cierre; fallo cerrado; entrada manual; estado de fuente visible |
+| R-41 (nuevo, ID de trabajo del borrador) | Fuentes envenenadas o inyección de instrucciones en el LLM | LLM desactivado por defecto; salida validada; nunca decide el estado; revisión humana para publicar |
+| R-42 (nuevo, ID de trabajo del borrador) | Datos personales en noticias (nombres de detenidos o de quien pilota) | Sin campos de persona en el modelo; detector de nombres; extractos internos borrados a los 30 días; nada al LLM sin filtrar |
+| R-43 (nuevo, ID de trabajo del borrador) | Nombres de persona dentro de nombres de instalaciones | Etiquetas públicas curadas; el detector se aplica también a esas etiquetas |
+| R-44 (nuevo, ID de trabajo del borrador) | Pocos incidentes reales: muestra de evaluación pequeña e intervalos anchos | Muestra ≥ 150 elementos (incluidos negativos); métricas con intervalo; se reevalúa en cada cierre |
+| R-45 (nuevo, ID de trabajo del borrador) | Fixtures con vocabulario que bloquea el guardarraíl | Fixtures sintéticos y neutros; datos reales solo en la base de datos local |
+| R-46 (nuevo, ID de trabajo del borrador) | Cadena de suministro npm | Versiones exactas ≥ 14 días, `npm ci`, licencias comprobadas, SBOM y grype en CI |
 | R-12 | Sin asesoría jurídica | Nada se publica; DPIA y lista de comprobación legal como borradores |
 | R-17 | La IA inventa APIs (STIX, MapLibre) | Verificar en la documentación oficial antes de escribir; validador oficial de STIX |
+
+Los IDs R-40–R-46 son identificadores de trabajo reservados en este borrador; su unicidad y su incorporación
+al registro global se comprueban en T2.21.
 
 ## 6. Estimación
 **3-4 semanas de trabajo efectivo** (23 tareas), por encima de las 2-3 de la SPEC: la política de fuentes,
@@ -392,7 +397,9 @@ tamaño exacto).
 ## 7. Decisiones que necesita el usuario
 1. Aprobar este plan (P0). La fase no empieza hasta cerrar las FASES 0 y 1 (T2.0).
 2. Stack del frontend: **A (React + Vite, recomendada)**, B (SvelteKit) o C (sin framework).
-3. Fuentes: aprobar las activas de §3.1 (Plataforma de Contratación, BOE, AESA y GDELT) y, si quiere,
+3. Fuentes: decidir en P0 cuáles de las candidatas de §3.1 (Plataforma de Contratación, BOE, AESA y GDELT)
+   se autorizan a incluir en T2.3. La decisión P0 no las activa: cada una solo se activa cuando sus términos
+   y hash estén archivados y exista aprobación explícita. Si quiere,
    pedir por correo la autorización del servicio NOTAM de ENAIRE y la de la Guardia Civil (gratis; sin
    ellas quedan desactivadas o como entrada manual).
 4. Medios: mantenerlos desactivados y cubrirlos con GDELT (recomendado) o darme una lista de medios para
