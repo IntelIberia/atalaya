@@ -23,3 +23,5 @@ La revisión final del conjunto y el análisis individual de los 58 supervivient
 El cierre exige ahora identidad de la prueba de integración, resultado verde y SHA-256 vigente del smoke, la prueba, conftest, pyproject y configuración Compose. Las pruebas negativas cubren informe vacío, fallido, omitido y obsoleto. El auditor independiente confirmó la corrección con 18 pruebas puntuales. La CI limpia mantiene el recorrido ligero. Un informe obsoleto presente localmente exige ejecutar nuevamente make smoke.
 
 Se ampliaron las pruebas de mutación para límites binarios, diagnóstico JSON, campos vecinos, comentarios YAML y escapes de shell. La clasificación individual actual se registra en revision-supervivientes.md. La aprobación P6 sigue reservada al propietario.
+
+El auditor contrastó los 41 supervivientes por AST y reprodujo un hueco de comodines combinados. Se añadió su regresión y se eliminó el mutante. Los 40 restantes quedan justificados con la corrección de la explicación sobre force_text. No se encontraron otros huecos confirmados.

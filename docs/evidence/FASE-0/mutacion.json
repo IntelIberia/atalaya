@@ -1,14 +1,14 @@
 {
   "scripts/guardrails.py": {
     "sha256": "496ad13be2a4c2a269335caf30c593b550f0a5814ee4372339010dae1df481ae",
-    "tests_sha256": "387a08ef7beced14064391bd36416a54e27643a34d6b4e0b6efa8b8532397f75",
+    "tests_sha256": "ce47e9f13ca6a8b67fffa2958c5d2331e4f5d0ae751442344b937eee1ca4dc34",
     "total": 535,
     "pending": 0,
-    "killed": 493,
-    "survived": 41,
+    "killed": 494,
+    "survived": 40,
     "timed_out": 1,
     "other": 0,
-    "score": 0.9214953271028037,
+    "score": 0.9233644859813084,
     "survivors": [
       "scripts.guardrails.x__changed__mutmut_23",
       "scripts.guardrails.x__decode__mutmut_1",
@@ -16,7 +16,6 @@
       "scripts.guardrails.x__decode__mutmut_9",
       "scripts.guardrails.x__enclosing_identifier__mutmut_3",
       "scripts.guardrails.x__git__mutmut_8",
-      "scripts.guardrails.x__glob_hits_secret__mutmut_2",
       "scripts.guardrails.x__glob_hits_secret__mutmut_3",
       "scripts.guardrails.x__settings_without_deny__mutmut_12",
       "scripts.guardrails.x__settings_without_deny__mutmut_13",

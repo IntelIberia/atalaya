@@ -5,12 +5,11 @@ Cada fila corresponde a un mutante inspeccionado mediante el diff AST guardado e
 | Mutante | Clasificación | Justificación |
 |---|---|---|
 | `_changed__mutmut_23` | Justificado | Alias de códec UTF-8/LATIN-1 o cambio de docstring, sin cambio de decodificación. |
-| `_decode__mutmut_1` | Justificado | Alias de códec UTF-8/LATIN-1 o cambio de docstring, sin cambio de decodificación. |
+| `_decode__mutmut_1` | Justificado | Cambia el valor predeterminado de force_text. El único consumidor de producción pasa force_text explícitamente, por lo que el valor predeterminado no participa en la ejecución. |
 | `_decode__mutmut_12` | Justificado | Alias de códec UTF-8/LATIN-1 o cambio de docstring, sin cambio de decodificación. |
 | `_decode__mutmut_9` | Justificado | Alias de códec UTF-8/LATIN-1 o cambio de docstring, sin cambio de decodificación. |
 | `_enclosing_identifier__mutmut_3` | Justificado | Cuando el término comienza con el identificador, el fragmento alternativo coincide con el identificador completo consumido por el patrón. |
 | `_git__mutmut_8` | Justificado | Equivalencia en APFS sin distinción de mayúsculas. En sistemas sensibles, el mutante rechaza por fallo de Git. El original conserva git y HEAD canónicos. |
-| `_glob_hits_secret__mutmut_2` | Justificado | El mutante amplía la evaluación de tokens. La comparación fnmatch y la detección literal de rutas mantienen el bloqueo efectivo. |
 | `_glob_hits_secret__mutmut_3` | Justificado | El mutante amplía la evaluación de tokens. La comparación fnmatch y la detección literal de rutas mantienen el bloqueo efectivo. |
 | `_settings_without_deny__mutmut_12` | Justificado | Solo cambia la serialización o ensure_ascii=None equivalente a False. La sensibilidad JSON se comprueba por estructura. Puede variar el número de línea del diagnóstico. |
 | `_settings_without_deny__mutmut_13` | Justificado | Solo cambia la serialización o ensure_ascii=None equivalente a False. La sensibilidad JSON se comprueba por estructura. Puede variar el número de línea del diagnóstico. |
@@ -49,3 +48,5 @@ Cada fila corresponde a un mutante inspeccionado mediante el diff AST guardado e
 El timeout _json_pilot_fields__mutmut_4 sustituye pop por None y deja la cola sin consumir. Se registra como timeout y se mantiene fuera del numerador.
 
 Las pruebas nuevas eliminaron supervivientes reales de límites binarios, comentarios YAML, escapes de shell, aislamiento de campos y diagnóstico JSON. Esta revisión retira la clasificación histórica general y conserva las diferencias de disponibilidad/diagnóstico expresamente descritas.
+
+El auditor independiente contrastó todas las filas. Su hallazgo sobre el comodín con tres operadores se resolvió añadiendo una prueba que elimina ese mutante. La justificación de force_text se corrigió conforme a los consumidores reales.

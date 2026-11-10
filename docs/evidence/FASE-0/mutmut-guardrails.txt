@@ -1,9 +1,9 @@
 # Mutación verificada de la continuación del 10 de noviembre
 
-493/535 = 92,15 %. Umbral conservado 80 %.
-41 supervivientes y 1 timeout, cero pendientes y otros errores.
+494/535 = 92,34 %. Umbral conservado 80 %.
+40 supervivientes y 1 timeout, cero pendientes y otros errores.
 Fuente y tests ligados mediante SHA-256 en mutacion.json.
 Clasificación individual en revision-supervivientes.md.
-Se eliminaron 17 de los 58 supervivientes del primer relevo mediante pruebas adicionales.
+Se eliminaron 18 de los 58 supervivientes del primer relevo mediante pruebas adicionales.
 El timeout se mantiene en el denominador y fuera del numerador.
 La revisión histórica de equivalencia general se retiró.

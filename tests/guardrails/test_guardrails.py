@@ -882,3 +882,8 @@ def test_relevo_comentario_yaml_no_autoriza_campo() -> None:
 @pytest.mark.req("REQ-SEC-002")
 def test_relevo_secreto_con_escape_shell() -> None:
     assert {v.rule for v in g.check_command(r"cat \.env")} == {"secret-file"}
+
+
+@pytest.mark.req("REQ-SEC-002")
+def test_relevo_comodin_con_tres_operadores() -> None:
+    assert {v.rule for v in g.check_command("cat .e*?[v]")} == {"secret-file"}
