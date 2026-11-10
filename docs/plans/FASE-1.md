@@ -38,16 +38,17 @@ Preparan (sin cerrarlos) REQ-FUN-031, REQ-FUN-036, REQ-FUN-048, REQ-FUN-061, REQ
 | Los `.proto` de SAPIENT incluyen `task.proto` (tareas para sensores y efectores, según el nombre del estándar; contenido NO VERIFICADO) | Riesgo legal: el gateway solo actuará como nodo de sensor y de fusión y **nunca** construirá tareas para efectores (R-34). Si `sapient_message.proto` importa `task.proto`, se generan sus bindings (no se puede generar un mensaje sin sus importaciones), pero un test impide usarlos |
 | **Remote ID en la UE:** la norma armonizada es **EN 4709-002:2023** (Decisión de Ejecución (UE) 2024/2103, en apoyo del Reglamento Delegado (UE) 2019/945; verificado en EUR-Lex y AENOR). ASTM F3411 es la norma estadounidense y no aparece en el Reglamento 2019/945 (según el coordinador; no lo he comprobado en el texto del Reglamento) | La referencia legal del proyecto es EN 4709-002. El simulador genera observaciones de ambos formatos (campo `standard`), con EN 4709-002 por defecto |
 
-**Versiones comprobadas en PyPI el 2026-11-08** (se fijan en `uv.lock` en T1.1; todas con wheel para Python 3.12 en macOS x86_64 o puro Python):
+**Versiones verificadas en PyPI el 2026-11-10 y fijadas en `uv.lock` en T1.1** (los wheels disponibles se comprobaron con `uv sync` en macOS x86_64):
 
 | Paquete | Versión | Licencia | Wheel Mac Intel | Uso |
 |---|---|---|---|---|
 | `protobuf` | 7.36.2 (17-09-2026) | BSD-3-Clause | `abi3 universal2` | Ejecución |
-| `grpcio-tools` (+ `grpcio`) | 1.85.1 (30-10-2026); exige `protobuf>=7.35.1,<8` | Apache-2.0 | `cp312 universal2` | Desarrollo: `protoc` empaquetado. Versión exacta de su `protoc`: NO VERIFICADA (se registra en T1.1) |
+| `grpcio-tools` (+ `grpcio`) | 1.85.1 (30-10-2026); `protoc` reporta 35.1 | Apache-2.0 | `cp312 macOS 11 universal2` | Desarrollo: `protoc` empaquetado |
 | `types-protobuf` | 7.35.1.20260906 | Apache-2.0 | puro | Desarrollo (mypy) |
 | `zstandard` | 0.25.0 (14-09-2025) | BSD-3-Clause | `cp312 x86_64` | Ejecución (`.pb.zst`; `compression.zstd` de la biblioteca estándar es de Python 3.14 y el proyecto usa 3.12) |
-| `paho-mqtt` | 2.1.0 (29-04-2024) recomendada; existe 2.2.0 publicada el 04-11-2026 (hace 4 días) | EPL-2.0 OR BSD-3-Clause | puro | Ejecución (MQTT 5: `CallbackAPIVersion.VERSION2`, `MQTTv5`, verificado en su README) |
+| `paho-mqtt` | 2.2.0 (04-11-2026) | EPL-2.0 OR BSD-3-Clause | puro | Ejecución (MQTT 5: `CallbackAPIVersion.VERSION2`, `MQTTv5`) |
 | `jsonschema` (+ `rpds-py`, `referencing`, `attrs`) | 4.26.0; `rpds-py` 2026.9.1 | MIT | `rpds-py` `cp312 x86_64` | Ejecución (validación de escenarios) |
+| `types-jsonschema` | 4.26.0.20261006 | Apache-2.0 | puro | Desarrollo (mypy) |
 | `hypothesis` | 6.170.15 (ya en `uv.lock`) | MPL-2.0 | sí | Desarrollo |
 
 No verificadas todavía en el código instalado (se comprueban en T1.1 o en su tarea antes de usarlas): `SerializeToString(deterministic=True)`, `FieldOptions.Extensions[...]` y `HasExtension` en protobuf 7.x; `--pyi_out` y la ruta de los `.proto` estándar dentro de `grpc_tools`; el ajuste `derandomize` de hypothesis.
@@ -111,11 +112,11 @@ Orden estricto. Cada tarea: TDD (primero el test que falla), verificación y pru
 - **Prueba negativa:** en una copia sin la etiqueta `fase-0-cerrada`, `test -n "$(git tag -l 'fase-0-cerrada')"` falla y la precondición se detiene; en una copia, un ADR nuevo sin «Consecuencias» hace fallar el test de documentos.
 
 ### T1.1 — Dependencias y entorno
-- **Qué:** `uv add protobuf zstandard paho-mqtt jsonschema` y `uv add --dev grpcio-tools types-protobuf types-jsonschema`, con versiones fijadas en `uv.lock` (paho-mqtt 2.1.0 salvo decisión D-7). Registrar la versión del `protoc` de `grpcio-tools` y comprobar en el código instalado las API del §3. `pythonpath` de pytest y `mypy_path`. `make doctor` comprueba también `python -m grpc_tools.protoc --version`.
+- **Qué:** añadir las versiones registradas en la tabla (§3) como runtime (`protobuf`, `zstandard`, `paho-mqtt`, `jsonschema`) y desarrollo (`grpcio-tools`, `types-protobuf`, `types-jsonschema`) en `pyproject.toml` y `uv.lock`. Confirmar instalación desde wheels para el Mac Intel y licencias. Registrar `libprotoc 35.1`. `make doctor` comprueba también `python -m grpc_tools.protoc --version`. Configurar `pythonpath` de pytest y `mypy_path` cuando se incorporen los bindings en T1.5.
 - **Requisitos:** REQ-NFR-015, REQ-LEG-016, REQ-NFR-016
-- **Verificación:** `uv sync --frozen && uv run python -m grpc_tools.protoc --version && uv run python -m scripts.license_check && make doctor && make check`
-- **Resultado esperado:** todo con exit 0; `license_check` sin dependencias de ejecución con copyleft fuerte (paho-mqtt cuenta como BSD-3-Clause por su doble licencia); versión de `protoc` registrada en la evidencia.
-- **Prueba negativa:** en una copia del proyecto, añadir una dependencia de ejecución con licencia GPL hace fallar `license_check` (G-12 sigue vivo); `uv sync --frozen` con un `pyproject.toml` alterado y sin regenerar el lock falla.
+- **Verificación:** `uv sync --frozen && uv run --frozen python -m grpc_tools.protoc --version && uv run --frozen python -m scripts.license_check && make doctor && make check`
+- **Resultado esperado:** todo con exit 0; `license_check` sin dependencias runtime con copyleft fuerte (paho-mqtt tiene opción BSD-3-Clause en su doble licencia); `libprotoc 35.1` y los hashes de los wheels quedan en lock/evidencia.
+- **Prueba negativa:** el test de G-12 inyecta una dependencia runtime GPL y `license_check` la bloquea; `uv sync --frozen` con un `pyproject.toml` alterado y sin regenerar el lock falla.
 
 ### T1.2 — `buf`, opciones de sensibilidad y meta-test «todo campo declara sensibilidad»
 - **Qué:** `buf.yaml` v2 en la raíz (`modules: [{path: proto}]`, lint `STANDARD`, breaking `FILE`), `proto/atalaya/v1/options.proto` y `common.proto`. `atalaya_contracts.sensitivity.undeclared_fields(file_descriptors)` recorre **todos** los mensajes de `atalaya.v1` y `atalaya.sim.v1` (incluidos los anidados y los `oneof`) y devuelve los campos sin la opción o con `SENSITIVITY_UNSPECIFIED`. `buf lint` entra en `make lint`.

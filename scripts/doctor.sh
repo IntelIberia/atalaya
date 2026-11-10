@@ -35,4 +35,16 @@ if [ "$missing" -gt 0 ]; then
   echo "doctor: faltan $missing herramientas obligatorias. Ver CLAUDE.md (Comandos)." >&2
   exit 1
 fi
+
+if command -v uv >/dev/null 2>&1; then
+  protoc_version=$(uv run --frozen python -m grpc_tools.protoc --version 2>&1) || {
+    printf "%-12s %-8s %s\n" "grpc-protoc" "FALTA" "(uv run --frozen python -m grpc_tools.protoc --version falló)" >&2
+    exit 1
+  }
+  printf "%-12s %-8s %s\n" "grpc-protoc" "OK" "$protoc_version"
+else
+  echo "grpc-protoc: FALTA (uv no está disponible)" >&2
+  exit 1
+fi
+
 echo "doctor: OK"

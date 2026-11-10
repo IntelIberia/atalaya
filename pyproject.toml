@@ -4,7 +4,12 @@ version = "0.0.0"
 description = "Atalaya: detección, seguimiento y alerta de drones (solo detección)"
 requires-python = ">=3.12,<3.13"
 license = { text = "LicenseRef-Proprietary" }
-dependencies = []
+dependencies = [
+    "jsonschema==4.26.0",
+    "paho-mqtt==2.2.0",
+    "protobuf==7.36.2",
+    "zstandard==0.25.0",
+]
 
 [dependency-groups]
 dev = [
@@ -21,6 +26,9 @@ dev = [
     "types-pyyaml>=6",
     "defusedxml>=0.7",
     "types-defusedxml>=0.7",
+    "grpcio-tools==1.85.1",
+    "types-protobuf==7.35.1.20260906",
+    "types-jsonschema==4.26.0.20261006",
 ]
 
 [tool.uv]

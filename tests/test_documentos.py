@@ -132,3 +132,5 @@ def test_plantillas(repo: Path) -> None:
 def test_herramientas_disponibles(repo: Path) -> None:
     r = subprocess.run([str(repo / "scripts/doctor.sh")], capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
+    assert "grpc-protoc" in r.stdout
+    assert "libprotoc" in r.stdout
