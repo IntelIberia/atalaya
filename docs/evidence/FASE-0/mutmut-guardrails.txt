@@ -1,9 +1,8 @@
-# Mutación verificada de la continuación del 10 de noviembre
+# Mutación tras la segunda revisión
 
-494/535 = 92,34 %. Umbral conservado 80 %.
-40 supervivientes y 1 timeout, cero pendientes y otros errores.
-Fuente y tests ligados mediante SHA-256 en mutacion.json.
-Clasificación individual en revision-supervivientes.md.
-Se eliminaron 18 de los 58 supervivientes del primer relevo mediante pruebas adicionales.
-El timeout se mantiene en el denominador y fuera del numerador.
-La revisión histórica de equivalencia general se retiró.
+573/622 = 92,12 %, con umbral aprobado del 80 %.
+48 supervivientes, un timeout y cero pendientes u otros errores.
+El timeout permanece en el denominador y fuera del numerador.
+La ejecución registra inputs antes de mutmut. El productor rechaza fuentes, tests o configuración modificados y metadatos anteriores.
+Los hashes se encuentran en mutacion.json y la clasificación actual en revision-supervivientes.md.
+Los cambios de diagnóstico y disponibilidad se reconocen como diferencias observables.

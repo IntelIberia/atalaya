@@ -1,7 +1,7 @@
-# commit: b5044b49bba67c2e61d543d546238af0ec5df310 · fecha UTC: 2026-11-10T06:56:46Z
+# commit: 36c4f2064af67872b036daae470d5f42f3cfa353 · fecha UTC: 2026-11-10T07:17:52Z
 $ scripts/verify_clean_clone.sh
-verify_clean_clone: AVISO: hay cambios sin commit; se verifica solo HEAD (b5044b4).
-verify_clean_clone: clon en /var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/tmp.EqVOpw20jH/atalaya (b5044b4)
+verify_clean_clone: AVISO: hay cambios sin commit; se verifica solo HEAD (36c4f20).
+verify_clean_clone: clon en /var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/tmp.1rHCc4ljhI/atalaya (36c4f20)
 make check: OK
 verify_clean_clone: OK
 exit=0
