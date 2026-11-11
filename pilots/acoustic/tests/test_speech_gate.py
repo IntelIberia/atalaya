@@ -109,3 +109,25 @@ def test_notebook_uses_all_inventoried_clips_and_mfcc_baseline() -> None:
     # La línea base usa la MISMA partición y su propio umbral elegido en validación.
     assert "choose_threshold(y[validation_idx], baseline.predict_proba(" in code
     assert "DADS_ENABLED = False" in code
+
+
+def test_revision_humana_sin_voz_reincorpora_el_clip() -> None:
+    cleared = {"a.wav": "usuario 2026-11-11: crujido de madera, sin voz"}
+    r = apply_speech_gate(["a.wav", "b.wav"], [0.75, 0.40], human_cleared=cleared)
+    assert r["kept_indices"] == (0,)
+    assert [e["clip"] for e in r["excluded"]] == ["b.wav"]
+    assert r["human_cleared"] == [
+        {"clip": "a.wav", "max_speech_score": 0.75, "revision": cleared["a.wav"]}
+    ]
+
+
+def test_revision_humana_no_rescata_puntuacion_invalida() -> None:
+    r = apply_speech_gate(["a.wav"], [float("nan")], human_cleared={"a.wav": "x"})
+    assert r["kept_indices"] == ()
+
+
+def test_revision_humana_sin_motivo_es_error() -> None:
+    import pytest
+
+    with pytest.raises(ValueError):
+        apply_speech_gate(["a.wav"], [0.9], human_cleared={"a.wav": "  "})

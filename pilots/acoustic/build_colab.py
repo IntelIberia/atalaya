@@ -263,8 +263,13 @@ print("Si YAMNet marca voz, revisa esos clips y no uses material con datos perso
         code("""# Puerta automática de privacidad (código probado: apply_speech_gate).
 # Excluye del entrenamiento Y de la evaluación los clips con max_speech_score >= 0,30
 # o sin puntuación válida. Revisión AUTOMÁTICA: NO sustituye a la escucha humana.
+# Revisiones humanas: clip escuchado por una persona y declarado SIN voz (revisor, fecha, nota).
+HUMAN_CLEARED = {
+    "BACKGROUND_006.wav": "usuario, 2026-11-11: escuchado; crujido de madera, no es voz",
+}
 SPEECH_GATE = apply_speech_gate(df["clip"].tolist(), df["max_speech_score"].tolist(),
-                                threshold=SPEECH_EXCLUSION_THRESHOLD)
+                                threshold=SPEECH_EXCLUSION_THRESHOLD, human_cleared=HUMAN_CLEARED)
+print("Reincorporados por revisión humana:", SPEECH_GATE["human_cleared"])
 excluded_speech = pd.DataFrame(SPEECH_GATE["excluded"], columns=["clip", "max_speech_score", "motivo"])
 print(f"Excluidos por posible voz (umbral {SPEECH_EXCLUSION_THRESHOLD:.2f}): {len(excluded_speech)}")
 print(SPEECH_GATE["note"])
