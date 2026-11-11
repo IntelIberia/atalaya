@@ -116,6 +116,9 @@ def test_informe_de_mutacion(tmp_path: Path) -> None:
     meta.write_text(json.dumps({"exit_code_by_key": codes}))
     (tmp_path / "tests" / "guardrails").mkdir(parents=True)
     (tmp_path / "tests" / "guardrails" / "t.py").write_text("x\n")
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.mutmut]\npytest_add_cli_args_test_selection = ["tests/guardrails/"]\n'
+    )
     rep = mr.report(tmp_path, "scripts/m.py")
     assert rep["killed"] == 3
     assert rep["survived"] == 1
