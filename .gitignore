@@ -4,7 +4,8 @@
 !.env.example
 secrets/
 # Datos crudos y audio (el audio nunca se versiona salvo fixtures sintéticos)
-data/raw/
+data/raw/*
+!data/raw/*.dvc
 *.wav
 *.flac
 *.mp3
