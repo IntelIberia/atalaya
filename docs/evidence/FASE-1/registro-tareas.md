@@ -17,3 +17,4 @@ a verificar. El último informe posterior se conserva en `mutacion-T1.6-historic
 FASE 1 (`MUTACION-HISTORICA.md` lista las cuatro ejecuciones). Sus 573/622 mutantes corresponden
 solo a `scripts/guardrails.py`; el control vigente de
 mutación de T1.7 se generará de nuevo para los módulos críticos de esa tarea.
+| 2026-11-10 | borrador | T1.8 fuente SAPIENT — preflight y STOP de guardarraíl | `python3 -I scripts/guardrails.py --paths bsi_flex_335_v2_0/*.proto proto_options.proto LICENCE.txt` sobre el clon oficial fijado | Exit 2: dos coincidencias en `registration.proto:59` y `:68`; 16+1 `.proto`, licencia y hashes inspeccionados; ver `T1.8-STOP-guardarrail.md` y ADR 0014 propuesto. Sin vendorización ni bindings | El guardarraíl bloqueó las dos líneas oficiales antes de copiarlas; excepción no aplicada | **BLOQUEADO — STOP pendiente de revisión jurídica y decisión** |
