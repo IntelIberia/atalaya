@@ -18,3 +18,19 @@
 Prueba técnica: demuestra que el flujo descarga→verificación→YAMNet→partición por grupos→umbral en
 validación→métricas funciona en Colab. **No** mide precisión: un solo positivo en test. Contaminación
 entre particiones no descartada. Nada de esto entra en el producto.
+
+# Iteración 2 — 2026-11-11 23:45 (commit 5c35f3f, 89 WAV, puerta automática de voz ≥ 0,30)
+Nota: esta ejecución es anterior a la revisión humana de BACKGROUND_006 (commit 4675684), así que
+ese clip quedó excluido por la puerta automática.
+- Partición por grupos: train/val/test = 48/16/16 clips (grupos 48/16/16, provisionales).
+- Comparación en test (misma partición; cada modelo con su umbral elegido en validación):
+
+| Modelo | Umbral (val.) | tn | fp | fn | tp | Precision [IC95 grupos] | Recall [IC95] | PR-AUC [IC95] | FA/h |
+|---|---|---|---|---|---|---|---|---|---|
+| YAMNet + reg. logística | 0,7777 | 10 | 0 | 2 | 4 | 1,000 [1,000; 1,000] | 0,667 [0,250; 1,000] | 1,000 [1,000; 1,000] | NO VERIFICADA |
+| MFCC(40) + reg. logística | 0,3667 | 8 | 2 | 0 | 6 | 0,75 [0,400; 1,000] | 1,000 [1,000; 1,000] | 0,958 [0,792; 1,000] | NO VERIFICADA |
+
+Lectura: YAMNet ordena mejor (PR-AUC 1,0), pero su umbral elegido con 16 clips de validación es
+conservador y pierde 2 drones; MFCC no pierde drones a costa de 2 falsas alarmas. Prueba técnica con
+16 clips de test y contaminación entre particiones no descartada: no son métricas de campo.
+Siguiente paso: más datos con licencia compatible, sobre todo negativos y confusores españoles.
