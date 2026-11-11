@@ -1,6 +1,6 @@
 # Propuesta de piloto acústico exploratorio
 
-Versión 0.2 · 2026-11-11 · Estado: **P0 exploratorio local autorizado con condiciones**.
+Versión 0.3 · 2026-11-11 · Estado: **P0 exploratorio local autorizado con condiciones**.
 La decisión se registra en `docs/requirements/DECISIONES-USUARIO.md`. No es P0 de FASE 4 ni
 autoriza una prueba operativa.
 
@@ -22,9 +22,11 @@ otras fases, permisos y mediciones.
 
 Este documento **no** constituye el P0 de la FASE 4 ni adelanta su P6. El usuario pidió empezar
 a probar YAMNet y se le comunicó la interpretación de un **P0 limitado** a este carril local y
-aislado. Permite preparar código y comprobar una fuente candidata, y descargarla **solo después**
-de verificar su licencia original y registrar procedencia, hashes y revisión inicial de privacidad.
-El entrenamiento con audio real exige que el intake esté aprobado. No autoriza captura de
+aislado. Permite preparar código y comprobar una fuente candidata. La secuencia obligatoria es:
+preflight de licencia original, procedencia e identificadores upstream del contenido; descarga
+aislada en ruta ignorada por Git; SHA-256 local, inspección de datos personales, DVC y data card;
+aprobación explícita del intake; y solo entonces entrenamiento con audio real. La descarga se
+detiene si falla el preflight y el entrenamiento si falla cualquier paso posterior. No autoriza captura de
 micrófono, uso de datos de clientes, nube, integración en Atalaya ni publicación de resultados
 operativos. La secuencia ordinaria de FASE 4 conserva sus propias puertas.
 
