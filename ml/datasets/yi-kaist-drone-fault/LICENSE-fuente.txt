@@ -1,0 +1,22 @@
+Fuente original: https://zenodo.org/records/7779574
+Consultada (UTC): 2026-11-11T22:45:39Z
+Licencia declarada por el registro: CC BY 4.0 (atribución obligatoria).
+Clasificación Atalaya: comercial OK; sin restricción de campo de uso.
+
+== Evidencia: registro original en Zenodo ==
+URL pública: https://zenodo.org/records/7779574 · DOI https://doi.org/10.5281/zenodo.7779574
+API consultada: https://zenodo.org/api/records/7779574 (SHA-256 de la respuesta: cdd68ce59fd1c6e7decb136051a54fd3ab7dffdfb156065dc425aa195b7f500b)
+Campo metadata.license (literal): {"id": "cc-by-4.0"}
+Autores (literal): Yi, Wonjun; Choi, Jung-Woo; Lee, Jae-Woo
+Publicación: 2023-03-29 · versión 1 · actualizado 2025-06-26T01:15:34.260863+00:00
+Descripción (literal, recortada):  arxiv : https://arxiv.org/abs/2304.11708 Accepted at 29th International Congress on Sound and Vibration (ICSV29). The drone has been used for various purposes including military applications, aerial photography, and pesticide spraying. However, the drone is vulnerable to external disturbances, and malfunction in propellers and motors can easily occur. To improve the safety of drone operations, early detection of mechanical faults should be made in real-time. In this paper, we propose a sound-based deep neural network (DNN) fault classifier and drone sound dataset. The dataset was constructed by collecting the operating sounds of drones from microphones mounted on three different drones in an anechoic chamber. The dataset includes various operating conditions of drones, such as flight directions (front, back, right, left, clockwise, counter clockwise) and faults on propellers and motors. The drone sounds were then mixed with noises recorded in five different spots on the university campus, with a signal-to-noise ratio (SNR) varying from 10 dB to 15 dB. Using the acquired dataset, we train a DNN classifier, 1DCNN-ResNet, that classifies the types of mechanical faults and their locations from short-time input waveforms. We employ multitask learning (MTL) and incorporate the direction classification task as an auxiliary task to make the classifier learn more general audio features
+
+== Evidencia complementaria: artículo (arXiv:2304.11708, ICSV29) ==
+URL: https://arxiv.org/pdf/2304.11708 (SHA-256 PDF: b4bb4c02d80161b711691fe2579513bd702a40bbec9224ae14c2aed6b0516d63)
+Cita literal: "During the recording, drones were loosely tied by two elastic ropes of 1.5 m and 1 m length connected to the ceiling and"
+Cita literal: "drone type, the dataset was randomly shuffled and split into the train, valid, and test datasets in a 6:2:2 ratio, respe"
+
+== Texto legal CC BY 4.0 ==
+Ver https://creativecommons.org/licenses/by/4.0/legalcode.txt
+(SHA-256 del texto consultado: 9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411; texto íntegro archivado
+en ml/datasets/salford-dronenoise/LICENSE-fuente.txt).

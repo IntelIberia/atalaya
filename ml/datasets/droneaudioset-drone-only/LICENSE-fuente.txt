@@ -1,0 +1,33 @@
+Fuente original: https://huggingface.co/datasets/ahlab-drone-project/DroneAudioSet
+Consultada (UTC): 2026-11-11T22:45:39Z
+Licencia declarada por los autores: MIT (metadato del repositorio y artículo).
+Clasificación Atalaya: comercial OK para drone-only; resto del dataset excluido.
+
+== Evidencia 1: metadatos del repositorio original (Hugging Face) ==
+URL: https://huggingface.co/datasets/ahlab-drone-project/DroneAudioSet/blob/e794007062e2d2ad29262a5795b60d09f2b345c4/README.md
+Revisión fijada: e794007062e2d2ad29262a5795b60d09f2b345c4
+SHA-256 del README.md descargado: bb6715c8a95c37d5d14e0a1c082ab86389da508e34464032c3940a0d551fe0d4
+Primeras líneas del README (cabecera YAML): '---' 'license: mit'
+El README no contiene texto en prosa; no existe fichero LICENSE en la raíz del repositorio
+(raíz: .gitattributes, README.md, drone-only/, drone-with-source/, source-only/,
+ground-truth/, ground-truth-annotations/).
+
+== Evidencia 2: artículo de los autores (arXiv:2510.15383v1, NeurIPS 2025 D&B) ==
+URL resumen: https://arxiv.org/abs/2510.15383 (SHA-256 HTML: 935e9812156c015d462840e8692c048dafb5b0018bc4de2571517d1ebe021058)
+URL texto: https://arxiv.org/html/2510.15383v1 (SHA-256 HTML: fc2bd3f0033a9fd0e6c8350120264b8ad79dd0c2b9f8b79ee0e3247e5ff8b500)
+Cita literal (resumen): "The dataset is publicly available at this https URL under the MIT license), a compre"
+Cita literal (datasheet): "We distribute it under the MIT License, as described at https://opensource.org/license/mit/"
+Cita literal (datasheet): "Have any third parties imposed IP-based or other restrictions on the data associated with the instanc [...]
+We collect all data ourselves and therefore have no third parties with IP-based restrictions on the data. Do"
+Cita literal (montaje): "we ensured that the drone remained securely and evenly attached to the frame to prevent any anomalous vibrations. Figure"
+
+== Texto de la licencia referenciada por los autores ==
+URL: https://opensource.org/license/mit (SHA-256 HTML: b4f8150e0f34084a2474c9ceb25ce6622db3cb579495c0c57f5109527f4f3b01)
+Copyright <YEAR> <COPYRIGHT HOLDER> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+== Nota de intake (Atalaya) ==
+Ningún documento del repositorio identifica el titular del copyright exigido por el aviso MIT
+(NO VERIFICADO). Se atribuirá a "DroneAudioSet authors (Gupta, Ramesh et al., AHLab)" con la cita
+del artículo hasta confirmación. MIT no restringe campo de uso (comercial ni seguridad).
+Ámbito admitido: SOLO el subconjunto drone-only. drone-with-source y source-only contienen
+sonidos de terceros (LibriSpeech, Freesound, AudioSet, etc.) y voz: excluidos.
