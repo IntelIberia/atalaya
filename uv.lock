@@ -54,6 +54,7 @@ dependencies = [
     { name = "jsonschema" },
     { name = "paho-mqtt" },
     { name = "protobuf" },
+    { name = "pyyaml" },
     { name = "zstandard" },
 ]
 
@@ -67,7 +68,6 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "pyyaml" },
     { name = "ruff" },
     { name = "types-defusedxml" },
     { name = "types-jsonschema" },
@@ -80,6 +80,7 @@ requires-dist = [
     { name = "jsonschema", specifier = "==4.26.0" },
     { name = "paho-mqtt", specifier = "==2.2.0" },
     { name = "protobuf", specifier = "==7.36.2" },
+    { name = "pyyaml", specifier = "==6.0.3" },
     { name = "zstandard", specifier = "==0.25.0" },
 ]
 
@@ -93,7 +94,6 @@ dev = [
     { name = "mypy", specifier = ">=1.11" },
     { name = "pytest", specifier = ">=8,<9" },
     { name = "pytest-cov", specifier = ">=5" },
-    { name = "pyyaml", specifier = ">=6" },
     { name = "ruff", specifier = ">=0.6" },
     { name = "types-defusedxml", specifier = ">=0.7" },
     { name = "types-jsonschema", specifier = "==4.26.0.20261006" },

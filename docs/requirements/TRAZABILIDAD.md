@@ -8,7 +8,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-FUN-002 | MUST | 1 | 35 | verde | en curso |
 | REQ-FUN-003 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-004 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-FUN-005 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-FUN-005 | MUST | 1 | 40 | verde | en curso |
 | REQ-FUN-006 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-007 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-008 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
@@ -80,7 +80,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-NFR-012 | SHOULD | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-013 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-014 | MUST | 0 | 32 | verde | OK |
-| REQ-NFR-015 | MUST | 0 | 3 | verde | OK |
+| REQ-NFR-015 | MUST | 0 | 2 | verde | OK |
 | REQ-NFR-016 | MUST | 0 | 1 | verde | OK |
 | REQ-NFR-017 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-018 | MUST | 0 | 47 | verde | OK |
@@ -93,7 +93,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-LEG-004 | MUST | 6 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-005 | MUST | 5 | 15 | verde | en curso |
 | REQ-LEG-006 | MUST | 4 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-LEG-007 | MUST | 1 | 44 | verde | en curso |
+| REQ-LEG-007 | MUST | 1 | 61 | verde | en curso |
 | REQ-LEG-008 | MUST | 9 | 1 | verde | en curso |
 | REQ-LEG-009 | MUST | 4 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-LEG-010 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
@@ -108,7 +108,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-SEC-002 | MUST | 0 | 42 | verde | OK |
 | REQ-SEC-003 | MUST | 0 | 58 | verde | OK |
 | REQ-SEC-004 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-SEC-005 | MUST | 0 | 19 | verde | OK |
+| REQ-SEC-005 | MUST | 0 | 18 | verde | OK |
 | REQ-SEC-006 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-007 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-SEC-008 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |

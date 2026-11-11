@@ -1,0 +1,99 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.1,
+          36.2
+        ]
+      },
+      "properties": {
+        "role": "site_center",
+        "site": "recinto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "rc-and-1",
+        "site": "recinto",
+        "kind": "acoustic_android",
+        "pps": false,
+        "offset_m": {
+          "east_m": -150.0,
+          "north_m": 0.0,
+          "up_m": 2.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "rc-and-2",
+        "site": "recinto",
+        "kind": "acoustic_android",
+        "pps": false,
+        "offset_m": {
+          "east_m": 150.0,
+          "north_m": 0.0,
+          "up_m": 2.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "rc-pps-1",
+        "site": "recinto",
+        "kind": "acoustic_pps",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": 150.0,
+          "up_m": 3.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "rc-pps-2",
+        "site": "recinto",
+        "kind": "acoustic_pps",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": -150.0,
+          "up_m": 3.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "rc-rx-1",
+        "site": "recinto",
+        "kind": "remote_id_adsb_receiver",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": 0.0,
+          "up_m": 6.0
+        }
+      }
+    }
+  ]
+}

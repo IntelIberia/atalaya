@@ -1,0 +1,130 @@
+# Escenario SINTÉTICO de Atalaya (T1.9, REQ-FUN-005). Centro FICTICIO sobre mar abierto,
+# redondeado a 0,01° (D-8): no reproduce ningún emplazamiento ni perímetro real. Todas las
+# posiciones son desplazamientos locales en metros (este, norte, arriba) respecto al centro.
+# launch_point equivale al origen probable: FCSE_ONLY (REQ-LEG-007).
+schema_version: 1
+name: aerodromo
+description: Aeródromo sintético con pista de 1,5 km y tráfico tripulado frecuente; drones cerca de la
+  senda de aproximación. Centro ficticio sobre mar abierto (D-8).
+seed_policy:
+  default_seed: 20261113
+  derivation: sha256-component
+duration_s: 600
+geometry: aerodromo.nodes.geo.json
+environment:
+  temperature_c: 24.0
+  relative_humidity_pct: 55.0
+  wind:
+    speed_mps: 4.0
+    from_deg: 200.0
+  background_bands:
+  - center_hz: 125.0
+    level_db_spl: 51.0
+  - center_hz: 250.0
+    level_db_spl: 48.0
+  - center_hz: 500.0
+    level_db_spl: 45.0
+  - center_hz: 1000.0
+    level_db_spl: 42.0
+  - center_hz: 2000.0
+    level_db_spl: 39.0
+  - center_hz: 4000.0
+    level_db_spl: 35.0
+sites:
+- id: pista
+  center:
+    lat_deg: 35.8
+    lon_deg: -4.4
+  objectives:
+  - id: zona-pista
+    kind: perimeter
+    offset_m:
+      east_m: 0.0
+      north_m: 0.0
+      up_m: 0.0
+    radius_m: 900.0
+  - id: umbral-27
+    kind: point
+    offset_m:
+      east_m: 750.0
+      north_m: 0.0
+      up_m: 0.0
+    radius_m: 100.0
+threats:
+- id: amenaza-1
+  class: C5
+  site: pista
+  start_s: 45.0
+  speed_mps: 20.0
+  route:
+  - east_m: 3000.0
+    north_m: 1500.0
+    up_m: 200.0
+  - east_m: 750.0
+    north_m: 0.0
+    up_m: 100.0
+  remote_id:
+    mode: compliant
+    standard: EN_4709_002
+  launch_point:
+    sensitivity: FCSE_ONLY
+    offset_m:
+      east_m: 3000.0
+      north_m: 1500.0
+      up_m: 0.0
+- id: amenaza-2
+  class: C2
+  site: pista
+  start_s: 330.0
+  speed_mps: 10.0
+  route:
+  - east_m: -2000.0
+    north_m: -1200.0
+    up_m: 90.0
+  - east_m: -750.0
+    north_m: 0.0
+    up_m: 60.0
+  remote_id:
+    mode: forged
+    standard: EN_4709_002
+  launch_point:
+    sensitivity: FCSE_ONLY
+    offset_m:
+      east_m: -2000.0
+      north_m: -1200.0
+      up_m: 0.0
+manned_aircraft:
+- id: SIM301
+  class: C8
+  site: pista
+  start_s: 0.0
+  speed_mps: 60.0
+  route:
+  - east_m: 8000.0
+    north_m: 0.0
+    up_m: 450.0
+  - east_m: 750.0
+    north_m: 0.0
+    up_m: 15.0
+- id: SIM302
+  class: C8
+  site: pista
+  start_s: 280.0
+  speed_mps: 45.0
+  route:
+  - east_m: -750.0
+    north_m: 0.0
+    up_m: 15.0
+  - east_m: -8000.0
+    north_m: 0.0
+    up_m: 600.0
+faults:
+- kind: pps_invalid
+  node: ad-pps-1
+  start_s: 150.0
+  duration_s: 90.0
+- kind: duplicate
+  node: ad-and-2
+  start_s: 400.0
+  duration_s: 60.0
+  magnitude: 0.05
