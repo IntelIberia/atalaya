@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import random
 from dataclasses import dataclass
 
+from acoustic_pilot.grouped_eval import split_indices_by_group
 from acoustic_pilot.manifest import Manifest
 
 
@@ -34,31 +34,9 @@ def split_manifest(
     if key == "site" and any(clip.site_id is None for clip in manifest.clips):
         raise ValueError("split por sitio exige site_id verificado en todos los clips")
 
-    group_for_index = {
-        index: (clip.group_id if key == "group" else clip.site_id)
-        for index, clip in enumerate(manifest.clips)
-    }
-    groups = sorted({group for group in group_for_index.values() if group is not None})
-    if len(groups) < 6:
-        raise ValueError("se necesitan al menos seis grupos independientes")
-    n_test = max(2, round(len(groups) * 0.2))
-    n_validation = max(2, round(len(groups) * 0.2))
-    if len(groups) - n_test - n_validation < 2:
-        raise ValueError("grupos insuficientes para train/validation/test")
-
-    for attempt in range(1000):
-        shuffled = groups.copy()
-        random.Random(seed + attempt).shuffle(shuffled)
-        test_groups = set(shuffled[:n_test])
-        validation_groups = set(shuffled[n_test : n_test + n_validation])
-        train_groups = set(shuffled[n_test + n_validation :])
-        partitions = [
-            tuple(i for i, group in group_for_index.items() if group in selected)
-            for selected in (train_groups, validation_groups, test_groups)
-        ]
-        if all({manifest.clips[i].label for i in part} == {0, 1} for part in partitions):
-            train, validation, test = partitions
-            if len(set(train + validation + test)) != len(manifest.clips):
-                raise ValueError("una grabación aparece en varias particiones")
-            return Split(train, validation, test, key, provisional)
-    raise ValueError("no hay partición por grupos con ambas clases en los tres conjuntos")
+    groups = [str(clip.group_id if key == "group" else clip.site_id) for clip in manifest.clips]
+    labels = [clip.label for clip in manifest.clips]
+    train, validation, test = split_indices_by_group(labels, groups, seed=seed)
+    if len(set(train + validation + test)) != len(manifest.clips):
+        raise ValueError("una grabación aparece en varias particiones")
+    return Split(train, validation, test, key, provisional)

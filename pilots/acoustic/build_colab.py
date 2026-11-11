@@ -14,6 +14,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "ml/datasets/svanstrom/manifest.json"
 OUTPUT = ROOT / "pilots/acoustic/Atalaya_YAMNet_Colab.ipynb"
+# Código probado en pilots/acoustic/tests; se incrusta literalmente (Colab no accede al repo).
+GROUPED_EVAL = ROOT / "pilots/acoustic/acoustic_pilot/grouped_eval.py"
 UPSTREAM_LICENSE_SHA256 = "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
 
 
@@ -37,12 +39,23 @@ def main() -> None:
     assert manifest["license"] == "CC0-1.0"
     assert manifest["license_evidence"]["upstream_sha256"] == UPSTREAM_LICENSE_SHA256
     clips = [
-        {"name": c["path"], "sha256": c["sha256"], "bytes": c["bytes"]} for c in manifest["clips"]
+        {
+            "name": c["path"],
+            "sha256": c["sha256"],
+            "bytes": c["bytes"],
+            "group_id": c["group_id"],
+            "training_excluded": c["training_excluded"],
+        }
+        for c in manifest["clips"]
     ]
     assert len(clips) == 90
+    assert manifest["group_status"] in {"provisional", "verified"}
+    grouped_eval_source = GROUPED_EVAL.read_text(encoding="utf-8")
+    assert "__future__" not in grouped_eval_source  # se incrusta a mitad de cuaderno
     config = {
         "source_commit": manifest["commit"],
         "license_sha256": UPSTREAM_LICENSE_SHA256,
+        "group_status": manifest["group_status"],
         "clips": clips,
         "fraunhofer_record": "https://zenodo.org/api/records/17525811",
         "dads_card": "https://huggingface.co/datasets/geronimobasso/drone-audio-detection-samples",
@@ -52,15 +65,25 @@ def main() -> None:
 
 **Exploración técnica; no es un detector operativo.** El repositorio de
 [DroneDetectionThesis v1.0.0](https://github.com/DroneDetectionThesis/Drone-detection-dataset/releases/tag/v1.0.0)
-declara CC0, pero el [artículo de sus autores](https://www.mdpi.com/2504-446X/6/11/317)
-indica que el vídeo visible incluye material externo; no está documentado si algún WAV procede
-de esos vídeos. Se verificaron 24 clips por SHA-256 para una inspección inicial con YAMNet;
-las nuevas descargas y el entrenamiento quedan **bloqueados** hasta aclarar derechos por
+declara CC0, pero el artículo de sus autores (Svanström, Alonso-Fernandez y Englund,
+[*A dataset for multi-sensor drone detection*](https://arxiv.org/pdf/2111.01888),
+*Data in Brief* 39 (2021), 107521) indica que una parte pequeña del conjunto procede de YouTube
+y que el audio se extrajo de los vídeos o se grabó aparte; la
+[tesis del primer autor](https://hh.diva-portal.org/smash/get/diva2%3A1434532/FULLTEXT02.pdf)
+sitúa 49 clips externos en el vídeo visible. No está documentado si algún WAV procede de ellos.
+
+**Recuento de clips:** el inventario fijado contiene **90 WAV** (30 por clase), verificados por
+SHA-256 en el preflight local de la data card. Este cuaderno usa una **muestra de 24**
+(`N_PER_CLASS = 8` por clase, sin duplicados exactos) y verifica cada WAV contra ese inventario.
+Las nuevas descargas y el entrenamiento quedan **bloqueados** hasta aclarar derechos por
 archivo, revisar voz y completar el intake. Los audios se pueden escuchar abajo para esa revisión.
 
-El conjunto incluye 30 clips de dron, 30 de helicóptero y 30 de fondo. No hay IDs fiables de
-vuelo, sesión o lugar por archivo. Cualquier reparto por clip sería solo una prueba de
-funcionamiento, **no una medida de precisión en otro lugar ni de falsas alarmas de un
+Pesos de [YAMNet](https://www.kaggle.com/models/google/yamnet) (Google, vía TF Hub/Kaggle):
+licencia Apache 2.0 según la ficha oficial de Kaggle (véase la model card del piloto).
+
+No hay IDs fiables de vuelo, sesión o lugar por archivo: los grupos son provisionales (un
+clip, o un par de duplicados exactos). La partición train/validación/test por grupos es solo una
+prueba de funcionamiento, con contaminación entre particiones no descartada, **no una medida de precisión en otro lugar ni de falsas alarmas de un
 perímetro**. No se usa micrófono, audio de clientes, acceso al GitHub privado ni montaje de
 Drive en el entorno de ejecución.
 
@@ -90,30 +113,38 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import librosa
+import librosa.display
 import tensorflow as tf
 import tensorflow_hub as hub
 from IPython.display import Audio, display
+# Las funciones split_indices_by_group, choose_threshold, binary_metrics, group_bootstrap,
+# false_alarms_per_hour y metric_caption se definen en la celda siguiente (código probado).
 
 PILOT = json.loads('''"""
             + json.dumps(config, ensure_ascii=False, separators=(",", ":"))
             + """''')
 SEED = 20261111
-N_PER_CLASS = 8  # 24 WAV / ~42 MB; sube hasta 30 tras revisar el coste y la privacidad.
+N_PER_CLASS = 8  # muestra de 24 de los 90 WAV inventariados (~42 MB); máx. 30 tras revisar coste y privacidad.
 BASE = Path("/content/atalaya_piloto")
 BASE.mkdir(parents=True, exist_ok=True)
 COMMIT = PILOT["source_commit"]
-print("Fuente fijada:", COMMIT, "| clips inventariados:", len(PILOT["clips"]))
+print("Fuente fijada:", COMMIT, "| clips inventariados:", len(PILOT["clips"]),
+      "| muestra prevista:", 3 * N_PER_CLASS, "| grupos:", PILOT["group_status"])
 """
         ),
+        code(grouped_eval_source),
         code("""# Verifica la licencia original antes de descargar datos. Las redirecciones son restringidas.
 ALLOWED_HOSTS = {"raw.githubusercontent.com", "api.github.com"}
-def read_source(url):
+def read_https(url, allowed_hosts, timeout=90):
     parsed = urlparse(url)
-    assert parsed.scheme == "https" and parsed.hostname in ALLOWED_HOSTS, "Origen no permitido"
-    with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Atalaya-Colab-Pilot/1"}), timeout=90) as r:
+    assert parsed.scheme == "https" and parsed.hostname in allowed_hosts, "Origen no permitido"
+    with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "Atalaya-Colab-Pilot/1"}), timeout=timeout) as r:
         redirected = urlparse(r.geturl())
-        assert redirected.scheme == "https" and redirected.hostname in ALLOWED_HOSTS, "Redirección no permitida"
+        assert redirected.scheme == "https" and redirected.hostname in allowed_hosts, "Redirección no permitida"
         return r.read()
+
+def read_source(url):
+    return read_https(url, ALLOWED_HOSTS)
 
 ROOT_URL = f"https://raw.githubusercontent.com/DroneDetectionThesis/Drone-detection-dataset/{COMMIT}"
 license_bytes = read_source(ROOT_URL + "/LICENSE")
@@ -133,6 +164,7 @@ for prefix in ("BACKGROUND", "HELICOPTER", "DRONE"):
     candidates = sorted((c for c in PILOT["clips"] if c["name"].startswith(prefix + "_")),
                         key=lambda c: c["name"])
     assert len(candidates) == 30
+    candidates = [c for c in candidates if not c["training_excluded"]]
     # La fuente contiene al menos un duplicado exacto: nunca meterlo dos veces.
     unique = {c["sha256"]: c for c in candidates}
     assert len(unique) >= N_PER_CLASS
@@ -204,29 +236,72 @@ df = pd.DataFrame(rows)
 display(df.sort_values("max_speech_score", ascending=False).head(10))
 print("Si YAMNet marca voz, revisa esos clips y no uses material con datos personales sin base resuelta.")
 """),
-        code("""# Clasificador simple: regresión logística sobre embeddings congelados de YAMNet.
-# Separación por clip: diagnóstica, NO evaluación independiente de vuelos o lugares.
-assert TRAINING_ALLOWED, "Entrenamiento bloqueado: el intake de derechos, privacidad y grupos sigue pendiente."
-from sklearn.model_selection import train_test_split
+        code("""# Clasificador simple: regresión logística sobre la MEDIA de embeddings YAMNet por clip.
+# Partición train/validación/test por group_id (ningún grupo en dos particiones).
+# El umbral se fija en validación y se guarda; test solo se usa para medir.
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import ConfusionMatrixDisplay, classification_report
+from sklearn.metrics import ConfusionMatrixDisplay
 
-X = np.asarray(vectors)
-y = df["dron"].to_numpy()
-idx = np.arange(len(y))
-train_idx, test_idx = train_test_split(idx, test_size=0.25, random_state=SEED, stratify=y)
+assert TRAINING_ALLOWED, "Entrenamiento bloqueado: intake de derechos, privacidad y grupos pendiente."
+
+PROVISIONAL = PILOT["group_status"] != "verified"
+CAPTION = metric_caption(provisional=PROVISIONAL)
+GROUP_OF = {c["name"]: c["group_id"] for c in PILOT["clips"]}
+X = np.asarray(vectors)  # una fila por clip: media temporal de los embeddings de 1024 dimensiones
+y = df["dron"].to_numpy().astype(int)
+groups = [GROUP_OF[n] for n in df["clip"]]
+train_idx, validation_idx, test_idx = (np.asarray(part) for part in
+                                       split_indices_by_group(y.tolist(), groups, seed=SEED))
+part_groups = [{groups[i] for i in part} for part in (train_idx, validation_idx, test_idx)]
+assert not (part_groups[0] & part_groups[1] or part_groups[0] & part_groups[2]
+            or part_groups[1] & part_groups[2]), "un grupo aparece en dos particiones"
+
 head = LogisticRegression(max_iter=1000, class_weight="balanced", random_state=SEED)
 head.fit(X[train_idx], y[train_idx])
+threshold = choose_threshold(y[validation_idx], head.predict_proba(X[validation_idx])[:, 1])
+MODEL_RECORD = {
+    "modelo": "LogisticRegression sobre media de embeddings YAMNet por clip",
+    "yamnet": MODEL_URL, "seed": SEED, "group_status": PILOT["group_status"],
+    "umbral": threshold, "umbral_elegido_en": "validación (máximo F1; empate -> umbral mayor)",
+    "particiones": {k: sorted(df["clip"].iloc[v]) for k, v in
+                    (("train", train_idx), ("validacion", validation_idx), ("test", test_idx))},
+    "coef_sha256": hashlib.sha256(head.coef_.tobytes() + head.intercept_.tobytes()).hexdigest(),
+}
+(BASE / "modelo_piloto.json").write_text(json.dumps(MODEL_RECORD, ensure_ascii=False, indent=1))
+print("Umbral fijado en validación y guardado en modelo_piloto.json:", round(threshold, 4))
+print("clips train/val/test:", len(train_idx), len(validation_idx), len(test_idx),
+      "| grupos:", [len(g) for g in part_groups], CAPTION)
+
 proba = head.predict_proba(X[test_idx])[:, 1]
-pred = (proba >= 0.5).astype(int)
-print("PRUEBA TÉCNICA POR CLIP · posible contaminación entre vuelos/sesiones · no sirve para campo")
-print("train:", len(train_idx), "test:", len(test_idx), "umbral fijo: 0.5")
-print(classification_report(y[test_idx], pred, labels=[0, 1], target_names=["no dron", "dron"], zero_division=0))
-ConfusionMatrixDisplay.from_predictions(y[test_idx], pred, display_labels=["no dron", "dron"])
-plt.title("Solo prueba técnica; generalización no verificada")
+m = binary_metrics(y[test_idx], proba, threshold)
+boot = group_bootstrap(y[test_idx], proba, [groups[i] for i in test_idx], threshold, seed=SEED)
+def interval(name):
+    if boot["status"] != "OK":
+        return (f"IC 95 % por grupo: NO DISPONIBLE "
+                f"({boot['n_groups']} grupos de test < {boot['min_groups']})")
+    lo, hi = boot["intervals"][name]
+    return f"IC 95 % por grupo [{lo:.3f}, {hi:.3f}]"
+print("Matriz de confusión (test):", {k: m[k] for k in ("tn", "fp", "fn", "tp")}, CAPTION)
+for name in ("precision", "recall", "pr_auc"):
+    print(f"{name}: {m[name]:.3f} · {interval(name)} {CAPTION}")
+# Los clips son de ~10 s y no contiguos: no hay duración negativa continua conocida.
+# Mínimo exploratorio de este cuaderno, no requisito (REQ-NFR-004 se evalúa en evals/frozen).
+FA_MIN_CONTINUOUS_HOURS = 24.0
+LONGEST_CONTINUOUS_NEGATIVE_S = 10.0
+fa = false_alarms_per_hour(m["fp"], continuous_negative_seconds=LONGEST_CONTINUOUS_NEGATIVE_S,
+                           min_hours=FA_MIN_CONTINUOUS_HOURS)
+print("Falsas alarmas por hora:", fa["status"] if fa["value"] is None else f"{fa['value']:.3f}",
+      f"(negativo continuo conocido {fa['hours']*3600:.0f} s < {FA_MIN_CONTINUOUS_HOURS:.0f} h)"
+      if fa["value"] is None else "", CAPTION)
+ConfusionMatrixDisplay.from_predictions(y[test_idx], (proba >= threshold).astype(int),
+                                        labels=[0, 1], display_labels=["no dron", "dron"])
+plt.title(f"Test · umbral de validación {threshold:.3f}\\n{CAPTION}", fontsize=9)
 plt.show()
 """),
-        code("""# Resultado visual sobre un clip retenido: espectrograma y puntuación por ventana.
+        code("""# Ilustración sobre un clip de test: espectrograma y puntuación por ventana.
+# AVISO: el clasificador se entrenó con la MEDIA de embeddings por clip. Aplicarlo a ventanas
+# sueltas de 0,96 s (salto 0,48 s) queda fuera de su distribución de entrenamiento: la curva
+# NO está calibrada y el umbral (fijado por clip en validación) no es un umbral por ventana.
 chosen = next((i for i in test_idx if y[i] == 1), test_idx[0])
 name = df.iloc[chosen]["clip"]
 signal = waveforms[name]
@@ -237,10 +312,12 @@ fig, (a, b) = plt.subplots(2, 1, figsize=(11, 6), sharex=True)
 librosa.display.specshow(db, sr=16000, x_axis="time", y_axis="mel", ax=a)
 a.set_title(f"{name} · espectrograma")
 b.plot(np.arange(len(window_scores)) * 0.48, window_scores)
-b.axhline(0.5, color="red", linestyle="--", label="umbral exploratorio")
-b.set(ylim=(0, 1), ylabel="Puntuación", xlabel="Tiempo (s)")
+b.axhline(threshold, color="red", linestyle="--",
+          label="umbral por clip (validación); no válido por ventana")
+b.set(ylim=(0, 1), ylabel="Puntuación sin calibrar", xlabel="Tiempo (s)")
 b.legend()
-fig.suptitle("Puntuación sin calibración; no usar para alertas reales")
+fig.suptitle("Modelo por clip (media de embeddings) aplicado a ventanas: "
+             "curva NO calibrada, solo ilustrativa\\n" + CAPTION, fontsize=9)
 plt.tight_layout(); plt.show()
 """),
         md("""## Fuentes para las siguientes pruebas
@@ -258,10 +335,10 @@ plt.tight_layout(); plt.show()
   ningún clip suyo se descarga ni se usa para entrenar este cuaderno.
 """),
         code("""# Auditoría de metadatos de Fraunhofer; NO descarga su ZIP de 1.5 GB.
-import urllib.request
+# Misma restricción de hosts y redirecciones que la celda de licencia de Svanström.
+FRAUNHOFER_HOSTS = {"zenodo.org"}
 FRAUNHOFER = PILOT["fraunhofer_record"]
-with urllib.request.urlopen(FRAUNHOFER, timeout=30) as response:
-    meta_record = json.load(response)
+meta_record = json.loads(read_https(FRAUNHOFER, FRAUNHOFER_HOSTS, timeout=30))
 assert meta_record["metadata"]["license"]["id"] == "cc-by-4.0"
 files = meta_record["files"]
 assert len(files) == 1 and files[0]["key"] == "MicArrayData30s.zip"
@@ -282,7 +359,7 @@ revisión de privacidad y una evaluación congelada por vuelo/sitio.
     ]
     # Los scores preentrenados de YAMNet ayudan a dirigir la revisión, pero solo
     # la declaración humana desbloquea el entrenamiento posterior.
-    cells[7], cells[8] = cells[8], cells[7]
+    cells[8], cells[9] = cells[9], cells[8]
     notebook = {
         "cells": cells,
         "metadata": {
