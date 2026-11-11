@@ -45,6 +45,8 @@ jobs:
           make doctor
       - name: make check
         run: make check
+      - name: Compatibilidad de contratos Protobuf
+        run: make proto-breaking
       - name: make regress
         run: make regress
       - name: Guardarraíles sobre el rango del PR
