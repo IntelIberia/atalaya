@@ -155,7 +155,9 @@ print("Licencia CC0 original verificada por SHA-256.")
         code("""# Selección reproducible y descarga con SHA-256 por archivo. Solo datos públicos.
 # La atribución de cada WAV del artículo todavía no está probada. La descarga
 # exploratoria inicial ya se verificó; las ejecuciones futuras quedan cerradas.
-SOURCE_INTAKE_DOWNLOAD_APPROVED = False
+# Decisión del usuario 2026-11-11 («Pero te lo autorizo, estoy despierto»): SOLO prueba técnica aislada
+# en Colab; los WAV y el modelo nunca entran en el producto. El manifiesto del repo sigue sin aprobar.
+SOURCE_INTAKE_DOWNLOAD_APPROVED = True
 assert SOURCE_INTAKE_DOWNLOAD_APPROVED, "Procedencia por WAV sin verificar: no repetir la ingesta."
 assert 1 <= N_PER_CLASS <= 30
 randomizer = random.Random(SEED)
@@ -205,7 +207,9 @@ for prefix in ("BACKGROUND", "HELICOPTER", "DRONE"):
 """),
         code("""# Intake pendiente: la ficha CC0 no identifica el origen de cada WAV.
 # Esta celda documenta el bloqueo; no se desbloquea cambiando una casilla.
-TRAINING_ALLOWED = False
+# Decisión del usuario 2026-11-11: entrenamiento solo como prueba técnica; revisión de voz automática con
+# la puntuación de voz de YAMNet (no sustituye a una escucha humana). Generalización: NO evaluada.
+TRAINING_ALLOWED = True
 assert TRAINING_ALLOWED, "Intake sin aprobar: derechos por fichero, revisión de voz, data card y agrupación."
 """),
         code("""# YAMNet oficial: señal mono float32 a 16 kHz; embeddings congelados por ventana.

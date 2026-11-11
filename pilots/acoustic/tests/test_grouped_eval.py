@@ -175,9 +175,14 @@ def test_notebook_embeds_tested_module_and_drops_clip_split() -> None:
     assert "choose_threshold(y[validation_idx]" in code
 
 
-def test_notebook_gates_remain_closed() -> None:
+def test_notebook_gates_open_only_for_documented_technical_test() -> None:
+    # Autorización explícita del usuario 2026-11-11 (DECISIONES-USUARIO.md): puertas abiertas SOLO
+    # para la prueba técnica aislada en Colab, con la decisión escrita junto a cada puerta.
     code = _notebook_code()
-    assert "SOURCE_INTAKE_DOWNLOAD_APPROVED = False" in code
-    assert "TRAINING_ALLOWED = False" in code
+    for gate in ("SOURCE_INTAKE_DOWNLOAD_APPROVED = True", "TRAINING_ALLOWED = True"):
+        assert gate in code
+        previas = code.split(gate)[0].splitlines()[-3:]
+        assert any("Decisión del usuario 2026-11-11" in ln for ln in previas), gate
+    assert "SOLO prueba técnica" in code
     assert "DADS_ENABLED = False" in code
     assert "drive.mount" not in code and "/Users/" not in code
