@@ -1,7 +1,7 @@
 {
   "scripts/guardrails.py": {
     "sha256": "767bb1084490ec5464c491ffadd74e4118500ad04147fcce37db8dac9e78d682",
-    "tests_sha256": "2bee3bc191d2e059b4a7256d4d88c5b0fd1e1a572db1eedc963d9efa063ac5eb",
+    "tests_sha256": "e626c2346a4488f4f7c3c37e66323f11e501deed211d1aca34bcf63e9dab646e",
     "total": 622,
     "pending": 0,
     "killed": 573,
@@ -59,11 +59,51 @@
       "scripts.guardrails.x_range_files__mutmut_12",
       "scripts.guardrails.x_range_files__mutmut_9"
     ],
-    "inputs_sha256": "f09c0f131416c061b603065eb613f343b6f261caa91df281d2d71941b4512418"
+    "inputs_sha256": "6a9c579ec197bfa7ccbb62ab595729216f9874081b6f380bf2aed66e4fe58a82"
+  },
+  "scripts/traceability.py": {
+    "sha256": "d066b3065103db8fc6f261893d689543a97b838287e026832382abdc7f528a36",
+    "tests_sha256": "e626c2346a4488f4f7c3c37e66323f11e501deed211d1aca34bcf63e9dab646e",
+    "total": 362,
+    "pending": 0,
+    "killed": 336,
+    "survived": 26,
+    "timed_out": 0,
+    "other": 0,
+    "score": 0.9281767955801105,
+    "survivors": [
+      "scripts.traceability.x__parse_one__mutmut_16",
+      "scripts.traceability.x__parse_one__mutmut_4",
+      "scripts.traceability.x__status__mutmut_10",
+      "scripts.traceability.x__status__mutmut_3",
+      "scripts.traceability.x__status__mutmut_5",
+      "scripts.traceability.x__status__mutmut_8",
+      "scripts.traceability.x_main__mutmut_106",
+      "scripts.traceability.x_main__mutmut_108",
+      "scripts.traceability.x_main__mutmut_111",
+      "scripts.traceability.x_main__mutmut_2",
+      "scripts.traceability.x_main__mutmut_20",
+      "scripts.traceability.x_main__mutmut_3",
+      "scripts.traceability.x_main__mutmut_37",
+      "scripts.traceability.x_main__mutmut_4",
+      "scripts.traceability.x_main__mutmut_43",
+      "scripts.traceability.x_main__mutmut_47",
+      "scripts.traceability.x_main__mutmut_5",
+      "scripts.traceability.x_main__mutmut_81",
+      "scripts.traceability.x_main__mutmut_90",
+      "scripts.traceability.x_parse_closed__mutmut_12",
+      "scripts.traceability.x_parse_closed__mutmut_2",
+      "scripts.traceability.x_parse_closed__mutmut_4",
+      "scripts.traceability.x_parse_closed__mutmut_9",
+      "scripts.traceability.x_parse_requirements__mutmut_11",
+      "scripts.traceability.x_parse_requirements__mutmut_2",
+      "scripts.traceability.x_parse_requirements__mutmut_4"
+    ],
+    "inputs_sha256": "6a9c579ec197bfa7ccbb62ab595729216f9874081b6f380bf2aed66e4fe58a82"
   },
   "proto/python/atalaya_contracts/redact.py": {
     "sha256": "f5a3e9e666f83a5d75a56aa90741a5d9782a1d7a2020d413ec0324db8027a1d3",
-    "tests_sha256": "2bee3bc191d2e059b4a7256d4d88c5b0fd1e1a572db1eedc963d9efa063ac5eb",
+    "tests_sha256": "e626c2346a4488f4f7c3c37e66323f11e501deed211d1aca34bcf63e9dab646e",
     "total": 173,
     "pending": 0,
     "killed": 142,
@@ -104,11 +144,11 @@
       "atalaya_contracts.redact.x_redact__mutmut_35",
       "atalaya_contracts.redact.x_redact__mutmut_47"
     ],
-    "inputs_sha256": "f09c0f131416c061b603065eb613f343b6f261caa91df281d2d71941b4512418"
+    "inputs_sha256": "6a9c579ec197bfa7ccbb62ab595729216f9874081b6f380bf2aed66e4fe58a82"
   },
   "proto/python/atalaya_contracts/log_projection.py": {
     "sha256": "3a4acb9bbe6d3e7d61324cca054a9b1251a5bb40be928f761009af43d71ee87a",
-    "tests_sha256": "2bee3bc191d2e059b4a7256d4d88c5b0fd1e1a572db1eedc963d9efa063ac5eb",
+    "tests_sha256": "e626c2346a4488f4f7c3c37e66323f11e501deed211d1aca34bcf63e9dab646e",
     "total": 158,
     "pending": 0,
     "killed": 130,
@@ -146,11 +186,11 @@
       "atalaya_contracts.log_projection.x_project_log_record__mutmut_14",
       "atalaya_contracts.log_projection.x_project_log_record__mutmut_5"
     ],
-    "inputs_sha256": "f09c0f131416c061b603065eb613f343b6f261caa91df281d2d71941b4512418"
+    "inputs_sha256": "6a9c579ec197bfa7ccbb62ab595729216f9874081b6f380bf2aed66e4fe58a82"
   },
   "proto/python/atalaya_contracts/validate.py": {
     "sha256": "d1a0750cfbcf486d414f7d0bdcd0c3c1623fc4a7cd5dd548210d3130cee666d7",
-    "tests_sha256": "2bee3bc191d2e059b4a7256d4d88c5b0fd1e1a572db1eedc963d9efa063ac5eb",
+    "tests_sha256": "e626c2346a4488f4f7c3c37e66323f11e501deed211d1aca34bcf63e9dab646e",
     "total": 444,
     "pending": 0,
     "killed": 389,
@@ -215,6 +255,6 @@
       "atalaya_contracts.validate.x_validate__mutmut_62",
       "atalaya_contracts.validate.x_validate__mutmut_8"
     ],
-    "inputs_sha256": "f09c0f131416c061b603065eb613f343b6f261caa91df281d2d71941b4512418"
+    "inputs_sha256": "6a9c579ec197bfa7ccbb62ab595729216f9874081b6f380bf2aed66e4fe58a82"
   }
 }

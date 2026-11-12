@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -130,3 +131,152 @@ def test_nats_conf_toma_credenciales_del_entorno(repo: Path) -> None:
     assert re.search(r"^http_port:\s*8222\s*$", conf, re.MULTILINE)
     vols = cargar(repo)["services"]["nats"]["volumes"]
     assert "./nats/nats.conf:/etc/nats/nats-server.conf:ro" in vols
+
+
+# --- T1.16: cuentas de servicio MQTT y ACL por topic/sitio ----------------------------------
+
+ACL = Path("infra/compose/mosquitto/acl.tmpl")
+CUENTAS = {"@MQTT_USER@", "@MQTT_SIM_USER@", "@MQTT_INGEST_USER@"}
+VARIABLES_MQTT = (
+    "MQTT_USER",
+    "MQTT_PASSWORD",
+    "MQTT_SIM_USER",
+    "MQTT_SIM_PASSWORD",
+    "MQTT_INGEST_USER",
+    "MQTT_INGEST_PASSWORD",
+)
+
+
+def sitios_de_escenarios(repo: Path) -> set[str]:
+    sitios: set[str] = set()
+    for f in sorted((repo / "sim/scenarios").glob("*.yaml")):
+        data = yaml.safe_load(f.read_text())
+        sitios |= {s["id"] for s in data["sites"]}
+    return sitios
+
+
+def reglas_acl(texto: str) -> dict[str, set[tuple[str, str]]]:
+    """Reglas por usuario; `*` agrupa las que no tienen usuario o no se reconocen."""
+    reglas: dict[str, set[tuple[str, str]]] = {}
+    usuario = "*"
+    for raw in texto.splitlines():
+        linea = raw.strip()
+        if not linea or linea.startswith("#"):
+            continue
+        partes = linea.split()
+        if partes[0] == "user" and len(partes) == 2:
+            usuario = partes[1]
+            reglas.setdefault(usuario, set())
+        elif partes[0] == "topic" and len(partes) == 3 and usuario != "*":
+            reglas[usuario].add((partes[1], partes[2]))
+        else:
+            reglas.setdefault("*", set()).add(("desconocida", linea))
+    return reglas
+
+
+def problemas_acl(texto: str, sitios: set[str]) -> list[str]:
+    p: list[str] = []
+    reglas = reglas_acl(texto)
+    if "*" in reglas:
+        p.append(f"reglas sin usuario o desconocidas: {sorted(reglas['*'])}")
+    if set(reglas) - {"*"} != CUENTAS:
+        p.append(f"cuentas: {sorted(set(reglas) - {'*'})}")
+    sim_esperado = {
+        ("write", f"atalaya/v1/{s}/+/{k}") for s in sitios for k in ("detection", "node_status")
+    }
+    if reglas.get("@MQTT_SIM_USER@") != sim_esperado:
+        p.append("simulador: solo escritura en los topics de sus sitios")
+    ingest_esperado = {("read", f"atalaya/v1/+/+/{k}") for k in ("detection", "node_status")}
+    if reglas.get("@MQTT_INGEST_USER@") != ingest_esperado:
+        p.append("ingesta: solo lectura de detecciones y estado de nodo")
+    if reglas.get("@MQTT_USER@") != {("read", "$SYS/broker/uptime"), ("readwrite", "smoke/#")}:
+        p.append("administración: solo smoke y uptime, nunca atalaya/")
+    return p
+
+
+@pytest.mark.req("REQ-SEC-005")
+def test_acl_mqtt_por_cuenta_topic_y_sitio(repo: Path) -> None:
+    sitios = sitios_de_escenarios(repo)
+    assert sitios == {"recinto", "muelles", "pista", "tramo-oeste", "tramo-este"}
+    assert problemas_acl((repo / ACL).read_text(), sitios) == []
+
+
+@pytest.mark.req("REQ-SEC-005")
+@pytest.mark.parametrize(
+    ("extra", "esperado"),
+    [
+        ("topic readwrite #\n", "reglas sin usuario"),
+        ("pattern write atalaya/v1/%u/#\n", "reglas sin usuario"),
+        ("user @MQTT_SIM_USER@\ntopic readwrite atalaya/v1/#\n", "simulador"),
+        ("user @MQTT_SIM_USER@\ntopic write atalaya/v1/ajeno/+/detection\n", "simulador"),
+        ("user @MQTT_INGEST_USER@\ntopic write atalaya/v1/+/+/detection\n", "ingesta"),
+        ("user @MQTT_USER@\ntopic read atalaya/v1/#\n", "administración"),
+        ("user otro\ntopic read smoke/#\n", "cuentas"),
+    ],
+)
+def test_acl_detecta_permisos_de_mas(repo: Path, extra: str, esperado: str) -> None:
+    texto = (
+        extra + "\n" + (repo / ACL).read_text()
+        if extra.startswith(("topic", "pattern"))
+        else ((repo / ACL).read_text() + "\n" + extra)
+    )
+    assert any(x.startswith(esperado) for x in problemas_acl(texto, sitios_de_escenarios(repo)))
+
+
+@pytest.mark.req("REQ-SEC-005")
+def test_mosquitto_usa_acl_y_cuentas_de_servicio(repo: Path) -> None:
+    conf = (repo / "infra/compose/mosquitto/mosquitto.conf").read_text()
+    assert re.search(r"^acl_file\s+/mosquitto/acl\s*$", conf, re.MULTILINE)
+    mosq = cargar(repo)["services"]["mosquitto"]
+    for var in VARIABLES_MQTT:
+        assert VAR_OBLIGATORIA.match(str(mosq["environment"][var])), var
+    cmd = str(mosq["command"])
+    for var in ("MQTT_USER", "MQTT_SIM_USER", "MQTT_INGEST_USER"):
+        assert f'"$${var}" "$${var.replace("USER", "PASSWORD")}"' in cmd, var
+        assert f"@{var}@" in cmd, var
+    assert "./mosquitto/acl.tmpl:/mosquitto/config/acl.tmpl:ro" in mosq["volumes"]
+
+
+def _copia_generador(repo: Path, destino: Path) -> Path:
+    (destino / "scripts").mkdir(parents=True)
+    script = destino / "scripts" / "gen_local_secrets.sh"
+    script.write_bytes((repo / "scripts/gen_local_secrets.sh").read_bytes())
+    script.chmod(0o700)
+    return script
+
+
+def _claves(env: Path) -> list[str]:
+    return [ln.split("=", 1)[0] for ln in env.read_text().splitlines() if "=" in ln]
+
+
+@pytest.mark.req("REQ-SEC-005")
+def test_generador_crea_todas_las_cuentas_mqtt(repo: Path, tmp_path: Path) -> None:
+    script = _copia_generador(repo, tmp_path)
+    subprocess.run([str(script)], check=True, capture_output=True)
+    env = tmp_path / ".env"
+    claves = _claves(env)
+    for var in VARIABLES_MQTT:
+        assert claves.count(var) == 1, var
+    assert env.stat().st_mode & 0o777 == 0o600
+    valores = dict(ln.split("=", 1) for ln in env.read_text().splitlines() if "=" in ln)
+    assert len({valores[v] for v in VARIABLES_MQTT}) == len(VARIABLES_MQTT)
+    assert all(len(valores[v]) >= 32 for v in VARIABLES_MQTT if v.endswith("PASSWORD"))
+
+
+@pytest.mark.req("REQ-SEC-005")
+def test_generador_completa_un_env_antiguo_sin_tocar_lo_existente(
+    repo: Path, tmp_path: Path
+) -> None:
+    script = _copia_generador(repo, tmp_path)
+    env = tmp_path / ".env"
+    antiguo = "# antiguo\nMQTT_USER=u_sintetico\nMQTT_PASSWORD=p_sintetica\n"
+    env.write_text(antiguo)
+    env.chmod(0o600)
+    subprocess.run([str(script)], check=True, capture_output=True)
+    texto = env.read_text()
+    assert texto.startswith(antiguo)
+    claves = _claves(env)
+    for var in VARIABLES_MQTT:
+        assert claves.count(var) == 1, var
+    subprocess.run([str(script)], check=True, capture_output=True)
+    assert env.read_text() == texto

@@ -38,7 +38,7 @@ package = false
 testpaths = ["tests"]
 addopts = "-ra --strict-markers -m 'not integracion'"
 junit_family = "xunit1"
-pythonpath = ["proto/gen/python", "proto/python"]
+pythonpath = ["proto/gen/python", "proto/python", "services/ingest"]
 markers = [
     "req(id): requisitos que verifica el test (trazabilidad)",
     "subproceso: lanza un script en otro proceso (se excluye de mutmut)",
@@ -61,7 +61,7 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 [tool.mypy]
 strict = true
 python_version = "3.12"
-mypy_path = ["proto/gen/python", "proto/python"]
+mypy_path = ["proto/gen/python", "proto/python", "services/ingest"]
 exclude = ["third_party/", "mutants/"]
 
 [[tool.mypy.overrides]]
@@ -71,10 +71,12 @@ ignore_errors = true
 [tool.mutmut]
 source_paths = [
     "scripts/guardrails.py",
+    "scripts/traceability.py",
     "src/atalaya_contracts",
 ]
 only_mutate = [
     "scripts/guardrails.py",
+    "scripts/traceability.py",
     "src/atalaya_contracts/redact.py",
     "src/atalaya_contracts/log_projection.py",
     "src/atalaya_contracts/validate.py",
@@ -84,6 +86,7 @@ pytest_add_cli_args_test_selection = [
     "tests/contracts/test_uncertainty.py",
     "tests/contracts/test_redact.py",
     "tests/sim/test_logs.py",
+    "tests/test_traceability.py",
 ]
 also_copy = [
     "scripts/",
@@ -100,4 +103,4 @@ pytest_add_cli_args = ["-m", "not subproceso", "-o", "pythonpath=proto/gen/pytho
 coverage_branch_min = 90
 coverage_critical = ["scripts/guardrails.py", "scripts/traceability.py", "scripts/evidence.py", "scripts/mutation_report.py", "proto/python/atalaya_contracts/validate.py", "proto/python/atalaya_contracts/redact.py", "proto/python/atalaya_contracts/log_projection.py"]
 mutation_threshold = 0.80
-mutation_critical = ["scripts/guardrails.py", "proto/python/atalaya_contracts/redact.py", "proto/python/atalaya_contracts/log_projection.py", "proto/python/atalaya_contracts/validate.py"]
+mutation_critical = ["scripts/guardrails.py", "scripts/traceability.py", "proto/python/atalaya_contracts/redact.py", "proto/python/atalaya_contracts/log_projection.py", "proto/python/atalaya_contracts/validate.py"]

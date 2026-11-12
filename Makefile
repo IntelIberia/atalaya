@@ -45,7 +45,7 @@ lint: ## Lint y formato (sin modificar ficheros)
 	@echo "lint: OK"
 
 typecheck: ## Tipos estrictos
-	@$(UV) mypy --strict scripts tests proto/python sim
+	@$(UV) mypy --strict scripts tests proto/python sim services/ingest
 
 test: ## Tests (+ JUnit para trazabilidad y cobertura de ramas)
 	@mkdir -p reports

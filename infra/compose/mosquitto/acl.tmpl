@@ -1,0 +1,27 @@
+# ACL de Mosquitto (T1.16, REQ-SEC-005). Plantilla: al arrancar, el contenedor sustituye los
+# marcadores @...@ por los usuarios de .env (make bootstrap) y escribe /mosquitto/acl.
+# Sin reglas globales ni `pattern`: una cuenta sin entrada aquí no puede leer ni escribir nada.
+# Un sitio nuevo en sim/scenarios exige su línea (lo comprueba tests/test_compose.py).
+
+# Administración y smoke de FASE 0: nunca los topics de Atalaya.
+user @MQTT_USER@
+topic read $SYS/broker/uptime
+topic readwrite smoke/#
+
+# Simulador: solo escritura, solo en los sitios de los escenarios.
+user @MQTT_SIM_USER@
+topic write atalaya/v1/pista/+/detection
+topic write atalaya/v1/pista/+/node_status
+topic write atalaya/v1/recinto/+/detection
+topic write atalaya/v1/recinto/+/node_status
+topic write atalaya/v1/muelles/+/detection
+topic write atalaya/v1/muelles/+/node_status
+topic write atalaya/v1/tramo-oeste/+/detection
+topic write atalaya/v1/tramo-oeste/+/node_status
+topic write atalaya/v1/tramo-este/+/detection
+topic write atalaya/v1/tramo-este/+/node_status
+
+# Ingesta: solo lectura de detecciones y estado de nodo de todos los sitios.
+user @MQTT_INGEST_USER@
+topic read atalaya/v1/+/+/detection
+topic read atalaya/v1/+/+/node_status
