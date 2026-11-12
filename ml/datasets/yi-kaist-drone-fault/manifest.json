@@ -1,0 +1,62 @@
+{
+  "source_id": "yi-kaist-drone-fault",
+  "source": "https://zenodo.org/records/7779574",
+  "doi": "https://doi.org/10.5281/zenodo.7779574",
+  "version": "1",
+  "license": "CC-BY-4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "license_status": "verified_at_source",
+  "license_evidence": {
+    "path": "LICENSE-fuente.txt",
+    "sha256": "e00d4c1f002299edeb6c10557168f3b9a696cb9427b6bd197ab922b73e790cfc"
+  },
+  "attribution": "Yi, Wonjun; Choi, Jung-Woo; Lee, Jae-Woo (2023). Sound-based drone fault classification using multi-task learning [Data set]. Zenodo. https://doi.org/10.5281/zenodo.7779574",
+  "retrieved_at_utc": "2026-11-11T22:45:39Z",
+  "blocked": false,
+  "preflight_only": true,
+  "audio_downloaded_on_mac": false,
+  "intake_approved": false,
+  "training_allowed": false,
+  "production_allowed": false,
+  "generalization_eval_allowed": false,
+  "reason": "preflight: member inventory, background speech review, regrouping by drone_file_index and DPIA pending",
+  "filename_schema": "{model}_{direction}_{fault}_{drone_file_index}_{background}_{background_file_index}_{SNR}",
+  "usable_filter": "fault == 'N' (normal) only",
+  "expected_file_count": 3,
+  "expected_total_bytes": 7622850560,
+  "files": [
+    {
+      "path": "drone_A.tar",
+      "bytes": 2554408960,
+      "md5": "14a6fd11add6aedb6e53404df7811147",
+      "md5_source": "zenodo_checksum",
+      "sha256": null,
+      "url": "https://zenodo.org/api/records/7779574/files/drone_A.tar/content",
+      "drone_type": "A",
+      "selected_for_colab": true,
+      "members": null
+    },
+    {
+      "path": "drone_B.tar",
+      "bytes": 2535034880,
+      "md5": "b3d19705fdc1f31f618c1f4d2682f2a4",
+      "md5_source": "zenodo_checksum",
+      "sha256": null,
+      "url": "https://zenodo.org/api/records/7779574/files/drone_B.tar/content",
+      "drone_type": "B",
+      "selected_for_colab": false,
+      "members": null
+    },
+    {
+      "path": "drone_C.tar",
+      "bytes": 2533406720,
+      "md5": "54b1e10b92d572551942a437130ecb36",
+      "md5_source": "zenodo_checksum",
+      "sha256": null,
+      "url": "https://zenodo.org/api/records/7779574/files/drone_C.tar/content",
+      "drone_type": "C",
+      "selected_for_colab": false,
+      "members": null
+    }
+  ]
+}
