@@ -27,7 +27,7 @@ sintéticos con prefijo `SIM`.
   y `uv run python -m sim hash F.pb.zst`; ambos imprimen `stream_sha256` (flujo sin comprimir,
   `varint(longitud) ‖ Envelope`) y `file_sha256` (fichero de replay completo). Desde T1.15
   `run` escribe el replay versionado e incluye todos los sensores (ver «Replay»).
-- La red de T1.13 y MQTT se integran en T1.16–T1.17.
+- La red de T1.13 y MQTT se integran en T1.16 (construcción, sin publicación), T1.7b y T1.17.
 
 ## Trayectorias (T1.11, REQ-FUN-004)
 
@@ -92,4 +92,18 @@ sintéticos con prefijo `SIM`.
   desplazamiento (en el fichero o en el contenido descomprimido).
 - `sim/replay.py`: `record()` (escenario con latido, acústica, Remote ID y ADS-B), `write()`,
   `read()`/`decode()` y `stream_sha256()`. CLI: `python -m sim replay --in F.pb.zst` (exit 2 si el
-  fichero no es válido). `--mqtt` llega con T1.16 (publicación cerrada hasta T1.7b).
+  fichero no es válido). `--mqtt` existe desde T1.16 y sale con exit 3 (publicación cerrada hasta T1.7b).
+
+## Salida MQTT (T1.16, sin publicación)
+
+- `mqtt_out.py`: `topic_for()` (`atalaya/v1/<site>/<node>/{detection,node_status}`, solo sitios
+  autorizados y segmentos `[a-z0-9-]`), `build_message()` (valida, redacta a `OPERATOR`, serializa
+  de forma determinista; QoS 1) y `make_client()` (paho-mqtt, MQTT 5, sin conectar). Solo
+  `Detection` y `NodeStatus` son publicables; `Evidence`, `Sighting` y el resto se rechazan.
+- `MqttCredentials.from_env()`: `MQTT_SIM_USER`/`MQTT_SIM_PASSWORD` del entorno (`.env` de
+  `make bootstrap`); sin valores por defecto; contraseña de ≥ 32 caracteres; nunca en `repr`.
+- `MqttPublisher.publish()` **deniega siempre** (`PublicationDenied`) sin crear el transporte ni
+  registrar el payload. No hay parámetro, variable de entorno ni método para abrir la puerta: la
+  sustituye T1.7b con autenticación, ACL y autorización por rol y recurso.
+- Broker: cuentas de administración, simulador e ingesta con ACL por topic y sitio
+  (`infra/compose/mosquitto/acl.tmpl`).
