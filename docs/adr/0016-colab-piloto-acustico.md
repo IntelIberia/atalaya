@@ -1,4 +1,4 @@
-# 0015 — Google Colab como entorno del piloto acústico exploratorio
+# 0016 — Google Colab como entorno del piloto acústico exploratorio
 
 - Estado: aceptado
 - Fecha: 2026-11-11
