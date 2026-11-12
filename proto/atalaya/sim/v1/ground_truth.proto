@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package atalaya.sim.v1;
+
+import "atalaya/v1/common.proto";
+import "atalaya/v1/options.proto";
+import "google/protobuf/timestamp.proto";
+
+message GroundTruth {
+  optional string target_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  google.protobuf.Timestamp simulated_at = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  atalaya.v1.GeoPoint true_position = 3 [(atalaya.v1.sensitivity) = FCSE_ONLY, (atalaya.v1.required) = true];
+  optional string class_id = 4 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional bool is_forged = 5 [(atalaya.v1.sensitivity) = FCSE_ONLY, (atalaya.v1.required) = true];
+  atalaya.v1.GeoPoint launch_point = 6 [(atalaya.v1.sensitivity) = FCSE_ONLY];
+}

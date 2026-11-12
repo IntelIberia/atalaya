@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/common.proto";
+import "atalaya/v1/options.proto";
+import "google/protobuf/timestamp.proto";
+
+enum NodeHealth {
+  NODE_HEALTH_UNSPECIFIED = 0;
+  NODE_HEALTH_HEALTHY = 1;
+  NODE_HEALTH_DEGRADED = 2;
+  NODE_HEALTH_FAILED = 3;
+}
+
+message NodeStatus {
+  optional string site_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional string node_id = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  google.protobuf.Timestamp observed_at = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional NodeHealth health = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  GeoPoint location = 5 [(atalaya.v1.sensitivity) = OPERATOR];
+  TimeQuality time_quality = 6 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double battery_percent = 7 [(atalaya.v1.sensitivity) = OPERATOR];
+  optional string software_version = 8 [(atalaya.v1.sensitivity) = OPERATOR];
+}

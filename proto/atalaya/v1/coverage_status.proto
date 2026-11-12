@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/common.proto";
+import "atalaya/v1/options.proto";
+import "google/protobuf/timestamp.proto";
+
+message CoverageStatus {
+  optional string site_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional string region_id = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  repeated GeoPoint boundary = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double estimated_probability = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  ErrorEllipse uncertainty = 5 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  google.protobuf.Timestamp assessed_at = 6 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+}

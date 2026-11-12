@@ -17,7 +17,9 @@ case "$file" in
     shellcheck "$file" >&2 || problems=1
     ;;
 esac
-"$PY" -I "$ROOT/scripts/guardrails.py" --paths "$file" || problems=1
+# Ruta relativa al repo: algunas reglas dependen de ella (p. ej. .claude/settings.json).
+rel="${file#"$ROOT"/}"
+(cd "$ROOT" && "$PY" -I scripts/guardrails.py --paths "$rel") || problems=1
 
 if [ "$problems" -ne 0 ]; then
   echo "post_edit: corrige los avisos anteriores en $file" >&2

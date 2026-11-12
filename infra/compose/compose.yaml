@@ -5,7 +5,7 @@ name: atalaya
 
 services:
   mosquitto:
-    image: eclipse-mosquitto:2.0.22
+    image: eclipse-mosquitto:2.0.22@sha256:81a6193ae693942a3231cd3ac52875b02b7e3a19da671b2fb4b55cc874c5b279
     environment:
       MQTT_USER: ${MQTT_USER:?falta MQTT_USER en .env}
       MQTT_PASSWORD: ${MQTT_PASSWORD:?falta MQTT_PASSWORD en .env}
@@ -18,6 +18,8 @@ services:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
     ports:
       - "127.0.0.1:1883:1883"
+    # El healthcheck pasa la contraseña a mosquitto_sub por argv: es un proceso efímero DENTRO del
+    # contenedor (solo lo ve quien ya tiene acceso al contenedor o al host); se acepta (P5).
     healthcheck:
       test: ["CMD-SHELL", "mosquitto_sub -h localhost -u \"$$MQTT_USER\" -P \"$$MQTT_PASSWORD\" -t '$$SYS/broker/uptime' -C 1 -W 3"]
       interval: 10s
@@ -27,12 +29,14 @@ services:
     restart: unless-stopped
 
   nats:
-    image: nats:2.15.1-alpine
+    image: nats:2.15.1-alpine@sha256:7ae34c25dfd6fe2e01c6483eabef20d796690fdcac6c4d94ca780a6cf9877fde
     environment:
       NATS_USER: ${NATS_USER:?falta NATS_USER en .env}
       NATS_PASSWORD: ${NATS_PASSWORD:?falta NATS_PASSWORD en .env}
-    command: ["-js", "-sd", "/data", "-m", "8222", "--user", "${NATS_USER}", "--pass", "${NATS_PASSWORD}"]
+    # Credenciales, JetStream (/data) y monitorización (8222) en nats.conf: nada secreto en argv.
+    command: ["nats-server", "--config", "/etc/nats/nats-server.conf"]
     volumes:
+      - ./nats/nats.conf:/etc/nats/nats-server.conf:ro
       - nats-data:/data
     ports:
       - "127.0.0.1:4222:4222"
@@ -46,10 +50,19 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7.4.11-alpine
+    image: redis:7.4.11-alpine@sha256:d9436322172a5b482c187bf1f363d3c4fea086fcca6b9c8a94de8f0f39ed3193
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?falta REDIS_PASSWORD en .env}
-    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes"]
+    # El fichero de configuración se genera al arrancar con printf (builtin de sh: no crea un proceso
+    # con la contraseña en argv) y redis-server lo lee; el entrypoint oficial baja al usuario redis.
+    command:
+      - sh
+      - -c
+      - >-
+        umask 077 &&
+        printf 'requirepass "%s"\nappendonly yes\n' "$$REDIS_PASSWORD" > /tmp/redis.conf &&
+        chown redis:redis /tmp/redis.conf &&
+        exec docker-entrypoint.sh redis-server /tmp/redis.conf
     volumes:
       - redis-data:/data
     ports:
@@ -63,7 +76,7 @@ services:
     restart: unless-stopped
 
   postgres:
-    image: timescale/timescaledb-ha:pg16.15-ts2.30.2
+    image: timescale/timescaledb-ha:pg16.15-ts2.30.2@sha256:7ed6848962519916b3dc78586ebf3fbd3e39869b4e692653c50c5d4e52887d88
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?falta POSTGRES_USER en .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?falta POSTGRES_PASSWORD en .env}

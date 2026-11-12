@@ -83,7 +83,7 @@ def test_post_edit_python_correcto_se_formatea(tmp_path: Path) -> None:
 @pytest.mark.req("REQ-SEC-001", "REQ-LEG-001")
 def test_post_edit_aplica_guardarrailes(tmp_path: Path) -> None:
     f = tmp_path / "m.py"
-    f.write_text("MODE = '" + "jam" + "ming'\n")
+    f.write_text("MODE = 'ja" + "mming'\n")
     r = run_hook("post_edit.sh", {"tool_name": "Write", "tool_input": {"file_path": str(f)}})
     assert r.returncode == 2
     assert "offensive-term" in r.stderr
@@ -151,3 +151,30 @@ def test_settings_json_valido_y_con_denegaciones() -> None:
     for script in ("pre_bash.py", "post_edit.sh", "stop_check.sh"):
         assert script in comandos
         assert (HOOKS / script).stat().st_mode & 0o111, f"{script} no es ejecutable"
+
+
+@pytest.mark.req("REQ-SEC-002")
+def test_p5_pre_bash_con_guardarrail_roto_bloquea(tmp_path: Path) -> None:
+    (tmp_path / "scripts" / "hooks").mkdir(parents=True)
+    (tmp_path / "scripts" / "__init__.py").write_text("")
+    (tmp_path / "scripts" / "guardrails.py").write_text("def roto(:\n")
+    hook = tmp_path / "scripts" / "hooks" / "pre_bash.py"
+    hook.write_text((HOOKS / "pre_bash.py").read_text())
+    hook.chmod(0o755)
+    r = subprocess.run([str(hook)], input=json.dumps(bash("ls")), capture_output=True, text=True)
+    assert r.returncode == 2
+    assert "GUARDARRAÍL" in r.stderr
+
+
+@pytest.mark.req("REQ-SEC-002")
+def test_p5_post_edit_settings_con_ruta_absoluta_sin_falso_positivo() -> None:
+    f = REPO / ".claude" / "settings.json"
+    r = run_hook("post_edit.sh", {"tool_name": "Edit", "tool_input": {"file_path": str(f)}})
+    assert r.returncode == 0, r.stderr
+
+
+@pytest.mark.req("REQ-SEC-002", "REQ-LEG-002")
+def test_p5_settings_deniega_herramientas_de_tx() -> None:
+    deny = set(json.loads((REPO / ".claude" / "settings.json").read_text())["permissions"]["deny"])
+    for herramienta in ("hackrf" + "_transfer", "rpi" + "tx", "SoapySDR" + "Util", "send" + "iq"):
+        assert f"Bash({herramienta} *)" in deny

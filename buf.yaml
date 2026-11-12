@@ -1,0 +1,12 @@
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+  ignore_only:
+    ENUM_VALUE_PREFIX:
+      - proto/atalaya/v1/options.proto
+breaking:
+  use:
+    - FILE

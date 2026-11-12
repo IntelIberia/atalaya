@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/common.proto";
+import "atalaya/v1/options.proto";
+import "google/protobuf/timestamp.proto";
+
+enum SensorType {
+  SENSOR_TYPE_UNSPECIFIED = 0;
+  SENSOR_TYPE_ACOUSTIC = 1;
+  SENSOR_TYPE_REMOTE_ID = 2;
+  SENSOR_TYPE_ADSB = 3;
+  SENSOR_TYPE_RF_PRESENCE = 4;
+  SENSOR_TYPE_HUMAN = 5;
+}
+
+enum RemoteIdStandard {
+  REMOTE_ID_STANDARD_UNSPECIFIED = 0;
+  REMOTE_ID_STANDARD_EN_4709_002 = 1;
+  REMOTE_ID_STANDARD_ASTM_F3411 = 2;
+}
+
+message AcousticBandLevel {
+  optional double center_frequency_hz = 1 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional double level_db_spl = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+}
+
+message AcousticObservation {
+  repeated AcousticBandLevel band_levels = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double signal_to_noise_db = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+}
+
+message RemoteIdObservation {
+  optional string operator_id = 1 [(atalaya.v1.sensitivity) = FCSE_ONLY];
+  GeoPoint operator_location = 2 [(atalaya.v1.sensitivity) = FCSE_ONLY];
+  optional string uas_id = 3 [(atalaya.v1.sensitivity) = FCSE_ONLY];
+  optional string self_id_description = 4 [(atalaya.v1.sensitivity) = FCSE_ONLY];
+  optional RemoteIdStandard standard = 5 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  GeoPoint aircraft_position = 6 [(atalaya.v1.sensitivity) = OPERATOR];
+  google.protobuf.Timestamp message_time = 7 [(atalaya.v1.sensitivity) = OPERATOR];
+}
+
+message AdsbObservation {
+  optional string callsign = 1 [(atalaya.v1.sensitivity) = OPERATOR];
+  GeoPoint aircraft_position = 2 [(atalaya.v1.sensitivity) = OPERATOR];
+  PositionCovariance position_covariance = 3 [(atalaya.v1.sensitivity) = OPERATOR];
+  google.protobuf.Timestamp message_time = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+}
+
+message RfPresenceObservation {
+  optional double center_frequency_hz = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double bandwidth_hz = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double received_power_dbm = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+}
+
+message HumanObservation {
+  optional string sighting_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+}
+
+message Detection {
+  optional string detection_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional string site_id = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional string node_id = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  google.protobuf.Timestamp observed_at = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional SensorType sensor_type = 5 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  TimeQuality time_quality = 6 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  GeoPoint position = 7 [(atalaya.v1.sensitivity) = OPERATOR];
+  PositionCovariance position_covariance = 8 [(atalaya.v1.sensitivity) = OPERATOR];
+  ErrorEllipse position_error = 9 [(atalaya.v1.sensitivity) = OPERATOR];
+  optional double bearing_deg = 10 [(atalaya.v1.sensitivity) = OPERATOR];
+  optional double bearing_uncertainty_deg = 11 [(atalaya.v1.sensitivity) = OPERATOR];
+  repeated ClassScore class_scores = 12 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double detection_confidence = 13 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  oneof observation {
+    AcousticObservation acoustic = 20 [(atalaya.v1.sensitivity) = OPERATOR];
+    RemoteIdObservation remote_id = 21 [(atalaya.v1.sensitivity) = OPERATOR];
+    AdsbObservation adsb = 22 [(atalaya.v1.sensitivity) = OPERATOR];
+    RfPresenceObservation rf_presence = 23 [(atalaya.v1.sensitivity) = OPERATOR];
+    HumanObservation human = 24 [(atalaya.v1.sensitivity) = OPERATOR];
+  }
+}

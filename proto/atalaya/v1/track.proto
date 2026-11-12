@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/common.proto";
+import "atalaya/v1/options.proto";
+import "google/protobuf/timestamp.proto";
+
+message Track {
+  optional string track_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional string site_id = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  GeoPoint position = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  PositionCovariance state_covariance = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double velocity_east_mps = 5 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double velocity_north_mps = 6 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double velocity_up_mps = 7 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  repeated ClassScore class_probabilities = 8 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  google.protobuf.Timestamp updated_at = 9 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  TimeQuality time_quality = 10 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+}

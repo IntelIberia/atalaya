@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/common.proto";
+import "atalaya/v1/options.proto";
+import "google/protobuf/timestamp.proto";
+
+enum AlertLevel {
+  ALERT_LEVEL_UNSPECIFIED = 0;
+  ALERT_LEVEL_INFORMATION = 1;
+  ALERT_LEVEL_WARNING = 2;
+  ALERT_LEVEL_CRITICAL = 3;
+}
+
+message Alert {
+  optional string alert_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional string track_id = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional AlertLevel level = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double confidence = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  google.protobuf.Timestamp created_at = 5 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  GeoPoint last_known_position = 6 [(atalaya.v1.sensitivity) = OPERATOR];
+  optional string summary = 7 [(atalaya.v1.sensitivity) = OPERATOR];
+}

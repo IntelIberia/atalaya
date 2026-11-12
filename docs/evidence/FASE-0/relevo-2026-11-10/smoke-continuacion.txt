@@ -1,0 +1,16 @@
+OK    mqtt pub/sub con credenciales
+OK    mqtt anónimo RECHAZADO
+OK    mqtt contraseña errónea RECHAZADA
+OK    nats pub/sub con credenciales
+OK    nats contraseña errónea RECHAZADA
+OK    nats JetStream activo
+OK    redis PING con contraseña
+OK    redis sin contraseña RECHAZADO
+OK    postgres PostGIS + TimescaleDB
+OK    postgres contraseña errónea RECHAZADA (loopback)
+OK    postgres contraseña errónea RECHAZADA (red docker)
+OK    postgres contraseña errónea RECHAZADA (socket local)
+smoke: 12/12 OK
+.
+-- generated xml file: /Users/veyron92i/atalaya/reports/junit-integracion.xml --
+1 passed in 4.21s

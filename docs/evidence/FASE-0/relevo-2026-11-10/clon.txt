@@ -1,0 +1,4 @@
+verify_clean_clone: AVISO: hay cambios sin commit; se verifica solo HEAD (c99289d).
+verify_clean_clone: clon en /var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/tmp.za8ueZUyss/atalaya (c99289d)
+make check: OK
+verify_clean_clone: OK

@@ -1,0 +1,28 @@
+lint: OK
+Success: no issues found in 30 source files
+........................................................................ [ 24%]
+........................................................................ [ 48%]
+........................................................................ [ 73%]
+........................................................................ [ 97%]
+......                                                                   [100%]
+-------- generated xml file: /Users/veyron92i/atalaya/reports/junit.xml --------
+294 passed, 1 deselected in 7.53s
+92
+guard: OK
+== check_spec.py — verificación de la FASE -1 ==
+Requisitos: 130
+  FUN   MUST= 50 SHOULD= 10 COULD=  2
+  NFR   MUST= 18 SHOULD=  3 COULD=  0
+  LEG   MUST= 17 SHOULD=  0 COULD=  0
+  SEC   MUST= 17 SHOULD=  2 COULD=  0
+  PRIV  MUST= 10 SHOULD=  1 COULD=  0
+Requisitos con bloqueo (**B**): 12 -> REQ-FUN-022, REQ-FUN-029, REQ-FUN-030, REQ-FUN-032, REQ-FUN-033, REQ-FUN-054, REQ-FUN-060, REQ-NFR-002, REQ-NFR-007, REQ-NFR-012, REQ-SEC-013, REQ-SEC-014
+Casos de uso: 24
+Requisitos sin caso de uso: 0
+Filas de correspondencia con el MEGAPROMPT: 22 (exigidas 22)
+Menciones sensibles: 56 (todas deben estar en scripts/legal_allowlist.txt)
+
+RESULTADO: FALLO (2 errores)
+  - docs/requirements/REQUIREMENTS.md:115: mención sensible no revisada: | REQ-LEG-001 | MUST | Atalaya solo detecta, clasifica, localiza, sigue, predice y alerta. Nunca contiene códi
+  - docs/RIESGOS.md:41: mención sensible no revisada: | R-33 | Legal / técnico | El guardarraíl de TX no cubre todas las APIs y herramientas de transmisión existent
+make: *** [spec] Error 1

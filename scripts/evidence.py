@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 import shlex
 import subprocess
 import sys
@@ -21,6 +22,32 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = "MANIFEST.sha256"
+
+
+def _closed_phase_directories(repo: Path) -> set[Path]:
+    registry = repo / "docs" / "requirements" / "FASES-CERRADAS.txt"
+    directories: set[Path] = set()
+    for raw_line in registry.read_text(encoding="utf-8").splitlines():
+        phase = raw_line.split("#", 1)[0].strip()
+        if not phase:
+            continue
+        if not re.fullmatch(r"-?\d+", phase):
+            raise ValueError(f"fase cerrada inválida en {registry}: {phase!r}")
+        directories.add((repo / "docs" / "evidence" / f"FASE-{phase}").resolve())
+    return directories
+
+
+def _write_allowed(directory: Path, repo: Path) -> bool:
+    try:
+        closed = _closed_phase_directories(repo)
+    except (OSError, ValueError) as exc:
+        print(f"evidence: registro de fases cerradas no válido: {exc}", file=sys.stderr)
+        return False
+    target = directory.resolve()
+    if any(target == phase_dir or phase_dir in target.parents for phase_dir in closed):
+        print(f"evidence: fase cerrada, paquete inmutable: {directory}", file=sys.stderr)
+        return False
+    return True
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -34,7 +61,7 @@ def _header(repo: Path) -> str:
 
 
 def _files(directory: Path) -> list[Path]:
-    return sorted(p for p in directory.rglob("*") if p.is_file() and p.name != MANIFEST)
+    return sorted(p for p in directory.rglob("*") if p.is_file() and p != directory / MANIFEST)
 
 
 def _sha256(path: Path) -> str:
@@ -58,11 +85,20 @@ def verify_manifest(directory: Path) -> list[str]:
     if not path.exists():
         return [f"no existe {MANIFEST}"]
     listed: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line and not line.startswith("#"):
-            digest, name = line.split("  ", 1)
-            listed[name] = digest
     problems = []
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if line and not line.startswith("#"):
+            match = re.fullmatch(r"([0-9a-f]{64})  (.+)", line)
+            if match is None:
+                problems.append(f"línea {number}: formato de manifiesto inválido")
+                continue
+            digest, name = match.groups()
+            if Path(name).is_absolute() or ".." in Path(name).parts:
+                problems.append(f"línea {number}: ruta fuera del paquete")
+                continue
+            if name in listed:
+                problems.append(f"duplicado: {name}")
+            listed[name] = digest
     present = {p.relative_to(directory).as_posix(): p for p in _files(directory)}
     for name, digest in listed.items():
         if name not in present:
@@ -90,7 +126,8 @@ def closing_commands(fase: str) -> dict[str, list[str]]:
         "make-regress.txt": ["make", "regress"],
         "trazabilidad.txt": [
             *("uv", "run", "--frozen", "python", "-m", "scripts.traceability"),
-            *("--fase", fase, "--out", trace_out),
+            *("--fase", fase, "--out", trace_out, "--require-integration"),
+            *("--junit", "reports/junit.xml", "--junit", "reports/junit-integracion.xml"),
         ],
         "clon-limpio.txt": ["scripts/verify_clean_clone.sh"],
     }
@@ -99,7 +136,7 @@ def closing_commands(fase: str) -> dict[str, list[str]]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Paquete de evidencias")
     g = ap.add_mutually_exclusive_group(required=True)
-    g.add_argument("--fase")
+    g.add_argument("--fase", type=int)
     g.add_argument("--manifest", type=Path)
     g.add_argument("--verify", type=Path)
     args = ap.parse_args(argv)
@@ -111,13 +148,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"evidence: manifiesto {'OK' if not problems else 'con problemas'}")
         return 1 if problems else 0
     if args.manifest is not None:
+        if not _write_allowed(args.manifest, ROOT):
+            return 1
         print(f"evidence: {write_manifest(args.manifest)}")
         return 0
 
     directory = ROOT / "docs" / "evidence" / f"FASE-{args.fase}"
+    if not _write_allowed(directory, ROOT):
+        return 1
     directory.mkdir(parents=True, exist_ok=True)
     failures = 0
-    for name, command in closing_commands(args.fase).items():
+    for name, command in closing_commands(str(args.fase)).items():
         rc = capture(command, directory / name)
         print(f"evidence: {name:<18} exit={rc}")
         failures += rc != 0

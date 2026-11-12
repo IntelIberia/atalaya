@@ -1,0 +1,19 @@
+# commit: fa5a8973bf6b3291b02ae01e789101ebce0a3eea · fecha UTC: 2026-11-10T07:27:58Z
+$ make check
+lint: OK
+Success: no issues found in 37 source files
+........................................................................ [ 19%]
+........................................................................ [ 38%]
+........................................................................ [ 57%]
+........................................................................ [ 76%]
+........................................................................ [ 95%]
+.................                                                        [100%]
+-------- generated xml file: /Users/veyron92i/atalaya/reports/junit.xml --------
+377 passed, 1 deselected in 7.61s
+cobertura de ramas: 189/194 = 97.42 %
+guard: OK
+spec: OK
+traceability: informes JUnit: ['junit.xml', 'junit-integracion.xml']
+traceability: fases cerradas [-1, 0]; MUST en ellas: 18; huecos: 0; IDs desconocidos: 0
+make check: OK
+exit=0

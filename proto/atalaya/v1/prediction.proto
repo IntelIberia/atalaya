@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/common.proto";
+import "atalaya/v1/options.proto";
+import "google/protobuf/timestamp.proto";
+
+message HorizonEstimate {
+  optional double horizon_s = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  GeoPoint position = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  PositionCovariance position_covariance = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+}
+
+message DestinationProbability {
+  optional string destination_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double probability = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+}
+
+message Prediction {
+  optional string track_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  google.protobuf.Timestamp generated_at = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  repeated HorizonEstimate horizons = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  repeated DestinationProbability destination_probabilities = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  bytes origin_heatmap = 5 [(atalaya.v1.sensitivity) = FCSE_ONLY];
+}

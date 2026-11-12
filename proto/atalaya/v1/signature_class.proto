@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/options.proto";
+
+enum SignatureClassCode {
+  SIGNATURE_CLASS_CODE_UNSPECIFIED = 0;
+  SIGNATURE_CLASS_CODE_C1 = 1;
+  SIGNATURE_CLASS_CODE_C2 = 2;
+  SIGNATURE_CLASS_CODE_C3 = 3;
+  SIGNATURE_CLASS_CODE_C4 = 4;
+  SIGNATURE_CLASS_CODE_C5 = 5;
+  SIGNATURE_CLASS_CODE_C6 = 6;
+  SIGNATURE_CLASS_CODE_C7 = 7;
+  SIGNATURE_CLASS_CODE_C8 = 8;
+  SIGNATURE_CLASS_CODE_C9 = 9;
+}
+
+message SignatureClass {
+  optional SignatureClassCode code = 1 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional string label = 2 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+  optional string description = 3 [(atalaya.v1.sensitivity) = PUBLIC];
+  optional bool synthetic = 4 [(atalaya.v1.sensitivity) = PUBLIC, (atalaya.v1.required) = true];
+}

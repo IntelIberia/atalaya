@@ -213,6 +213,7 @@ Supuestos: una persona revisando y una IA implementando; la dedicación semanal 
 | B-05 | Sin ESP32 ni SDR | Pruebas con hardware de REQ-FUN-030, 032 y 033; REQ-SEC-013 y 014 en ESP32 | Punto de decisión de gasto 2 |
 | B-06 | Sin usuarios reales | Usabilidad de la FASE 10 | Contacto en prisiones, puertos o seguridad privada |
 | B-07 | Harness de conformidad SAPIENT solo para Windows (los `.proto` sí están disponibles, Apache-2.0) | REQ-FUN-054 (parte del harness) | Máquina o VM Windows |
+| B-07b | No se puede ejecutar el harness oficial SAPIENT en el entorno macOS Intel de desarrollo; la conformidad del gateway queda NO VERIFICADA aunque pasen pruebas de esquema, round-trip y mapeo | REQ-FUN-054 (harness) | Ejecutar el harness oficial en Windows con PostgreSQL 12 y registrar su salida |
 | B-08 | Sin emplazamiento ni cliente | REQ-NFR-007, FASE 13 | Cliente o financiación |
 | B-09 | Sin 4G real | REQ-NFR-002 (solo emulado) | Módem y SIM IoT |
 

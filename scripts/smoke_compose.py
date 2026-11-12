@@ -5,6 +5,7 @@ credenciales y rechaza el acceso SIN ellas o con credenciales erróneas. No impr
 from __future__ import annotations
 
 import json
+import os
 import socket
 import subprocess
 import sys
@@ -35,10 +36,13 @@ def load_env() -> dict[str, str]:
 
 
 def sh(service: str, script: str, extra_env: dict[str, str] | None = None) -> tuple[int, str]:
+    # `-e NOMBRE` sin valor: docker toma el valor del entorno del cliente, así el secreto no
+    # aparece en el argv de `docker compose` en el host (revisión P5).
     cmd = [*COMPOSE, "exec", "-T"]
-    for k, v in (extra_env or {}).items():
-        cmd += ["-e", f"{k}={v}"]
-    r = subprocess.run([*cmd, service, "sh", "-c", script], capture_output=True, text=True)
+    for k in extra_env or {}:
+        cmd += ["-e", k]
+    env = {**os.environ, **(extra_env or {})}
+    r = subprocess.run([*cmd, service, "sh", "-c", script], capture_output=True, text=True, env=env)
     return r.returncode, r.stdout + r.stderr
 
 
@@ -67,7 +71,9 @@ def nats_session(user: str, password: str, *, pubsub: bool) -> str:
 
 def main() -> int:
     e = load_env()
-    mq_auth = f'-h localhost -u "{e["MQTT_USER"]}" -P "{e["MQTT_PASSWORD"]}"'
+    # Las variables las expande el sh del contenedor (las tiene por compose): el secreto no va en
+    # el argv de `docker compose` en el host; solo en el de mosquitto_pub/sub, efímeros.
+    mq_auth = '-h localhost -u "$MQTT_USER" -P "$MQTT_PASSWORD"'
     checks: list[tuple[str, Callable[[], bool]]] = [
         (
             "mqtt pub/sub con credenciales",
@@ -87,10 +93,7 @@ def main() -> int:
         (
             "mqtt contraseña errónea RECHAZADA",
             lambda: (
-                sh("mosquitto", f'mosquitto_pub -h localhost -u "{e["MQTT_USER"]}" -P x -t s -m x')[
-                    0
-                ]
-                != 0
+                sh("mosquitto", 'mosquitto_pub -h localhost -u "$MQTT_USER" -P x -t s -m x')[0] != 0
             ),
         ),
         (

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/common.proto";
+import "atalaya/v1/options.proto";
+import "google/protobuf/timestamp.proto";
+
+message Sighting {
+  optional string sighting_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  google.protobuf.Timestamp observed_at = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  GeoPoint observer_position = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double bearing_deg = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double bearing_uncertainty_deg = 5 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional double estimated_altitude_m = 6 [(atalaya.v1.sensitivity) = OPERATOR];
+  optional double estimated_distance_m = 7 [(atalaya.v1.sensitivity) = OPERATOR];
+  optional string description = 8 [(atalaya.v1.sensitivity) = OPERATOR];
+  repeated string evidence_ids = 9 [(atalaya.v1.sensitivity) = OPERATOR];
+}

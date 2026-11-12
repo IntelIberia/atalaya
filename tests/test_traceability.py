@@ -145,3 +145,18 @@ def test_cli_exit_1_con_huecos(entorno: Path) -> None:
 def test_cli_junit_ausente_falla(entorno: Path) -> None:
     args = ["--requirements", str(entorno / "REQUIREMENTS.md"), "--junit", str(entorno / "no.xml")]
     assert t.main([*args, "--closed", str(entorno / "FASES-CERRADAS.txt")]) == 1
+
+
+@pytest.mark.req("REQ-SEC-003")
+def test_integration_failure_overrides_unit_success(entorno: Path) -> None:
+    unit = entorno / "unit.xml"
+    integration = entorno / "integration.xml"
+    unit.write_text(junit([("unit", ["REQ-FUN-001", "REQ-SEC-001"], "ok")]))
+    integration.write_text(junit([("integration", ["REQ-FUN-001"], "fail")]))
+    result = t.evaluate(
+        entorno / "REQUIREMENTS.md",
+        [unit, integration],
+        entorno / "FASES-CERRADAS.txt",
+        extra_closed=[0],
+    )
+    assert result.gaps == ["REQ-FUN-001"]

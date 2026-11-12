@@ -1,0 +1,24 @@
+worktree /Users/veyron92i/atalaya
+HEAD 89c3d2cbe12c6872cd981ba5e55d54b5f85e558f
+branch refs/heads/main
+
+worktree /Users/veyron92i/atalaya/.claude/worktrees/agent-a26ff5cacd2d78177
+HEAD a8d219587fe3d5e7cb471b9e926d12f60aab2573
+branch refs/heads/plan/fase-1
+
+worktree /Users/veyron92i/atalaya/.claude/worktrees/agent-a9023aff048724992
+HEAD 248e7e4b6c2a2cc69fb55c62ad1ad035c9cd8819
+branch refs/heads/plan/fase-3
+
+worktree /Users/veyron92i/atalaya/.claude/worktrees/agent-ab647fcc7cb1ac695
+HEAD 1f897c99334afc2c0900c55908ce02666fc7dc0b
+branch refs/heads/fix/compose-p5
+
+worktree /Users/veyron92i/atalaya/.claude/worktrees/plan-fase-2
+HEAD 68631251823c15cdd868da695cde679a6fd5a008
+branch refs/heads/plan/fase-2
+
+worktree /Users/veyron92i/atalaya/.claude/worktrees/plan-fase-4
+HEAD 9d3c192f8476777a8a4305133a40dbdd48bf0b18
+branch refs/heads/plan/fase-4
+

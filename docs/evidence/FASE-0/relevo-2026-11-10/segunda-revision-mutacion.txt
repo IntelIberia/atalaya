@@ -1,0 +1,5 @@
+rm -rf mutants
+uv run --frozen python -m scripts.mutation_report --snapshot reports/mutation-inputs.json scripts/guardrails.py
+uv run --frozen mutmut run --max-children 4 > reports/mutmut.log 2>&1 || true
+uv run --frozen python -m scripts.mutation_report --inputs reports/mutation-inputs.json --out docs/evidence/FASE-0/mutacion.json scripts/guardrails.py
+mutación scripts/guardrails.py: 573/622 = 92.1%

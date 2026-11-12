@@ -1,0 +1,7 @@
+# commit: fa5a8973bf6b3291b02ae01e789101ebce0a3eea · fecha UTC: 2026-11-10T07:28:42Z
+$ scripts/verify_clean_clone.sh
+verify_clean_clone: AVISO: hay cambios sin commit; se verifica solo HEAD (fa5a897).
+verify_clean_clone: clon en /var/folders/k2/z97wd_017s95p4x4kscfnxkh0000gn/T/tmp.Vpqh8JS7ub/atalaya (fa5a897)
+make check: OK
+verify_clean_clone: OK
+exit=0

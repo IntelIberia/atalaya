@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/alert.proto";
+import "atalaya/v1/coverage_status.proto";
+import "atalaya/v1/detection.proto";
+import "atalaya/v1/evidence.proto";
+import "atalaya/v1/node_status.proto";
+import "atalaya/v1/options.proto";
+import "atalaya/v1/prediction.proto";
+import "atalaya/v1/signature_class.proto";
+import "atalaya/v1/sighting.proto";
+import "atalaya/v1/track.proto";
+import "google/protobuf/timestamp.proto";
+
+message Envelope {
+  optional string site_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional string node_id = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional uint64 sequence = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  google.protobuf.Timestamp emitted_at = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  oneof payload {
+    Detection detection = 10 [(atalaya.v1.sensitivity) = OPERATOR];
+    Track track = 11 [(atalaya.v1.sensitivity) = OPERATOR];
+    Prediction prediction = 12 [(atalaya.v1.sensitivity) = OPERATOR];
+    Alert alert = 13 [(atalaya.v1.sensitivity) = OPERATOR];
+    NodeStatus node_status = 14 [(atalaya.v1.sensitivity) = OPERATOR];
+    CoverageStatus coverage_status = 15 [(atalaya.v1.sensitivity) = OPERATOR];
+    Sighting sighting = 16 [(atalaya.v1.sensitivity) = OPERATOR];
+    Evidence evidence = 17 [(atalaya.v1.sensitivity) = OPERATOR];
+    SignatureClass signature_class = 18 [(atalaya.v1.sensitivity) = PUBLIC];
+  }
+}

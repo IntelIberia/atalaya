@@ -1,0 +1,11 @@
++ fix/compose-p5                   1f897c9 (/Users/veyron92i/atalaya/.claude/worktrees/agent-ab647fcc7cb1ac695) fix(infra): contraseñas fuera de argv e imágenes por digest (P5 FASE 0)
+* main                             89c3d2c [origin/main] chore: no versionar .pyc (scripts/__pycache__)
++ plan/fase-1                      a8d2195 (/Users/veyron92i/atalaya/.claude/worktrees/agent-a26ff5cacd2d78177) docs(plan): plan de la FASE 1
++ plan/fase-2                      6863125 (/Users/veyron92i/atalaya/.claude/worktrees/plan-fase-2) docs(plan): plan de la FASE 2
++ plan/fase-3                      248e7e4 (/Users/veyron92i/atalaya/.claude/worktrees/agent-a9023aff048724992) docs(plan): plan de la FASE 3
++ plan/fase-4                      9d3c192 (/Users/veyron92i/atalaya/.claude/worktrees/plan-fase-4) docs(plan): plan de la FASE 4 e investigación de licencias
+  worktree-agent-a26ff5cacd2d78177 8c1276f ci: workflow_dispatch y evidencia de las pruebas negativas G-08, G-06 y G-12 (T0.11)
+  worktree-agent-a9023aff048724992 8c1276f ci: workflow_dispatch y evidencia de las pruebas negativas G-08, G-06 y G-12 (T0.11)
+  worktree-agent-ab647fcc7cb1ac695 89c3d2c chore: no versionar .pyc (scripts/__pycache__)
+  remotes/origin/HEAD              -> origin/main
+  remotes/origin/main              89c3d2c chore: no versionar .pyc (scripts/__pycache__)

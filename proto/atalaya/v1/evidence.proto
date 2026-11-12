@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package atalaya.v1;
+
+import "atalaya/v1/options.proto";
+import "google/protobuf/timestamp.proto";
+
+message Evidence {
+  optional string evidence_id = 1 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional string sha256 = 2 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional string media_type = 3 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  google.protobuf.Timestamp captured_at = 4 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  optional string custodian_pseudonym = 5 [(atalaya.v1.sensitivity) = OPERATOR, (atalaya.v1.required) = true];
+  bytes custody_signature = 6 [(atalaya.v1.sensitivity) = OPERATOR];
+}

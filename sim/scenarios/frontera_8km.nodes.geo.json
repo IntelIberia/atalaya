@@ -1,0 +1,193 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.2,
+          36.4
+        ]
+      },
+      "properties": {
+        "role": "site_center",
+        "site": "tramo-oeste"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.11,
+          36.4
+        ]
+      },
+      "properties": {
+        "role": "site_center",
+        "site": "tramo-este"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "fo-and-1",
+        "site": "tramo-oeste",
+        "kind": "acoustic_android",
+        "pps": false,
+        "offset_m": {
+          "east_m": -800.0,
+          "north_m": 0.0,
+          "up_m": 2.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "fo-and-2",
+        "site": "tramo-oeste",
+        "kind": "acoustic_android",
+        "pps": false,
+        "offset_m": {
+          "east_m": 800.0,
+          "north_m": 0.0,
+          "up_m": 2.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "fo-pps-1",
+        "site": "tramo-oeste",
+        "kind": "acoustic_pps",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": 800.0,
+          "up_m": 3.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "fo-pps-2",
+        "site": "tramo-oeste",
+        "kind": "acoustic_pps",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": -800.0,
+          "up_m": 3.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "fo-rx-1",
+        "site": "tramo-oeste",
+        "kind": "remote_id_adsb_receiver",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": 0.0,
+          "up_m": 6.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "fe-and-1",
+        "site": "tramo-este",
+        "kind": "acoustic_android",
+        "pps": false,
+        "offset_m": {
+          "east_m": -800.0,
+          "north_m": 0.0,
+          "up_m": 2.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "fe-and-2",
+        "site": "tramo-este",
+        "kind": "acoustic_android",
+        "pps": false,
+        "offset_m": {
+          "east_m": 800.0,
+          "north_m": 0.0,
+          "up_m": 2.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "fe-pps-1",
+        "site": "tramo-este",
+        "kind": "acoustic_pps",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": 800.0,
+          "up_m": 3.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "fe-pps-2",
+        "site": "tramo-este",
+        "kind": "acoustic_pps",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": -800.0,
+          "up_m": 3.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "fe-rx-1",
+        "site": "tramo-este",
+        "kind": "remote_id_adsb_receiver",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": 0.0,
+          "up_m": 6.0
+        }
+      }
+    }
+  ]
+}

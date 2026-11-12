@@ -1,0 +1,3 @@
+[{"headRefName":"prueba/g12-gpl","number":3,"state":"CLOSED","title":"PRUEBA NEGATIVA g12-gpl (no fusionar)","url":"https://github.com/IntelIberia/atalaya/pull/3"},{"headRefName":"prueba/g06-secreto","number":2,"state":"CLOSED","title":"PRUEBA NEGATIVA g06-secreto (no fusionar)","url":"https://github.com/IntelIberia/atalaya/pull/2"},{"headRefName":"prueba/g08-desactivar-guardarrail","number":1,"state":"CLOSED","title":"PRUEBA NEGATIVA g08-desactivar-guardarrail (no fusionar)","url":"https://github.com/IntelIberia/atalaya/pull/1"}]
+
+exit=0
