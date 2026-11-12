@@ -71,3 +71,6 @@ d6495a36d54a1c73be78f6d8e60d8a159ed6b46e8d3a94b82abab9c49f8f0fd4  docs/requireme
 # 2026-11-09: decisión conservadora de Codex por delegación expresa del usuario; ver registro de decisiones.
 512473c148bdf6703d366d1ee93921a5d506121df28044a85d2713be83880ca5  docs/requirements/REQUIREMENTS.md  # | REQ-LEG-001 | MUST | Atalaya solo detecta, clasifica, localiza, sigue, predice y alerta. Nunca contiene códi
 fce6180f4daa5e1befa9edc003dcd528c8acc69d7fcfe270887a77eeb6767110  docs/RIESGOS.md  # | R-33 | Legal / técnico | El guardarraíl de TX no cubre todas las APIs y herramientas de transmisión existent
+# Revisión 2026-11-12: FASE-3.md L245 y L249 usan «emitir» en el sentido de enviar texto a una salida (logs/detección); son controles de privacidad, sin relación con radio.
+22b20d87f9bed754ef661e988400b2cffdfa46ca59f3354da6af8dbbc701b3ad  docs/plans/FASE-3.md  # - Antes de registrar texto en logs o emitirlo a cualquier salida, aplicar la sanitización y los controles de a
+cb079a1004961a0531b9b58874efdafc84322b2907fb661cef4e58d1fe0bbce1  docs/plans/FASE-3.md  # - **Prueba negativa:** medio con hash distinto → 422 y nada publicado; el vigilante intenta firmar → 403; la r
