@@ -26,8 +26,8 @@ sintéticos con prefijo `SIM`.
 - CLI: `uv run python -m sim run --scenario sim/scenarios/X.yaml [--seed N] [--duration S] --out F.pb.zst`
   y `uv run python -m sim hash F.pb.zst`; ambos imprimen `stream_sha256` (flujo sin comprimir,
   `varint(longitud) ‖ Envelope`) y `file_sha256` (zstd nivel 10).
-- Por ahora solo se emite el latido `NodeStatus` de cada nodo cada 30 s simulados (datos
-  sintéticos); trayectorias, sensores, red, fallos, replay con cabecera y MQTT llegan en T1.11–T1.16.
+- La CLI solo emite el latido `NodeStatus` de cada nodo cada 30 s simulados (con los fallos de nodo
+  de T1.13); sensores, red, replay con cabecera y MQTT se integran en T1.14–T1.17.
 
 ## Trayectorias (T1.11, REQ-FUN-004)
 
@@ -37,3 +37,29 @@ sintéticos con prefijo `SIM`.
   coordinados (radio `max(v/ω, 2v²/a)`), altitud con `smoothstep` y, solo en C1-C2, arranque y
   parada en reposo y vuelo estacionario (`hover_s`). Rutas imposibles → `ValueError` con la clase y
   el límite. `state(t)` da posición, velocidad y aceleración ENU.
+
+## Propagación acústica y detección (T1.12, REQ-FUN-004, REQ-FUN-062)
+
+- `acoustics.py`: divergencia esférica (−20·log10 r), absorción atmosférica con la formulación de
+  ISO 9613-1 (ecuaciones tomadas de dos fuentes públicas secundarias y contrastadas con una tabla
+  publicada; texto original de la norma **NO VERIFICADO**), velocidad del sonido según la
+  temperatura, corrección por viento a favor/en contra y ruido de viento sumado al fondo por bandas
+  (modelo de viento **NO VERIFICADO**). Sin viento, el nivel decrece estrictamente con la distancia.
+- `sensors/acoustic.py`: SNR por banda → probabilidad de detección logística → `Detection` con
+  `class_scores` de una matriz de confusión configurable, `detection_confidence`, `time_quality` y
+  rumbo con su incertidumbre; toda `Detection` pasa `validate()`. Espectros de fuente por clase y
+  matriz por defecto **NO VERIFICADO**. `acoustic_components(escenario)` da un componente del motor
+  por nodo acústico (se pasa con `extra_components`; aún no forma parte de `python -m sim run`).
+- **Sin audio en ningún punto:** solo niveles por banda, SNR y puntuaciones.
+
+## Red, relojes y fallos (T1.13, REQ-FUN-004)
+
+- `network.py`: `transmit_scenario(escenario, envelopes, semilla)` aplica por nodo latencia
+  lognormal, pérdidas, duplicados (copia idéntica, mismo `detection_id`) y desorden, y devuelve las
+  entregas por instante de llegada. Valores por defecto (20 ms, σ 0,5) **NO VERIFICADO**.
+- `clock.py`: deriva lineal en ppm (`drift_offset_ms`) y σ del reloj con o sin PPS.
+- `faults.py`: `node_down`, `link_down`, `pps_invalid`, `clock_drift`, `latency`, `packet_loss`,
+  `duplicate`, `reorder`; las magnitudes imposibles se rechazan al cargar el escenario. El latido
+  `NodeStatus` y el sensor acústico respetan nodo caído, PPS perdido y deriva (solo sin PPS).
+- La CLI `python -m sim run` aún escribe el flujo emitido, sin red; la red se aplicará en el
+  replay y el extremo a extremo (T1.15–T1.17).
