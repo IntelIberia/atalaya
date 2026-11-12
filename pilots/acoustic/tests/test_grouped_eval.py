@@ -172,7 +172,8 @@ def test_notebook_embeds_tested_module_and_drops_clip_split() -> None:
     assert Path(grouped_eval.__file__).read_text(encoding="utf-8") in code
     assert "train_test_split" not in code
     assert "import librosa.display" in code
-    assert "choose_threshold(y[validation_idx]" in code
+    # Iteración 4: umbral orientado a recall, elegido en validación (nunca en test).
+    assert "rule = choose_threshold_for_recall(y[list(validation)]" in code
 
 
 def test_notebook_gates_open_only_for_documented_technical_test() -> None:

@@ -1,0 +1,46 @@
+{
+ "source_id": "itu-aris",
+ "source": "https://zenodo.org/records/22682339",
+ "doi": "10.5281/zenodo.22682339",
+ "version": "1.0.0",
+ "license": "CC-BY-4.0",
+ "zenodo_license_id": "cc-by-4.0",
+ "license_evidence": {
+  "path": "LICENSE-fuente.txt",
+  "sha256": "b79e2b6ded8d3c4cee0a64ab6562864d210fb33449095ad4bf330e64d8058c11"
+ },
+ "attribution": "Muhaciroglu, I. M. and Akgul, T. (2026). ITU ARIS Lab. Acoustic Drone Dataset (v1.0.0). Zenodo. 10.5281/zenodo.22682339",
+ "archive": {
+  "key": "itu-aris-lab-acoustic-drone-dataset-v1.0.0.zip",
+  "bytes": 169094149,
+  "md5": "64aed06e8dac417d0c3c7db0e3ac340b",
+  "sha256": "11d1b1208ef63515d3fe62de3047b58977d00959cc938f49d17913e428400511"
+ },
+ "inner_files_sha256": {
+  "LICENSE": "b79e2b6ded8d3c4cee0a64ab6562864d210fb33449095ad4bf330e64d8058c11",
+  "README.md": "fae2b49ab71e6cd01a0a1b7ef531f10e4681a7dbbf3d7a54a8cdc5c7216151f1",
+  "metadata.json": "45a14bb6d54fb9550e9584ed36f9c841309b6cd8d3a6805c82b1340043ea13d5",
+  "groups.json": "a79cd37058795b15ad355c156934493f546bd83acad9ba3e961add270d20d837",
+  "SHA256SUMS": "d4064353ac803be2c9615f2631f83902c9eb50ba742d0b4e07e3bffe3730f620",
+  "splits/split_interval_disjoint.json": "1492a1984c014adcd5daeecf34c17c174e8eaec38e05de0922b6befd4a6d873f",
+  "splits/split_temporal.json": "a086485805694cdab62cd18e051b098d483d0efaf25316d924e44cba22d8adc5"
+ },
+ "inner_prefix": "itu-aris-lab-acoustic-drone-dataset/",
+ "split_used": "splits/split_interval_disjoint.json",
+ "group_policy": "group_id = intervalo de dron o bloque de fondo de groups.json; segmentos solapados al 50 %: nunca se parte por segmento",
+ "segment_count": 5491,
+ "counts": {
+  "drone:val": 673,
+  "drone:test": 674,
+  "drone:train": 3144,
+  "background:train": 700,
+  "background:test": 150,
+  "background:val": 150
+ },
+ "retrieved_at_utc": "2026-11-12T10:01:38+00:00",
+ "personal_data": "README: voz de los operadores audible en algunos segmentos (miembros del grupo, con consentimiento para publicar); la puerta automática de voz se aplica igualmente",
+ "intake_approved": false,
+ "training_allowed": false,
+ "production_allowed": false,
+ "alcance": "prueba técnica aislada en Colab (ADR 0016); nada entra en el producto"
+}

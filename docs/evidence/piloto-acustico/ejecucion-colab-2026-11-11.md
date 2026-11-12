@@ -56,3 +56,19 @@ Lectura: añadir un solo clip cambia la partición y los resultados varían much
 en 16 clips de validación son demasiado altos. Conclusión técnica: hacen falta muchos más datos
 (positivos y, sobre todo, negativos), validación cruzada por grupos y elección de umbral orientada
 a recall. Prueba técnica; nada entra en el producto.
+
+# Iteración 4 — preparada el 2026-11-12 (más datos; cuaderno sin ejecutar en Colab)
+Encargo de la iteración 4 (estabilizar el modelo con más datos), dentro de la misma prueba técnica
+aislada (ADR 0016); nada entra en el producto. **Resultados en Colab: NO VERIFICADOS** hasta ejecutar
+el cuaderno; esta sección se completará con las cifras recalculadas desde `predicciones.csv`.
+- Fuentes nuevas con licencia verificada en la fuente original el 2026-11-12 (data cards
+  `docs/data-cards/fsd50k-subset.md` e `itu-aris.md`): ESC-10 (318 clips admitidos, CC BY 3.0 y
+  CC0/CC BY por clip), FSD50K subconjunto de confusores (solo CC0/CC BY por clip, sin etiquetas
+  humanas ni de música, sin menciones a drones, sin clips que ya estén en ESC-10) e ITU ARIS Lab
+  (CC BY 4.0, 5.491 segmentos con `groups.json` y split `interval_disjoint`).
+- Prohibidas y no descargadas: DADS, Al-Emadi, UrbanSound8K, ESC-50 fuera de ESC-10, Sonniss y
+  AeroSonicDB.
+- Evaluación: partición única (ITU ARIS con el split de los autores), validación cruzada por grupos
+  (5 folds), umbral más alto con recall ≥ 0,90 en validación, métricas por fuente y TOTAL con IC 95 %
+  por grupos, YAMNet frente a MFCC y exportación de `predicciones.csv` con SHA-256 para
+  `pilots/acoustic/recompute_metrics.py` (cierra el pendiente de ADR 0016 cuando se ejecute).
