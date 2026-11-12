@@ -47,8 +47,11 @@ def _get(url: str) -> bytes:
 
 
 def _blob_sha1(data: bytes) -> str:
+    # SHA-1 es el identificador de objeto de git: se usa solo para compararlo con el blob que
+    # publica GitHub, no como control criptográfico (semgrep: insecure-hash-algorithm-sha1).
+    # La integridad se verifica con SHA-256.
     header = f"blob {len(data)}\0".encode("ascii")
-    return hashlib.sha1(header + data, usedforsecurity=False).hexdigest()
+    return hashlib.sha1(header + data, usedforsecurity=False).hexdigest()  # nosemgrep
 
 
 def _download(path: str, expected_sha1: str, expected_size: int, dest: Path) -> bytes:
