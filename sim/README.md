@@ -63,3 +63,21 @@ sintéticos con prefijo `SIM`.
   `NodeStatus` y el sensor acústico respetan nodo caído, PPS perdido y deriva (solo sin PPS).
 - La CLI `python -m sim run` aún escribe el flujo emitido, sin red; la red se aplicará en el
   replay y el extremo a extremo (T1.15–T1.17).
+
+## Remote ID y ADS-B (T1.14, REQ-FUN-004, REQ-LEG-007, REQ-LEG-001)
+
+- **Solo datos en memoria:** mensajes Protobuf internos como los que entregaría un receptor tras
+  decodificar. Ni tramas, ni radio, ni Wi-Fi, ni Bluetooth; un test estático comprueba que `sim/`
+  no importa bibliotecas de ese tipo.
+- `sensors/remote_id.py`: por amenaza con Remote ID (`compliant` o `forged`, norma EN 4709-002 o
+  ASTM F3411) un componente que cada segundo registra la verdad terreno (`Engine.ground_truth`,
+  nunca en `Envelope`) y entrega `Detection.remote_id` a los receptores en alcance y en servicio.
+  Conforme: posición real + ruido gaussiano truncado (σ 3 m, ±4σ: error ≤ 20,8 m). Falsificado:
+  desplazamiento de 400 m con giros ≥ 90° cada 5 mensajes (saltos imposibles, posición
+  incompatible con la acústica); la `Detection` tiene la misma forma que la conforme y solo
+  `GroundTruth.is_forged` lo sabe. `uas_id`, `operator_id` y `operator_location` son sintéticos
+  (`SIM-…`) y `FCSE_ONLY`; `self_id_description` (texto libre) no se rellena.
+- `sensors/adsb.py`: aeronaves C8 con indicativos sintéticos `SIM…` (el sensor rechaza cualquier
+  otro), posición con ruido (σ 10 m) y covarianza.
+- Valores por defecto (ruido, alcances 3 km y 60 km, confianzas) **NO VERIFICADO**. Los componentes
+  se pasan con `extra_components`; aún no forman parte de `python -m sim run`.
