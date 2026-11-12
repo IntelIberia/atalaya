@@ -1,0 +1,8 @@
+# Configuración de gitleaks: reglas por defecto + excepciones acotadas y justificadas.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Nombres de fichero del registro de Zenodo de FSD50K (\"key\": \"FSD50K.<parte>.zip\") en manifiestos de datasets: no son credenciales"
+paths = ['''^ml/datasets/[a-z0-9-]+/manifest\.json$''']
+regexes = ['''FSD50K\.[A-Za-z0-9_.]+\.(zip|z[0-9]{2})''']

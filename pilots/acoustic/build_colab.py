@@ -701,7 +701,11 @@ vuelo/sitio.
     names = [("".join(c["source"])[:60]) for c in cells]
     gate_cell = next(i for i, s in enumerate(names) if s.startswith("# Intake pendiente"))
     yamnet_cell = next(i for i, s in enumerate(names) if s.startswith("# YAMNet oficial"))
-    speech_cell = next(i for i, s in enumerate(names) if s.startswith("# Puerta automática"))
+    speech_cell = next(
+        i
+        for i, s in enumerate(names)
+        if s.startswith("# Puerta automática de privacidad (código probado")
+    )
     assert gate_cell + 1 == yamnet_cell and yamnet_cell + 1 == speech_cell
     cells[gate_cell], cells[yamnet_cell], cells[speech_cell] = (
         cells[yamnet_cell],
@@ -709,7 +713,8 @@ vuelo/sitio.
         cells[gate_cell],
     )
     notebook = {
-        "cells": cells,
+        # nbformat 4.5 exige un id por celda; ids deterministas para que la salida sea reproducible.
+        "cells": [{"id": f"celda-{i:02d}", **cell} for i, cell in enumerate(cells)],
         "metadata": {
             "colab": {"name": OUTPUT.name, "provenance": []},
             "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
