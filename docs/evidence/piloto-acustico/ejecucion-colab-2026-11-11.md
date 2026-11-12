@@ -72,3 +72,10 @@ el cuaderno; esta sección se completará con las cifras recalculadas desde `pre
   (5 folds), umbral más alto con recall ≥ 0,90 en validación, métricas por fuente y TOTAL con IC 95 %
   por grupos, YAMNet frente a MFCC y exportación de `predicciones.csv` con SHA-256 para
   `pilots/acoustic/recompute_metrics.py` (cierra el pendiente de ADR 0016 cuando se ejecute).
+- Cuaderno generado: `pilots/acoustic/Atalaya_YAMNet_Colab.ipynb`, SHA-256
+  `ad8708c9d03f90825e1ae97752583480300f769f752b7fba44804ec671fe6596` (regeneración reproducible
+  comprobada por test). Descarga prevista ≈ 1,24 GB: Svanström 157 MB, ESC-10 140 MB, FSD50K 769 MB
+  comprimidos (833 clips), ITU ARIS 169 MB.
+- Ensayo en seco local de las celdas de evaluación con rasgos **sintéticos** (sin TensorFlow ni
+  audio): partición, CV, umbral por recall, tablas por fuente, CSV y recálculo independiente
+  coinciden. No es un resultado del modelo.

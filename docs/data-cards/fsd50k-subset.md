@@ -42,8 +42,10 @@ SHA-256 en memoria.
   coincidencias en FSD50K: mismo audio en dos fuentes sería una fuga).
 - Topes: 120 clips por etiqueta, 3 por autor y etiqueta, 800 MB comprimidos repartidos por
   etiqueta; orden por SHA-256 con semilla `20261112`.
-- Resultado: ver `clip_count`, `total_compressed_bytes` y `total_wav_bytes` en el manifiesto
-  (≈ 830 clips, ≈ 0,77 GB comprimidos). Cada clip lleva licencia, URL de la licencia, autor y
+- Resultado (`clip_count`, `total_compressed_bytes` y `total_wav_bytes` en el manifiesto)
+  (**833 clips**: 410 CC0 y 423 CC BY 3.0; 502 autores; 768.910.167 bytes comprimidos y
+  985.643.870 bytes de WAV). Por etiqueta: Engine 94, Motorcycle 85, Boat 72, Fixed-wing 62,
+  Aircraft 66, Insect 96, Wind 97, Rain 92, Gull 59, Bird 110. Cada clip lleva licencia, URL de la licencia, autor y
   título (atribución CC BY), etiquetas y grupo.
 
 ## Integridad
