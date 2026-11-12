@@ -54,3 +54,8 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: scripts/guardrails.sh --range "origin/${BASE_REF}...HEAD"
+      - name: Historia del PR sin commits WIP ni «sin verificar»
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: python3 -I scripts/check_pr_commits.py --range "origin/${BASE_REF}..HEAD"

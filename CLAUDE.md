@@ -50,6 +50,9 @@ entran en `make check` ni en la trazabilidad y por eso quedan fuera de esa barre
    verificación en `docs/evidence/FASE-N/registro-tareas.md`, un commit por tarea con los IDs →
    4. `make check`, `make regress`, `scripts/verify_clean_clone.sh` → 5. subagentes revisores sin
    contexto → 6. `make evidence` y `CIERRE.md` → **STOP de cierre** → etiqueta `fase-N-cerrada`.
+- Los PR se fusionan **sin commits WIP**: squash o commits limpios y verificados. La CI falla si algún
+  asunto del rango del PR contiene «wip» (sin distinguir mayúsculas) o «sin verificar»
+  (`scripts/check_pr_commits.py`). La historia de `main` no se reescribe.
 - Skills: `/phase-plan`, `/phase-close`, `/new-adr`, `/dataset-intake`, `/release` (esta solo manual).
 - Subagentes (`.claude/agents/`): `independent-reviewer`, `test-auditor`, `security-reviewer`,
   `legal-guardrail-reviewer`, `privacy-reviewer`, `ml-eval-reviewer`, `sapient-conformance`.
