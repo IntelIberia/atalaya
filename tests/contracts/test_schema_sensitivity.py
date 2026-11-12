@@ -109,6 +109,7 @@ def test_estado_forged_solo_existe_en_ground_truth() -> None:
     assert occurrences == [(ground_truth_pb2.DESCRIPTOR.package, "GroundTruth")]
 
 
+@pytest.mark.req("REQ-FUN-002")
 def test_campos_required_primitivos_tienen_presencia_incluidos_anidados() -> None:
     required = cast(Any, options_pb2.required)
     scalar_types = {

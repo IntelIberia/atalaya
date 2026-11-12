@@ -26,7 +26,11 @@ Idioma: documentación, informes y mensajes en español; código, ficheros y com
 | `scripts/verify_clean_clone.sh` | Reproducibilidad en un clon limpio (puerta P4) |
 | `scripts/demo_guardrails.sh` | Demostración de bloqueo de commits prohibidos |
 
-Tests: `uv run pytest tests/ruta -q`. Marca cada test con `@pytest.mark.req("REQ-…")` (trazabilidad).
+Tests: `uv run pytest tests/ruta -q`. Marca cada test con `@pytest.mark.req("REQ-…")` (trazabilidad):
+`tests/conftest.py` hace **fallar la recogida** si algún test de `tests/` no lo lleva. Los tests de
+`pilots/acoustic/` (proyecto uv aparte, prueba técnica exploratoria fuera de producto, ADR 0016) no
+entran en `make check` ni en la trazabilidad y por eso quedan fuera de esa barrera.
+
 
 ## Restricciones legales (resumen; texto completo en el MEGAPROMPT y `.claude/rules/legal.md`)
 - **Nunca** código, configuración, documentación ni ejemplos para neutralizar, inhibir, interferir,

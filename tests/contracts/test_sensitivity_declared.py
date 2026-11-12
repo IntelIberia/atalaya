@@ -4,9 +4,15 @@ from __future__ import annotations
 
 from typing import Any, cast
 
+import pytest
 from atalaya.v1 import common_pb2, options_pb2
 from atalaya_contracts.sensitivity import undeclared_fields
 from google.protobuf import descriptor_pb2
+
+# Todo el módulo verifica el contrato de esquemas con sensibilidad y presencia declaradas
+# (REQ-FUN-002); los tests de sensibilidad son además la base de esquema de REQ-PRIV-001
+# (sin sensibilidad declarada no se puede impedir que un campo FCSE_ONLY salga).
+pytestmark = pytest.mark.req("REQ-FUN-002")
 
 
 def descriptor_copy() -> descriptor_pb2.FileDescriptorProto:
@@ -37,6 +43,7 @@ def required_fields_without_presence(
     return sorted(missing)
 
 
+@pytest.mark.req("REQ-PRIV-001")
 def test_todos_los_campos_common_declaran_sensibilidad() -> None:
     assert undeclared_fields([descriptor_copy()]) == []
 
@@ -61,6 +68,7 @@ def test_campo_required_anidado_sin_presencia_se_detecta() -> None:
     ]
 
 
+@pytest.mark.req("REQ-PRIV-001")
 def test_campo_sin_opcion_se_informa_con_ruta_completa() -> None:
     file_proto = descriptor_copy()
     field = file_proto.message_type[0].field[0]
@@ -68,6 +76,7 @@ def test_campo_sin_opcion_se_informa_con_ruta_completa() -> None:
     assert undeclared_fields([file_proto]) == ["atalaya.v1.GeoPoint.latitude_deg"]
 
 
+@pytest.mark.req("REQ-PRIV-001")
 def test_sensitivity_unspecified_se_considera_no_declarada() -> None:
     file_proto = descriptor_copy()
     field = file_proto.message_type[0].field[0]
@@ -77,6 +86,7 @@ def test_sensitivity_unspecified_se_considera_no_declarada() -> None:
     assert undeclared_fields([file_proto]) == ["atalaya.v1.GeoPoint.latitude_deg"]
 
 
+@pytest.mark.req("REQ-PRIV-001")
 def test_campos_de_mensajes_anidados_tambien_se_recursan() -> None:
     file_proto = descriptor_copy()
     nested = file_proto.message_type[0].nested_type.add(name="Nested")
