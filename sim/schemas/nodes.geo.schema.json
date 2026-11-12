@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atalaya.invalid/sim/nodes.geo.schema.json",
+  "title": "Geometría de nodos de un escenario (GeoJSON, RFC 7946)",
+  "description": "Solo los centros de emplazamiento llevan coordenadas (lon, lat), redondeadas a 0,01°. Los nodos no tienen geometría propia: su posición es un desplazamiento local en metros respecto al centro.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "features"],
+  "properties": {
+    "type": { "const": "FeatureCollection" },
+    "features": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "geometry", "properties"],
+        "properties": {
+          "type": { "const": "Feature" },
+          "geometry": true,
+          "properties": {
+            "type": "object",
+            "required": ["role"],
+            "properties": { "role": { "enum": ["site_center", "node"] } }
+          }
+        },
+        "if": { "properties": { "properties": { "properties": { "role": { "const": "node" } } } } },
+        "then": {
+          "properties": {
+            "geometry": { "type": "null" },
+            "properties": { "$ref": "#/$defs/node_properties" }
+          }
+        },
+        "else": {
+          "properties": {
+            "geometry": { "$ref": "#/$defs/center_point" },
+            "properties": { "$ref": "#/$defs/site_properties" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,47}$" },
+    "center_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "coordinates"],
+      "properties": {
+        "type": { "const": "Point" },
+        "coordinates": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": -180, "maximum": 180 },
+            { "type": "number", "minimum": -90, "maximum": 90 }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "site_properties": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "site"],
+      "properties": {
+        "role": { "const": "site_center" },
+        "site": { "$ref": "#/$defs/identifier" }
+      }
+    },
+    "node_properties": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "id", "site", "kind", "pps", "offset_m"],
+      "properties": {
+        "role": { "const": "node" },
+        "id": { "$ref": "#/$defs/identifier" },
+        "site": { "$ref": "#/$defs/identifier" },
+        "kind": { "enum": ["acoustic_android", "acoustic_pps", "remote_id_adsb_receiver"] },
+        "pps": { "type": "boolean" },
+        "offset_m": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["east_m", "north_m", "up_m"],
+          "properties": {
+            "east_m": { "type": "number", "minimum": -20000, "maximum": 20000 },
+            "north_m": { "type": "number", "minimum": -20000, "maximum": 20000 },
+            "up_m": { "type": "number", "minimum": -100, "maximum": 500 }
+          }
+        }
+      }
+    }
+  }
+}

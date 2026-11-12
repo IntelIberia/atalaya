@@ -14,6 +14,7 @@ import pytest
 
 from scripts import evidence as ev
 from scripts import mutation_report as mr
+from scripts import mutation_target as mt
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -116,6 +117,9 @@ def test_informe_de_mutacion(tmp_path: Path) -> None:
     meta.write_text(json.dumps({"exit_code_by_key": codes}))
     (tmp_path / "tests" / "guardrails").mkdir(parents=True)
     (tmp_path / "tests" / "guardrails" / "t.py").write_text("x\n")
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.mutmut]\npytest_add_cli_args_test_selection = ["tests/guardrails/"]\n'
+    )
     rep = mr.report(tmp_path, "scripts/m.py")
     assert rep["killed"] == 3
     assert rep["survived"] == 1
@@ -169,4 +173,10 @@ def evidencia_mutacion_problemas(repo: Path, fase: str) -> list[str]:
 
 @pytest.mark.req("REQ-NFR-018")
 def test_evidencia_de_mutacion_vigente(repo: Path) -> None:
-    assert evidencia_mutacion_problemas(repo, "FASE-0") == []
+    active = mt.active_phase(repo / "docs" / "requirements" / "FASES-CERRADAS.txt")
+    assert evidencia_mutacion_problemas(repo, f"FASE-{active}") == []
+
+
+@pytest.mark.req("REQ-NFR-014")
+def test_manifiesto_fase_0_cerrada_sigue_intacto(repo: Path) -> None:
+    assert ev.verify_manifest(repo / "docs" / "evidence" / "FASE-0") == []

@@ -1,0 +1,117 @@
+# Escenario SINTÉTICO de Atalaya (T1.9, REQ-FUN-005). Centro FICTICIO sobre mar abierto,
+# redondeado a 0,01° (D-8): no reproduce ningún emplazamiento ni perímetro real. Todas las
+# posiciones son desplazamientos locales en metros (este, norte, arriba) respecto al centro.
+# launch_point equivale al origen probable: FCSE_ONLY (REQ-LEG-007).
+schema_version: 1
+name: prision_ceuta
+description: Recinto cerrado sintético con perímetro de 400 m; entregas por dron pequeño a baja altura.
+  Centro ficticio sobre mar abierto (D-8).
+seed_policy:
+  default_seed: 20261111
+  derivation: sha256-component
+duration_s: 600
+geometry: prision_ceuta.nodes.geo.json
+environment:
+  temperature_c: 19.0
+  relative_humidity_pct: 72.0
+  wind:
+    speed_mps: 6.0
+    from_deg: 90.0
+  background_bands:
+  - center_hz: 125.0
+    level_db_spl: 48.0
+  - center_hz: 250.0
+    level_db_spl: 45.0
+  - center_hz: 500.0
+    level_db_spl: 42.0
+  - center_hz: 1000.0
+    level_db_spl: 39.0
+  - center_hz: 2000.0
+    level_db_spl: 36.0
+  - center_hz: 4000.0
+    level_db_spl: 32.0
+sites:
+- id: recinto
+  center:
+    lat_deg: 36.2
+    lon_deg: -4.1
+  objectives:
+  - id: perimetro
+    kind: perimeter
+    offset_m:
+      east_m: 0.0
+      north_m: 0.0
+      up_m: 0.0
+    radius_m: 200.0
+  - id: patio
+    kind: point
+    offset_m:
+      east_m: 40.0
+      north_m: -30.0
+      up_m: 0.0
+    radius_m: 25.0
+threats:
+- id: amenaza-1
+  class: C2
+  site: recinto
+  start_s: 30.0
+  speed_mps: 9.0
+  route:
+  - east_m: -1500.0
+    north_m: 900.0
+    up_m: 60.0
+  - east_m: 40.0
+    north_m: -30.0
+    up_m: 25.0
+  remote_id:
+    mode: none
+  launch_point:
+    sensitivity: FCSE_ONLY
+    offset_m:
+      east_m: -1500.0
+      north_m: 900.0
+      up_m: 0.0
+- id: amenaza-2
+  class: C1
+  site: recinto
+  start_s: 240.0
+  speed_mps: 7.0
+  route:
+  - east_m: 1200.0
+    north_m: 1300.0
+    up_m: 50.0
+  - east_m: 0.0
+    north_m: 0.0
+    up_m: 30.0
+  remote_id:
+    mode: forged
+    standard: EN_4709_002
+  launch_point:
+    sensitivity: FCSE_ONLY
+    offset_m:
+      east_m: 1200.0
+      north_m: 1300.0
+      up_m: 0.0
+manned_aircraft:
+- id: SIM101
+  class: C8
+  site: recinto
+  start_s: 120.0
+  speed_mps: 70.0
+  route:
+  - east_m: -9000.0
+    north_m: 4000.0
+    up_m: 900.0
+  - east_m: 9000.0
+    north_m: 4500.0
+    up_m: 900.0
+faults:
+- kind: node_down
+  node: rc-and-2
+  start_s: 300.0
+  duration_s: 120.0
+- kind: clock_drift
+  node: rc-and-1
+  start_s: 0.0
+  duration_s: 600.0
+  magnitude: 25.0

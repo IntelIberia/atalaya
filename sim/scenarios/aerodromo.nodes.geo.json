@@ -1,0 +1,99 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -4.4,
+          35.8
+        ]
+      },
+      "properties": {
+        "role": "site_center",
+        "site": "pista"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "ad-and-1",
+        "site": "pista",
+        "kind": "acoustic_android",
+        "pps": false,
+        "offset_m": {
+          "east_m": -500.0,
+          "north_m": 0.0,
+          "up_m": 2.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "ad-and-2",
+        "site": "pista",
+        "kind": "acoustic_android",
+        "pps": false,
+        "offset_m": {
+          "east_m": 500.0,
+          "north_m": 0.0,
+          "up_m": 2.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "ad-pps-1",
+        "site": "pista",
+        "kind": "acoustic_pps",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": 500.0,
+          "up_m": 3.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "ad-pps-2",
+        "site": "pista",
+        "kind": "acoustic_pps",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": -500.0,
+          "up_m": 3.0
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "role": "node",
+        "id": "ad-rx-1",
+        "site": "pista",
+        "kind": "remote_id_adsb_receiver",
+        "pps": true,
+        "offset_m": {
+          "east_m": 0.0,
+          "north_m": 0.0,
+          "up_m": 6.0
+        }
+      }
+    }
+  ]
+}
