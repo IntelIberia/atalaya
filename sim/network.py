@@ -97,9 +97,11 @@ def merge(deliveries: Sequence[Delivery]) -> list[Delivery]:
     return sorted(deliveries, key=lambda d: (d.arrival_ns, d.envelope.sequence, d.copy))
 
 
-def transmit_scenario(scenario: Scenario, envelopes: Sequence[Envelope], seed: int) -> list[Delivery]:
+def transmit_scenario(
+    scenario: Scenario, envelopes: Sequence[Envelope], seed: int
+) -> list[Delivery]:
     """Red del escenario: un enlace por nodo con las condiciones de sus fallos programados."""
-    from sim.faults import FaultSchedule  # noqa: PLC0415 (faults importa este módulo)
+    from sim.faults import FaultSchedule  # import diferido: faults importa este módulo
 
     schedule = FaultSchedule(scenario.data["faults"])
     rngs = RngRegistry(seed)

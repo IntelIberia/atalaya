@@ -43,7 +43,7 @@ def from_timestamp(ts: Timestamp) -> int:
 
 
 def drift_offset_ms(drift_ppm: float, elapsed_s: float) -> float:
-    """Desfase acumulado por una deriva de `drift_ppm` durante `elapsed_s` (lineal; 1 ppm·s = 1 µs)."""
+    """Desfase acumulado por `drift_ppm` durante `elapsed_s` (lineal; 1 ppm·s = 1 µs)."""
     if isinstance(drift_ppm, bool) or not math.isfinite(drift_ppm):
         raise ValueError(f"deriva de reloj no finita: {drift_ppm!r} ppm")
     if not math.isfinite(elapsed_s):

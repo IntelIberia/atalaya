@@ -6,8 +6,8 @@ Tipos (`faults[].kind` del escenario), activos en `[start_s, start_s + duration_
 |---|---|---|
 | `node_down` | el nodo no emite nada (ni `NodeStatus` ni detecciones) | — |
 | `link_down` | el nodo emite, pero el enlace pierde todo | — |
-| `pps_invalid` | PPS perdido: `pps_valid=false`, incertidumbre de reloj alta, salud degradada | — |
-| `clock_drift` | deriva del reloj sin PPS: desfase lineal desde el inicio del fallo | ppm (finita) |
+| `pps_invalid` | PPS perdido: `pps_valid=false`, más incertidumbre, salud degradada | — |
+| `clock_drift` | deriva sin PPS: desfase lineal desde el inicio del fallo | ppm (finita) |
 | `latency` | mediana de la latencia del enlace | ms (finita, ≥ 0) |
 | `packet_loss` / `duplicate` / `reorder` | probabilidad por mensaje | [0, 1] |
 

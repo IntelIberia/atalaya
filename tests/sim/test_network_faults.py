@@ -10,6 +10,7 @@ huecos en la secuencia de `NodeStatus` sin fallos.
 from __future__ import annotations
 
 import copy
+import itertools
 import math
 from collections import Counter
 from collections.abc import Sequence
@@ -42,7 +43,8 @@ def _scenario(name: str, fault_list: Sequence[dict[str, Any]] | None = None) -> 
         return base
     data = copy.deepcopy(base.data)
     data["faults"] = list(fault_list)
-    validate_scenario(data, source="test", geometry=base.geometry)
+    if fault_list:  # el esquema exige ≥ 1 fallo; la lista vacía «desactiva» los fallos
+        validate_scenario(data, source="test", geometry=base.geometry)
     return Scenario(name=base.name, data=data, geometry=base.geometry)
 
 
@@ -106,7 +108,7 @@ def test_entrega_ordenada_por_llegada_con_desorden() -> None:
     arrivals = [d.arrival_ns for d in delivered]
     assert arrivals == sorted(arrivals)
     sequences = [d.envelope.sequence for d in delivered]
-    inversions = sum(1 for a, b in zip(sequences, sequences[1:], strict=False) if b < a)
+    inversions = sum(1 for a, b in itertools.pairwise(sequences) if b < a)
     assert inversions > 0
     calm = network.transmit(
         _messages(2000),
@@ -123,9 +125,7 @@ def test_duplicados_conservan_el_mismo_detection_id() -> None:
         [{"kind": "duplicate", "node": "rc-pps-1", "start_s": 0.0, "duration_s": 600.0,
           "magnitude": 0.5}],
     )  # fmt: skip
-    engine = build_engine(
-        scenario, seed=3, extra_components=acoustic.acoustic_components(scenario)
-    )
+    engine = build_engine(scenario, seed=3, extra_components=acoustic.acoustic_components(scenario))
     emitted = engine.run_all()
     delivered = network.transmit_scenario(scenario, emitted, seed=3)
     ids = Counter(
@@ -362,7 +362,7 @@ def test_negativa_sin_fallos_cero_huecos_en_node_status(name: str) -> None:
             for d in delivered
             if d.envelope.node_id == node and d.envelope.HasField("node_status")
         )
-        gaps = [b - a for a, b in zip(times, times[1:], strict=False)]
+        gaps = [b - a for a, b in itertools.pairwise(times)]
         assert gaps and all(g == pytest.approx(NODE_STATUS_PERIOD_S) for g in gaps), node
         assert times[0] < NODE_STATUS_PERIOD_S
         assert scenario.data["duration_s"] - times[-1] <= NODE_STATUS_PERIOD_S
