@@ -96,12 +96,33 @@ def _crop(x: np.ndarray, length: int, offset_fraction: float) -> np.ndarray:
     return np.asarray(x)[start : start + length]
 
 
+class SilentMixError(ValueError):
+    """El dron o el fondo no tienen energía en ninguna ventana: la mezcla se omite."""
+
+
+def _energetic_crop(x: np.ndarray, length: int, offset_fraction: float) -> np.ndarray:
+    """Recorte pedido; si es silencio (p. ej. relleno de ESC-10), la ventana de más energía."""
+    crop = _crop(x, length, offset_fraction)
+    if _power(crop) > 0:
+        return crop
+    arr = np.asarray(x, dtype=np.float64)
+    if len(arr) <= length or _power(arr) <= 0:
+        raise SilentMixError("clip sin energía: mezcla omitida")
+    energy = np.concatenate(([0.0], np.cumsum(arr**2)))
+    window = energy[length:] - energy[:-length]
+    start = int(np.argmax(window))
+    return np.asarray(x)[start : start + length]
+
+
 def render_mix(spec: dict, drone: np.ndarray, background: np.ndarray, sr: int) -> np.ndarray:
-    """Genera la mezcla de un plan: recorte, desplazamiento del dron, SNR y ganancia."""
+    """Genera la mezcla de un plan: recorte, desplazamiento del dron, SNR y ganancia.
+    Los recortes evitan el silencio; un clip sin energía lanza SilentMixError (se omite)."""
     length = min(int(spec["seconds"] * sr), len(drone), len(background))
-    d = _crop(drone, length, spec["drone_offset"])
+    d = _energetic_crop(drone, length, spec["drone_offset"])
     d = time_shift(d, int(spec["shift_fraction"] * length))
-    b = _crop(background, length, spec["background_offset"])
+    if _power(d) <= 0:
+        raise SilentMixError("dron sin energía tras el desplazamiento: mezcla omitida")
+    b = _energetic_crop(background, length, spec["background_offset"])
     mix, _, _ = mix_at_snr(d, b, spec["snr_db"])
     out = random_gain(mix, spec["gain_db"])
     peak = float(np.max(np.abs(out)))

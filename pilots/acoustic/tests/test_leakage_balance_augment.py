@@ -192,3 +192,40 @@ def test_render_mix_is_deterministic_and_bounded() -> None:
     assert a.dtype == np.float32 and len(a) == 24000
     np.testing.assert_array_equal(a, render_mix(spec, drone, bg, 16000))
     assert np.max(np.abs(a)) <= 0.99
+
+
+def _spec(**kw: float) -> dict:
+    base = {
+        "seconds": 1.0,
+        "drone_offset": 0.0,
+        "background_offset": 0.0,
+        "shift_fraction": 0.0,
+        "snr_db": 0.0,
+        "gain_db": 0.0,
+    }
+    base.update(kw)
+    return base
+
+
+def test_render_mix_recorte_en_silencio_usa_la_ventana_con_energia() -> None:
+    # Fondo tipo ESC-10: 1 s de sonido seguido de 4 s de silencio de relleno.
+    sr = 16000
+    rng = np.random.default_rng(0)
+    drone = rng.normal(0, 0.1, 5 * sr).astype(np.float32)
+    bg = np.zeros(5 * sr, dtype=np.float32)
+    bg[:sr] = rng.normal(0, 0.1, sr)
+    mix = render_mix(_spec(background_offset=1.0), drone, bg, sr)  # el recorte pedido es silencio
+    assert mix.shape == (sr,)
+    assert np.isfinite(mix).all() and float(np.mean(mix.astype(np.float64) ** 2)) > 0
+
+
+def test_render_mix_fondo_totalmente_silencioso_se_omite() -> None:
+    import pytest
+
+    from acoustic_pilot.augment import SilentMixError
+
+    sr = 16000
+    drone = np.random.default_rng(1).normal(0, 0.1, sr).astype(np.float32)
+    with pytest.raises(SilentMixError):
+        render_mix(_spec(), drone, np.zeros(sr, dtype=np.float32), sr)
+    assert issubclass(SilentMixError, ValueError)

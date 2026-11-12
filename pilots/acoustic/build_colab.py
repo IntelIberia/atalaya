@@ -733,8 +733,14 @@ for n, (a, b) in enumerate(mix_ranges, 1):
     if loaded is None:
         means_part, blocks_part = [], []
         for m in MIX_PLAN[a:b]:
-            mix = render_mix(m, load_normalized(df["clip"][m["drone"]]),
-                             load_normalized(df["clip"][m["background"]]), TARGET_SR)
+            try:
+                mix = render_mix(m, load_normalized(df["clip"][m["drone"]]),
+                                 load_normalized(df["clip"][m["background"]]), TARGET_SR)
+            except SilentMixError:
+                # Clip sin energía: la posición se conserva como no válida (NaN) y se excluye.
+                means_part.append(np.full(1024, np.nan, dtype=np.float32))
+                blocks_part.append(np.zeros((0, 1024), dtype=np.float32))
+                continue
             _, embedding_array, _, _ = yamnet_features(mix)
             means_part.append(embedding_array.mean(axis=0))
             blocks_part.append(embedding_array)
@@ -748,6 +754,8 @@ for n, (a, b) in enumerate(mix_ranges, 1):
 MIX_MEANS = np.vstack(mix_means)
 MIX_FRAMES, MIX_OFFSETS = pack_frames(mix_blocks)
 assert len(MIX_MEANS) == len(MIX_PLAN) == len(MIX_OFFSETS) - 1
+MIX_VALID = np.isfinite(MIX_MEANS).all(axis=1)
+print(f"Mezclas omitidas por clip sin energía: {int((~MIX_VALID).sum())} de {len(MIX_PLAN)}")
 print("Plan de mezclas SHA-256:", MIX_PLAN_SHA256)
 plan_df = pd.DataFrame(MIX_PLAN)
 plan_df["fuente_dron"] = [src[i] for i in plan_df["drone"]]
@@ -784,7 +792,7 @@ def fit_lr(X, labels, weights, scale=False):
 def raw_scores(train, parts):
     # Puntuaciones sin calibrar de cada variante en cada parte (validación, test).
     train = list(train)
-    mix_ids = mixes_for_training(MIX_PLAN, train)
+    mix_ids = [i for i in mixes_for_training(MIX_PLAN, train) if MIX_VALID[i]]
     out = {}
     w = class_source_weights(y[train], [src[i] for i in train])
     model = fit_lr(MEANS[train], y[train], w)
