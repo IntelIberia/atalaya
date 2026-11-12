@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Higiene de historia de los PR: ningún commit WIP ni «sin verificar» llega a main.
 
-Lee los asuntos (`git log --format=%s RANGO`) y falla (exit 1) si alguno contiene «wip»
-(sin distinguir mayúsculas) o «sin verificar». Un error al leer el rango también falla
+Lee los asuntos (`git log --format=%s RANGO`) y falla (exit 1) si alguno lleva la marca «wip»
+(palabra suelta) o «sin verificar» como marca, no como mención. Un error al leer el rango falla
 (exit 2): fallo cerrado. Los PR se fusionan con squash o con commits limpios (CLAUDE.md, Flujo).
 
 Uso: python3 -I scripts/check_pr_commits.py --range "origin/main..HEAD"
@@ -15,12 +15,19 @@ import re
 import subprocess
 import sys
 
-PROHIBIDO = re.compile(r"wip|sin verificar", re.IGNORECASE)
+# Se buscan MARCAS, no menciones: el commit que introduce esta regla habla de commits
+# «sin verificar» y no debe bloquearse a sí mismo.
+MARCAS = (
+    re.compile(r"\bwip\b", re.IGNORECASE),  # «wip:», «WIP(fase1)», «[Wip]»; no «swipe»
+    re.compile(r"[(\[]\s*sin verificar\s*[)\]]", re.IGNORECASE),  # «(sin verificar)»
+    re.compile(r"^[^:]*:\s*sin verificar\b", re.IGNORECASE),  # «fix: sin verificar…»
+    re.compile(r"SIN VERIFICAR"),  # en mayúsculas es siempre una marca
+)
 
 
 def offending(subjects: list[str]) -> list[str]:
-    """Asuntos de commit que delatan trabajo en curso o sin verificar."""
-    return [s for s in subjects if PROHIBIDO.search(s)]
+    """Asuntos de commit marcados como trabajo en curso o sin verificar."""
+    return [s for s in subjects if any(m.search(s) for m in MARCAS)]
 
 
 def subjects_in_range(rango: str) -> list[str]:

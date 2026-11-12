@@ -57,9 +57,34 @@ def test_asuntos_prohibidos_se_detectan(asunto: str) -> None:
     assert cpc.offending(["feat: limpio", asunto]) == [asunto]
 
 
+@pytest.mark.parametrize(
+    "asunto",
+    [
+        "wip(piloto): iteración 4",
+        "fix: sin verificar, falta CI",
+        "docs: registro [sin verificar]",
+    ],
+)
+def test_marcas_reales_de_la_historia_se_detectan(asunto: str) -> None:
+    assert cpc.offending([asunto]) == [asunto]
+
+
 def test_asuntos_limpios_pasan() -> None:
     limpios = ["feat(sim): red y relojes [REQ-FUN-004]", "docs: verificado con make check"]
     assert cpc.offending(limpios) == []
+
+
+@pytest.mark.parametrize(
+    "asunto",
+    [
+        # Mencionar la regla no es marcar el commit (el propio commit que la introduce).
+        "ci: rechazar PR con commits provisionales o sin verificar en su rango",
+        "feat(ui): gesto swipe en el mapa",
+        "docs: wiping de caché explicado",
+    ],
+)
+def test_menciones_no_son_marcas(asunto: str) -> None:
+    assert cpc.offending([asunto]) == []
 
 
 @pytest.mark.subproceso

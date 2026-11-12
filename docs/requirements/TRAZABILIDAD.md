@@ -79,7 +79,7 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 | REQ-NFR-011 | MUST | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-012 | SHOULD | 5 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-NFR-013 | MUST | 10 | 0 | sin tests | pendiente (fase abierta) |
-| REQ-NFR-014 | MUST | 0 | 46 | verde | OK |
+| REQ-NFR-014 | MUST | 0 | 52 | verde | OK |
 | REQ-NFR-015 | MUST | 0 | 2 | verde | OK |
 | REQ-NFR-016 | MUST | 0 | 1 | verde | OK |
 | REQ-NFR-017 | MUST | 9 | 0 | sin tests | pendiente (fase abierta) |
