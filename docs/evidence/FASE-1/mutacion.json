@@ -59,7 +59,7 @@
       "scripts.guardrails.x_range_files__mutmut_12",
       "scripts.guardrails.x_range_files__mutmut_9"
     ],
-    "inputs_sha256": "65d17ac0a81e840cfcef82acc0cda94e70d3d2699a2439c15708a17a62ec779e"
+    "inputs_sha256": "f09c0f131416c061b603065eb613f343b6f261caa91df281d2d71941b4512418"
   },
   "proto/python/atalaya_contracts/redact.py": {
     "sha256": "f5a3e9e666f83a5d75a56aa90741a5d9782a1d7a2020d413ec0324db8027a1d3",
@@ -104,7 +104,7 @@
       "atalaya_contracts.redact.x_redact__mutmut_35",
       "atalaya_contracts.redact.x_redact__mutmut_47"
     ],
-    "inputs_sha256": "65d17ac0a81e840cfcef82acc0cda94e70d3d2699a2439c15708a17a62ec779e"
+    "inputs_sha256": "f09c0f131416c061b603065eb613f343b6f261caa91df281d2d71941b4512418"
   },
   "proto/python/atalaya_contracts/log_projection.py": {
     "sha256": "3a4acb9bbe6d3e7d61324cca054a9b1251a5bb40be928f761009af43d71ee87a",
@@ -146,7 +146,7 @@
       "atalaya_contracts.log_projection.x_project_log_record__mutmut_14",
       "atalaya_contracts.log_projection.x_project_log_record__mutmut_5"
     ],
-    "inputs_sha256": "65d17ac0a81e840cfcef82acc0cda94e70d3d2699a2439c15708a17a62ec779e"
+    "inputs_sha256": "f09c0f131416c061b603065eb613f343b6f261caa91df281d2d71941b4512418"
   },
   "proto/python/atalaya_contracts/validate.py": {
     "sha256": "d1a0750cfbcf486d414f7d0bdcd0c3c1623fc4a7cd5dd548210d3130cee666d7",
@@ -215,6 +215,6 @@
       "atalaya_contracts.validate.x_validate__mutmut_62",
       "atalaya_contracts.validate.x_validate__mutmut_8"
     ],
-    "inputs_sha256": "65d17ac0a81e840cfcef82acc0cda94e70d3d2699a2439c15708a17a62ec779e"
+    "inputs_sha256": "f09c0f131416c061b603065eb613f343b6f261caa91df281d2d71941b4512418"
   }
 }

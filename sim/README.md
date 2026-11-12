@@ -25,9 +25,9 @@ sintéticos con prefijo `SIM`.
 - `geo.py`: WGS84 ↔ ECEF ↔ ENU local; `clock.py`: época simulada fija (2026-01-01T00:00:00Z).
 - CLI: `uv run python -m sim run --scenario sim/scenarios/X.yaml [--seed N] [--duration S] --out F.pb.zst`
   y `uv run python -m sim hash F.pb.zst`; ambos imprimen `stream_sha256` (flujo sin comprimir,
-  `varint(longitud) ‖ Envelope`) y `file_sha256` (zstd nivel 10).
-- La CLI solo emite el latido `NodeStatus` de cada nodo cada 30 s simulados (con los fallos de nodo
-  de T1.13); sensores, red, replay con cabecera y MQTT se integran en T1.14–T1.17.
+  `varint(longitud) ‖ Envelope`) y `file_sha256` (fichero de replay completo). Desde T1.15
+  `run` escribe el replay versionado e incluye todos los sensores (ver «Replay»).
+- La red de T1.13 y MQTT se integran en T1.16–T1.17.
 
 ## Trayectorias (T1.11, REQ-FUN-004)
 
@@ -49,7 +49,7 @@ sintéticos con prefijo `SIM`.
   `class_scores` de una matriz de confusión configurable, `detection_confidence`, `time_quality` y
   rumbo con su incertidumbre; toda `Detection` pasa `validate()`. Espectros de fuente por clase y
   matriz por defecto **NO VERIFICADO**. `acoustic_components(escenario)` da un componente del motor
-  por nodo acústico (se pasa con `extra_components`; aún no forma parte de `python -m sim run`).
+  por nodo acústico (se pasa con `extra_components`; desde T1.15 lo incluye `python -m sim run`).
 - **Sin audio en ningún punto:** solo niveles por banda, SNR y puntuaciones.
 
 ## Red, relojes y fallos (T1.13, REQ-FUN-004)
@@ -62,4 +62,34 @@ sintéticos con prefijo `SIM`.
   `duplicate`, `reorder`; las magnitudes imposibles se rechazan al cargar el escenario. El latido
   `NodeStatus` y el sensor acústico respetan nodo caído, PPS perdido y deriva (solo sin PPS).
 - La CLI `python -m sim run` aún escribe el flujo emitido, sin red; la red se aplicará en el
-  replay y el extremo a extremo (T1.15–T1.17).
+  extremo a extremo (T1.16–T1.17); el replay de T1.15 graba lo emitido.
+
+## Remote ID y ADS-B (T1.14, REQ-FUN-004, REQ-LEG-007, REQ-LEG-001)
+
+- **Solo datos en memoria:** mensajes Protobuf internos como los que entregaría un receptor tras
+  decodificar. Ni tramas, ni radio, ni Wi-Fi, ni Bluetooth; un test estático comprueba que `sim/`
+  no importa bibliotecas de ese tipo.
+- `sensors/remote_id.py`: por amenaza con Remote ID (`compliant` o `forged`, norma EN 4709-002 o
+  ASTM F3411) un componente que cada segundo registra la verdad terreno (`Engine.ground_truth`,
+  nunca en `Envelope`) y entrega `Detection.remote_id` a los receptores en alcance y en servicio.
+  Conforme: posición real + ruido gaussiano truncado (σ 3 m, ±4σ: error ≤ 20,8 m). Falsificado:
+  desplazamiento de 400 m con giros ≥ 90° cada 5 mensajes (saltos imposibles, posición
+  incompatible con la acústica); la `Detection` tiene la misma forma que la conforme y solo
+  `GroundTruth.is_forged` lo sabe. `uas_id`, `operator_id` y `operator_location` son sintéticos
+  (`SIM-…`) y `FCSE_ONLY`; `self_id_description` (texto libre) no se rellena.
+- `sensors/adsb.py`: aeronaves C8 con indicativos sintéticos `SIM…` (el sensor rechaza cualquier
+  otro), posición con ruido (σ 10 m) y covarianza.
+- Valores por defecto (ruido, alcances 3 km y 60 km, confianzas) **NO VERIFICADO**. Los componentes
+  se pasan con `extra_components`; desde T1.15 `python -m sim run` los incluye vía `sim.replay`.
+
+## Replay `.pb.zst` (T1.15, REQ-FUN-006, REQ-FUN-003)
+
+- `atalaya_contracts.envelope_io`: magia `ATLYRPLY`, versión de formato (2 B, hoy 1), SHA-256 del
+  contenido sin comprimir y una trama zstd de nivel 10 con suma de comprobación. Contenido:
+  registros `tipo ‖ varint(longitud) ‖ mensaje` (1 = `Envelope`, 2 = `GroundTruth`), en orden.
+- Lectura todo o nada: magia, versión, trama (truncada, corrupta o con datos sobrantes), hash y
+  cada registro se comprueban antes de devolver nada; cualquier fallo es `ReplayFormatError` con el
+  desplazamiento (en el fichero o en el contenido descomprimido).
+- `sim/replay.py`: `record()` (escenario con latido, acústica, Remote ID y ADS-B), `write()`,
+  `read()`/`decode()` y `stream_sha256()`. CLI: `python -m sim replay --in F.pb.zst` (exit 2 si el
+  fichero no es válido). `--mqtt` llega con T1.16 (publicación cerrada hasta T1.7b).

@@ -9,7 +9,7 @@
 
 El flujo sin comprimir es una sucesión de `Envelope` precedidos por su longitud en varint
 (delimitado como `writeDelimitedTo`); el `.pb.zst` es ese flujo comprimido con zstd de nivel fijo.
-El formato de replay con cabecera de versión y hash llega en T1.15.
+El fichero de replay versionado (cabecera, hash y verdad terreno) está en `sim.replay` (T1.15).
 
 El emisor propio es el latido `NodeStatus` de cada nodo cada 30 s simulados (tiempo y batería
 sintéticos). Desde T1.13 respeta los fallos programados (`sim.faults`): un nodo caído no publica,
@@ -26,6 +26,7 @@ from random import Random
 from typing import Any
 
 import zstandard
+from atalaya.sim.v1.ground_truth_pb2 import GroundTruth
 from atalaya.v1.envelope_pb2 import Envelope
 from atalaya.v1.node_status_pb2 import NODE_HEALTH_DEGRADED, NODE_HEALTH_HEALTHY, NodeStatus
 from google.protobuf.message import Message
@@ -67,6 +68,8 @@ class Engine:
         self.end_ns = end_ns
         self.now_ns = 0
         self.envelopes: list[Envelope] = []
+        # Verdad del simulador (`atalaya.sim.v1`): solo para métricas; nunca viaja en `Envelope`.
+        self.ground_truth: list[GroundTruth] = []
         self._rngs = RngRegistry(seed)
         self._queue: list[tuple[int, int, Action]] = []
         self._order = 0
@@ -94,6 +97,10 @@ class Engine:
         getattr(envelope, _PAYLOAD_FIELDS[payload.DESCRIPTOR.full_name]).CopyFrom(payload)
         self.envelopes.append(envelope)
         return envelope
+
+    def record_truth(self, truth: GroundTruth) -> None:
+        """Registra la verdad terreno del instante actual, aparte del flujo de la plataforma."""
+        self.ground_truth.append(truth)
 
     def run(self, until_ns: int) -> list[Envelope]:
         """Ejecuta los eventos con instante ≤ `until_ns` en orden `(tiempo, secuencia)`."""
