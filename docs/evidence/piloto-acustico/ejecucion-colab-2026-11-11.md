@@ -79,3 +79,62 @@ el cuaderno; esta sección se completará con las cifras recalculadas desde `pre
 - Ensayo en seco local de las celdas de evaluación con rasgos **sintéticos** (sin TensorFlow ni
   audio): partición, CV, umbral por recall, tablas por fuente, CSV y recálculo independiente
   coinciden. No es un resultado del modelo.
+
+# Iteración 5 — preparada el 2026-11-12 (tratamiento de datos avanzado; cuaderno sin ejecutar en Colab)
+Misma prueba técnica aislada (ADR 0016), mismas fuentes con licencia verificada; prohibidas y no
+descargadas: DADS, Al-Emadi, UrbanSound8K, ESC-50 fuera de ESC-10, Sonniss y AeroSonicDB. Sin
+dependencias nuevas (numpy, SciPy y scikit-learn, BSD-3; cleanlab descartado por AGPL: lo necesario
+se implementa en `acoustic_pilot`). **Resultados en Colab: NO VERIFICADOS** hasta ejecutar el cuaderno.
+
+Técnicas (código en `pilots/acoustic/acoustic_pilot/`, probado en `pilots/acoustic/tests/` e
+incrustado tal cual por `build_colab.py`):
+1. `data_quality`: formato normalizado (mono, 16 kHz, float32, `resample_poly`); clip **silencioso**
+   si el RMS < −60 dBFS en todos los canales; **saturado** si > 1 % de muestras con |x| ≥ 0,999 en
+   algún canal original; **corrupto** si es ilegible, no finito o dura < 0,5 s. Sonoridad (RMS, LUFS
+   aproximado BS.1770 sin compuertas, pico, factor de cresta) **solo como característica**.
+   Duplicados exactos por SHA-256 del PCM normalizado; casi duplicados por coseno de la media de
+   embeddings YAMNet **≥ 0,995** (YAMNet da embeddings no negativos; clips distintos de una misma
+   escena quedan en ~0,95–0,98) solo entre grupos distintos; el componente conserva el grupo que
+   más aporta. Informe `descartes.csv` con SHA-256.
+2. `leakage`: `StratifiedGroupKFold` (5 folds) por grupo y leave-one-source-out; en cada partición
+   se recalculan los casi duplicados entre particiones y debe salir vacío (fallo cerrado).
+   La partición de autores de ITU ARIS ya no se usa; sus grupos (intervalo/bloque) sí.
+3. `balance`: pesos por clase y por fuente (cada clase suma N/2; dentro de cada clase, cada fuente
+   igual; las mezclas sintéticas cuentan como una fuente más) y muestreo balanceado.
+4. `augment`: 1.500 mezclas dron + fondo negativo a SNR nominal −10…+20 dB, ganancia −6…+6 dB y
+   desplazamiento circular, `synthetic=true`; en cada fold solo entran si dron **y** fondo están en
+   entrenamiento; nunca se puntúan. **No cuentan como rendimiento real.**
+5. `windows`: regresión logística por ventana YAMNet (≤ 8 ventanas por clip, etiqueta débil) con
+   agregación media, máximo, top-3, máximo suavizado (3 ventanas) y atención ligera (softmax,
+   T = 0,1), frente a la media de embeddings por clip.
+6. `calibration`: Platt e isotónica ajustadas en validación; ECE (15 bins), Brier, fiabilidad, DET
+   y PR; umbral = el más alto con recall ≥ 0,90 en validación (Platt); FA/h sobre concatenaciones
+   de negativos de test con refractario de 5 s: **ESTIMACIÓN, NO VERIFICADA como métrica de campo**.
+7. `hard_negatives`: segunda ronda que multiplica por 3 el peso del 10 % de negativos de
+   entrenamiento con mayor puntuación (sesgo optimista: puntuaciones del propio entrenamiento) y
+   falsas alarmas por tipo de negativo (motos, barcos, aviones, helicópteros, insectos, viento…)
+   con la lista «qué grabar primero en Ceuta».
+8. `experiment` y `predictions`: registro `modelo_piloto.json` con hash propio (semillas,
+   configuración, inventario de datos, descartes, plan de mezclas, versiones, hash del código del
+   cuaderno y de `predicciones.csv`); CSV ampliado (tipo, puntuaciones cruda/Platt/isotónica) con
+   precisión de ida y vuelta; `recompute_metrics.py --record` recalcula confusión, PR-AUC, ECE,
+   Brier y falsas alarmas por tipo sin importar `acoustic_pilot` ni numpy.
+9. `checkpoints` (tras la desconexión de la iteración 4 en Colab durante YAMNet): descargas en 8
+   hilos con límite global de 120 peticiones/minuto a Zenodo y reintentos, progreso por fuente,
+   reutilización de ficheros solo si su hash coincide, escritura atómica y YAMNet/mezclas por lotes
+   (256/250) guardados en `/content/atalaya_piloto/checkpoints` con hash de entrada. Sobrevive a un
+   reinicio del kernel; **no** a que Colab recicle la máquina (sin Drive por ADR 0016).
+
+Verificación local:
+- `cd pilots/acoustic && uv run pytest -q` → 181 tests en verde; `ruff check` y `ruff format --check` limpios.
+- Ensayo en seco con rasgos **sintéticos** (sin TensorFlow ni audio) de las celdas desde la puerta de
+  voz hasta la exportación, más el bucle de YAMNet por lotes con el modelo sustituido: se ejecutan
+  sin error, la reanudación reutiliza los lotes y solo recalcula el dañado, y el resumen del cuaderno
+  coincide con `recompute_metrics.py` en las 90 celdas modelo/esquema/fuente (confusión, PR-AUC, ECE).
+  Encontró dos errores ya corregidos con test de regresión: el informe de voz trataba como tuplas
+  los dicts de `apply_speech_gate` (y `float(None)` en puntuaciones no válidas), y 9 decimales
+  convertían en empates probabilidades calibradas saturadas. No es un resultado del modelo.
+- Cuaderno: `pilots/acoustic/Atalaya_YAMNet_Colab.ipynb`, SHA-256
+  `96bc96d155947391daa97bad32f2c7168dbbea5f98bf99a48a593b38e0b0003a`; hash del código incrustado
+  `00046807668aa0581878d2593b36471e22091ffae5b4d34379072c5c41bad40c`; nbformat 4.5 válido;
+  regeneración reproducible comprobada por test.

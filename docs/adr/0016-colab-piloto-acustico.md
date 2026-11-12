@@ -39,3 +39,8 @@ Opción 2, con estas condiciones obligatorias:
   SHA-256 impreso y guardado en `modelo_piloto.json`) y `pilots/acoustic/recompute_metrics.py`
   recalcula las métricas de forma independiente verificando ese hash. El pendiente se cierra cuando
   una ejecución real archive el CSV y su recálculo en `docs/evidence/piloto-acustico/`.
+- Actualización 2026-11-12 (iteración 5): sin dependencias nuevas; los puntos de control del
+  cuaderno viven solo en `/content` del runtime (nunca Drive): sobreviven a un reinicio del kernel,
+  no al reciclado de la máquina. `predicciones.csv` amplía columnas (tipo de negativo, puntuaciones
+  cruda/Platt/isotónica) y `modelo_piloto.json` lleva hash propio que `recompute_metrics.py --record`
+  verifica. Las falsas alarmas por hora del cuaderno son una estimación NO VERIFICADA.

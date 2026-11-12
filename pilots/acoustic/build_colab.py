@@ -1,4 +1,4 @@
-"""Build a self-contained, public-data-only Colab pilot notebook (iteración 4).
+"""Build a self-contained, public-data-only Colab pilot notebook (iteración 5).
 
 The notebook embeds hashes and source references, never audio, repository secrets,
 or the private Atalaya repository. Run this after the pinned source manifests exist
@@ -9,6 +9,7 @@ or the private Atalaya repository. Run this after the pinned source manifests ex
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -21,7 +22,24 @@ ARIS_MANIFEST = ROOT / "ml/datasets/itu-aris/manifest.json"
 OUTPUT = ROOT / "pilots/acoustic/Atalaya_YAMNet_Colab.ipynb"
 # Código probado en pilots/acoustic/tests; se incrusta literalmente (Colab no accede al repo).
 PILOT_PKG = ROOT / "pilots/acoustic/acoustic_pilot"
-EMBEDDED = ("grouped_eval", "speech_gate", "remote", "remote_zip", "sources", "predictions")
+EMBEDDED = (
+    "grouped_eval",
+    "speech_gate",
+    "remote",
+    "remote_zip",
+    "sources",
+    "predictions",
+    "data_quality",
+    "leakage",
+    "balance",
+    "augment",
+    "windows",
+    "calibration",
+    "hard_negatives",
+    "experiment",
+    "checkpoints",
+)
+CODE_SHA_PLACEHOLDER = "__CODIGO_SHA256__"
 UPSTREAM_LICENSE_SHA256 = "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
 ESC10_COMMIT = "33c8ce9eb2cf0b1c2f8bcf322eb349b6be34dbb6"
 # Fuentes prohibidas (licencia incompatible o sin trazabilidad por clip): nunca se descargan.
@@ -138,7 +156,7 @@ def _aris() -> dict:
     }
 
 
-INTRO = """# Atalaya · piloto acústico YAMNet · iteración 4 (más datos)
+INTRO = """# Atalaya · piloto acústico YAMNet · iteración 5 (tratamiento de datos avanzado)
 
 **Exploración técnica; no es un detector operativo.** Prueba técnica aislada en Colab
 (ADR 0016): nada de este cuaderno entra en el producto. Las cifras no son métricas de campo.
@@ -152,30 +170,44 @@ INTRO = """# Atalaya · piloto acústico YAMNet · iteración 4 (más datos)
 
 **Prohibidas** (nunca se descargan): DADS, Al-Emadi, UrbanSound8K, ESC-50 fuera de ESC-10,
 Sonniss y AeroSonicDB. Fraunhofer IDMT solo se audita por metadatos (dirección de llegada, fase
-posterior).
+posterior). Mismas fuentes que la iteración 4; ninguna dependencia nueva (numpy, SciPy y
+scikit-learn, BSD; sin cleanlab, que es AGPL).
 
-**Descarga total ≈ 1,25 GB** (Colab gratuito, CPU). Todas las peticiones van solo a hosts
-permitidos y cada redirección se comprueba antes de seguirla. FSD50K se lee por **rangos HTTP**
-del ZIP original (sin bajar sus 24 GB): solo los clips fijados.
+**Descarga total ≈ 1,25 GB** (Colab gratuito, CPU, ~12 GB de RAM). Descargas concurrentes
+(8 hilos, hosts y redirecciones comprobados, reintentos con `Retry-After`) con un límite global
+de 120 peticiones/minuto hacia Zenodo; progreso visible por fuente.
 
-**Puerta automática de privacidad:** tras YAMNet se excluyen del entrenamiento y la evaluación
-los clips con `max_speech_score >= 0,30` en **todas** las fuentes (ITU ARIS declara voz de sus
-operadores en algunos segmentos). No sustituye a la escucha humana; `HUMAN_CLEARED` registra las
-revisiones humanas.
+**Puntos de control en `/content` (sin Drive):** cada fichero descargado se reutiliza solo si su
+hash coincide, y YAMNet se calcula por lotes que se guardan al terminar (`checkpoints/*.npz` con
+hash de entrada). Si el kernel se reinicia o se reconecta a la misma máquina, «Ejecutar todas»
+salta lo ya descargado y calculado. Si Colab **recicla la máquina**, `/content` se pierde y hay
+que empezar de cero (no se monta Drive por ADR 0016).
 
-**Evaluación:**
-- Grupos por fuente/sesión, nunca por segmento solapado: Svanström por clip (provisional),
-  ESC-10 por audio original de Freesound, FSD50K por autor de Freesound (seudonimizado) e ITU ARIS
-  por intervalo/bloque de `groups.json` (segmentos solapados al 50 %) con el split
-  `interval_disjoint` de los autores.
-- Partición única train/validación/test **y** validación cruzada por grupos (5 folds).
-- **Umbral orientado a recall**: el umbral más alto con recall ≥ 0,90 en validación (nunca en test).
-- Métricas por fuente y agregadas con IC 95 % remuestreando grupos; YAMNet frente a MFCC.
-- Las predicciones se exportan a `predicciones.csv` con SHA-256 para recalcular las métricas con
-  `pilots/acoustic/recompute_metrics.py` (pendiente de ADR 0016).
+**Puerta automática de privacidad:** se excluyen del entrenamiento y la evaluación los clips con
+`max_speech_score >= 0,30` en **todas** las fuentes; `HUMAN_CLEARED` registra las escuchas humanas.
 
-Svanström sigue con grupos provisionales (sin IDs de vuelo/sesión): las cifras agregadas llevan
-el rótulo de contaminación no descartada. Pesos de [YAMNet](https://www.kaggle.com/models/google/yamnet)
+**Novedades de la iteración 5 (todo el código probado en `pilots/acoustic/tests`):**
+1. **Calidad de datos:** formato normalizado (mono, 16 kHz, float32); clips silenciosos,
+   saturados o corruptos detectados y descartados; sonoridad (RMS y LUFS aproximado) **solo como
+   característica**; duplicados exactos (hash del PCM) y casi duplicados (coseno de embeddings
+   YAMNet ≥ 0,995); informe de todo lo descartado.
+2. **Fugas y dominio:** `StratifiedGroupKFold` (5 folds) por grupo y **leave-one-source-out**;
+   ningún casi duplicado queda a ambos lados de una partición (se comprueba).
+3. **Desequilibrio:** pesos por clase y por fuente (ITU ARIS no domina) y muestreo balanceado.
+4. **Aumento** (solo entrenamiento): drones mezclados sobre fondos negativos a SNR −10…+20 dB,
+   ganancia y desplazamiento temporal, marcados `synthetic=true`; **no cuentan como rendimiento real**.
+5. **Ventanas:** modelo por ventana YAMNet con agregación media, máximo, top-3, máximo suavizado y
+   atención ligera, frente a la media de embeddings por clip.
+6. **Calibración** Platt e isotónica en validación, ECE, diagrama de fiabilidad, curvas DET y PR;
+   umbral con recall ≥ 0,90 en validación; falsas alarmas por hora **estimadas** sobre
+   concatenaciones de negativos: **NO VERIFICADAS** como métrica de campo.
+7. **Negativos difíciles:** segunda ronda reponderada y falsas alarmas por **tipo** de negativo
+   (orienta qué grabar en Ceuta).
+8. **Registro:** semillas, configuración, hashes de datos y del código, versiones,
+   `predicciones.csv` con SHA-256 y `pilots/acoustic/recompute_metrics.py` para recalcularlo todo.
+
+Svanström sigue con grupos provisionales (sin IDs de vuelo/sesión): las cifras llevan el rótulo
+de contaminación no descartada. Pesos de [YAMNet](https://www.kaggle.com/models/google/yamnet)
 (Google): Apache 2.0. No se usa micrófono, audio de clientes, acceso al GitHub privado ni montaje
 de Drive.
 """
@@ -228,7 +260,9 @@ import tensorflow_hub as hub
 from IPython.display import Audio, display
 # Las celdas siguientes definen el código probado en pilots/acoustic/tests (incrustado tal cual):
 # grouped_eval, speech_gate, remote (descargas restringidas), remote_zip (ZIP por rangos),
-# sources (licencias por clip, selección y grupos) y predictions (CSV con hash).
+# sources (licencias por clip, selección y grupos), predictions (CSV con hash) y, nuevos en la
+# iteración 5, data_quality, leakage, balance, augment, windows, calibration, hard_negatives y
+# experiment.
 
 PILOT = json.loads('''"""
             + json.dumps(config, ensure_ascii=False, separators=(",", ":"))
@@ -237,6 +271,15 @@ SEED = 20261111
 N_PER_CLASS = 30  # todos los WAV inventariados de Svanström por clase; el duplicado excluido sigue fuera.
 TARGET_RECALL = 0.90  # criterio del umbral, elegido SOLO en validación
 N_FOLDS = 5
+# Iteración 5 (valores documentados en docs/evidence/piloto-acustico; no se ajustan mirando test):
+N_MIXES = 1500       # mezclas sintéticas dron + fondo (solo entrenamiento)
+MAX_FRAMES = 8       # ventanas YAMNet por clip en el entrenamiento del modelo por ventanas
+HN_FRACTION = 0.10   # fracción de negativos de entrenamiento reponderados en la segunda ronda
+HN_FACTOR = 3.0      # factor de peso de esos negativos difíciles
+REFRACTORY_S = 5.0   # dos flancos a menos de 5 s cuentan como una alarma (FA/h estimada)
+OPERATING_CALIBRATION = "platt"  # calibración del punto de operación; la isotónica se compara
+CODE_VERSION = "iteracion-5"
+NOTEBOOK_CODE_SHA256 = "__CODIGO_SHA256__"  # SHA-256 de las celdas (con este marcador), fijado al generar
 BASE = Path("/content/atalaya_piloto")
 BASE.mkdir(parents=True, exist_ok=True)
 COMMIT = PILOT["source_commit"]
@@ -278,14 +321,23 @@ assert len({c["sha256"] for c in selected}) == len(selected)
 
 CATALOG = []  # una fila por clip: fuente, id único, ruta local, etiqueta, grupo, partición fijada
 (BASE / "svanstrom").mkdir(exist_ok=True)
-for item in selected:
+DOWNLOAD_WORKERS = 8  # descargas concurrentes; cada fichero se verifica por hash antes de usarse
+
+def fetch_svanstrom(item):
+    # Punto de control: un WAV ya presente solo se reutiliza si su SHA-256 coincide.
     name = item["name"]
     assert name.replace("_", "").replace(".", "").isalnum() and name.endswith(".wav")
     path = BASE / "svanstrom" / name
-    raw = path.read_bytes() if path.exists() else read_source(f"{ROOT_URL}/Data/Audio/{name}")
-    assert len(raw) == item["bytes"] and hashlib.sha256(raw).hexdigest() == item["sha256"], name
-    if not path.exists():
-        path.write_bytes(raw)
+    if verified_cached_bytes(path, item["sha256"]) is None:
+        raw = read_source(f"{ROOT_URL}/Data/Audio/{name}")
+        assert len(raw) == item["bytes"] and hashlib.sha256(raw).hexdigest() == item["sha256"], name
+        write_atomic(path, raw)
+    return path
+
+svan_paths = run_concurrent(selected, fetch_svanstrom, workers=DOWNLOAD_WORKERS,
+                            on_done=Progress("Svanström", len(selected), every=30))
+for item, path in zip(selected, svan_paths):
+    name = item["name"]
     with wave.open(str(path), "rb") as wav:
         assert wav.getframerate() == 44100 and wav.getsampwidth() == 2
         assert wav.getnchannels() in (1, 2) and 9.9 <= wav.getnframes()/44100 <= 10.1
@@ -313,13 +365,21 @@ assert all(esc10_rows[f["path"].split("/")[-1]]["esc10"] == "True" for f in ESC[
 assert not {f["category"] for f in ESC["files"]} & {"crying_baby", "sneezing"}
 (BASE / "esc10").mkdir(exist_ok=True)
 esc_inventory = hashlib.sha256()
-for f in ESC["files"]:
-    name = f["path"].split("/")[-1]
-    path = BASE / "esc10" / name
-    raw = path.read_bytes() if path.exists() else read_https(f"{ESC_URL}/{f['path']}", SVAN_HOSTS, limit=1 << 20)
-    assert len(raw) == f["bytes"] and git_blob_sha1(raw) == f["blob"], name
-    if not path.exists():
-        path.write_bytes(raw)
+
+def fetch_esc10(f):
+    # Punto de control: se reutiliza solo si tamaño y Git blob coinciden; si no, se descarga.
+    path = BASE / "esc10" / f["path"].split("/")[-1]
+    raw = path.read_bytes() if path.is_file() else b""
+    if len(raw) != f["bytes"] or git_blob_sha1(raw) != f["blob"]:
+        raw = read_https(f"{ESC_URL}/{f['path']}", SVAN_HOSTS, limit=1 << 20)
+        assert len(raw) == f["bytes"] and git_blob_sha1(raw) == f["blob"], path.name
+        write_atomic(path, raw)
+    return path, raw
+
+esc_fetched = run_concurrent(ESC["files"], fetch_esc10, workers=DOWNLOAD_WORKERS,
+                             on_done=Progress("ESC-10", len(ESC["files"]), every=80))
+for f, (path, raw) in zip(ESC["files"], esc_fetched):
+    name = path.name
     esc_inventory.update(f"{hashlib.sha256(raw).hexdigest()}  {name}\\n".encode())
     CATALOG.append({"clip": f"esc10/{name}", "fuente": "esc10", "path": path, "clase": f["category"],
                     "dron": 0, "grupo": f["group_id"], "split": None})
@@ -366,31 +426,44 @@ for part, info in FSD["audio_archives"].items():
     assert hashlib.sha256(raw).hexdigest() == cd["sha256"], f"directorio central {part}"
     cds[part] = {e["name"]: e for e in parse_central_directory(raw, cd["n_entries"])}
 (BASE / "fsd50k").mkdir(exist_ok=True)
-for n, clip in enumerate(FSD["clips"], 1):
+# Descarga concurrente (DOWNLOAD_WORKERS hilos) con un límite GLOBAL de 120 peticiones/minuto
+# compartido entre hilos (Zenodo admite ~133) y reintentos con Retry-After en read_https. Cada
+# clip ya presente se reutiliza solo si su SHA-256 coincide (punto de control en /content).
+ZENODO_LIMITER = RateLimiter(120)
+
+def zenodo_range(url, byte_range):
+    ZENODO_LIMITER.acquire()
+    return read_https(url, ZENODO_HOSTS, byte_range=byte_range)
+
+def fetch_fsd50k(clip):
     part = clip["split"]
     entry = cds[part][clip["member"]]
     assert all(entry[k] == clip[k] for k in ("disk", "offset", "size", "method", "crc32"))
     assert entry["compressed_size"] == clip["compressed_bytes"]
     path = BASE / "fsd50k" / f"{int(clip['fname'])}.wav"
-    if path.exists() and hashlib.sha256(path.read_bytes()).hexdigest() == clip["sha256"]:
-        pass
-    else:
-        vols = FSD["audio_archives"][part]["volumes"]
-        sizes = [v["bytes"] for v in vols]
-        span = LOCAL_HEADER_LEN + len(clip["member"].encode()) + 512 + clip["compressed_bytes"]
-        span = min(span, sum(sizes[clip["disk"]:]) - clip["offset"])
-        raw = b"".join(read_https(zenodo_file(FSD["record"], vols[d]["key"]), ZENODO_HOSTS, byte_range=(a, b))
-                       for d, a, b in volume_ranges(clip["disk"], clip["offset"], span, sizes))
-        head = local_header_length(raw, clip["member"])
-        data = decode_member(raw[head:head + clip["compressed_bytes"]], method=clip["method"],
-                             size=clip["size"], crc32=clip["crc32"])
-        assert hashlib.sha256(data).hexdigest() == clip["sha256"], clip["fname"]
-        path.write_bytes(data)
-        time.sleep(0.45)  # límite de Zenodo (~133 peticiones/minuto)
+    if verified_cached_bytes(path, clip["sha256"]) is not None:
+        return path
+    vols = FSD["audio_archives"][part]["volumes"]
+    sizes = [v["bytes"] for v in vols]
+    span = LOCAL_HEADER_LEN + len(clip["member"].encode()) + 512 + clip["compressed_bytes"]
+    span = min(span, sum(sizes[clip["disk"]:]) - clip["offset"])
+    raw = b"".join(zenodo_range(zenodo_file(FSD["record"], vols[d]["key"]), (a, b))
+                   for d, a, b in volume_ranges(clip["disk"], clip["offset"], span, sizes))
+    head = local_header_length(raw, clip["member"])
+    data = decode_member(raw[head:head + clip["compressed_bytes"]], method=clip["method"],
+                         size=clip["size"], crc32=clip["crc32"])
+    assert hashlib.sha256(data).hexdigest() == clip["sha256"], clip["fname"]
+    write_atomic(path, data)
+    return path
+
+already = sum(verified_cached_bytes(BASE / "fsd50k" / f"{int(c['fname'])}.wav", c["sha256"]) is not None
+              for c in FSD["clips"])
+print(f"FSD50K: {already}/{len(FSD['clips'])} clips ya verificados en /content; se descargan el resto")
+fsd_paths = run_concurrent(FSD["clips"], fetch_fsd50k, workers=DOWNLOAD_WORKERS,
+                           on_done=Progress("FSD50K", len(FSD["clips"]), every=50))
+for clip, path in zip(FSD["clips"], fsd_paths):
     CATALOG.append({"clip": f"fsd50k/{clip['fname']}.wav", "fuente": "fsd50k", "path": path,
                     "clase": clip["target_label"], "dron": 0, "grupo": clip["group_id"], "split": None})
-    if n % 100 == 0:
-        print(f"  FSD50K {n}/{len(FSD['clips'])}")
 print(f"FSD50K: {len(FSD['clips'])} clips verificados ({sum(c['compressed_bytes'] for c in FSD['clips'])/1e6:.0f} MB "
       f"descargados); {len({c['group_id'] for c in FSD['clips']})} autores (grupos).")
 """),
@@ -404,9 +477,13 @@ assert aris_record["doi"] == "10.5281/zenodo.22682339"
 arch = ARIS["archive"]
 assert {f["key"]: f["size"] for f in aris_record["files"]}[arch["key"]] == arch["bytes"]
 zip_path = BASE / arch["key"]
-raw = zip_path.read_bytes() if zip_path.exists() else read_https(zenodo_file(ARIS["record"], arch["key"]), ZENODO_HOSTS, limit=arch["bytes"])
-assert len(raw) == arch["bytes"] and hashlib.sha256(raw).hexdigest() == arch["sha256"]
-zip_path.write_bytes(raw)
+if verified_cached_bytes(zip_path, arch["sha256"]) is None:  # punto de control: ZIP verificado
+    raw = read_https(zenodo_file(ARIS["record"], arch["key"]), ZENODO_HOSTS, limit=arch["bytes"])
+    assert len(raw) == arch["bytes"] and hashlib.sha256(raw).hexdigest() == arch["sha256"]
+    write_atomic(zip_path, raw)
+    del raw
+else:
+    print("ITU ARIS: ZIP ya verificado en /content")
 aris_zip = zipfile.ZipFile(zip_path)
 inner = {}
 for name, digest in ARIS["inner_files_sha256"].items():
@@ -417,11 +494,14 @@ aris_sums = parse_sha256sums(inner["SHA256SUMS"].decode("utf-8"))
 aris_rows = aris_segments(json.loads(inner["groups.json"]), json.loads(inner[ARIS["split_used"]]))
 assert len(aris_rows) == ARIS["segment_count"]
 (BASE / "aris").mkdir(exist_ok=True)
-for seg in aris_rows:
-    data = aris_zip.read(ARIS["inner_prefix"] + seg["path"])
-    assert hashlib.sha256(data).hexdigest() == aris_sums[seg["path"]], seg["path"]
+aris_progress = Progress("ITU ARIS", len(aris_rows), every=1000)
+for n, seg in enumerate(aris_rows, 1):
     path = BASE / "aris" / seg["path"].split("/")[-1]
-    path.write_bytes(data)
+    if verified_cached_bytes(path, aris_sums[seg["path"]]) is None:
+        data = aris_zip.read(ARIS["inner_prefix"] + seg["path"])
+        assert hashlib.sha256(data).hexdigest() == aris_sums[seg["path"]], seg["path"]
+        write_atomic(path, data)
+    aris_progress(n, len(aris_rows))
     CATALOG.append({"clip": "aris/" + seg["path"].split("/")[-1], "fuente": "aris", "path": path,
                     "clase": "ARIS_" + ("DRONE" if seg["label"] else "BACKGROUND"), "dron": seg["label"],
                     "grupo": seg["group_id"], "split": seg["split"]})
@@ -454,37 +534,116 @@ for (source, label), part in catalog.groupby(["fuente", "dron"]):
 TRAINING_ALLOWED = True
 assert TRAINING_ALLOWED, "Intake sin aprobar: derechos por fichero, revisión de voz, data card y agrupación."
 """),
-        code("""# YAMNet oficial: señal mono float32 a 16 kHz; media de embeddings por clip. Línea base: 40 MFCC.
+        code("""# YAMNet oficial + calidad de datos (código probado: data_quality). Cada clip se lee en su formato
+# original, se comprueba (corrupto, silencioso, saturado) y se normaliza a mono, 16 kHz, float32.
+# La sonoridad (RMS, LUFS aproximado) se usa SOLO como característica: la señal que recibe YAMNet
+# no se modifica. YAMNet se calcula POR LOTES de YAMNET_SHARD clips y cada lote se guarda al
+# terminar en /content/atalaya_piloto/checkpoints (npz con hash de entrada: clips + SHA-256 +
+# modelo + código). Si el kernel se reinicia, al reejecutar se cargan los lotes ya hechos y solo
+# se calcula lo que falta. Sin Drive: si Colab recicla la máquina, /content se pierde.
 MODEL_URL = "https://tfhub.dev/google/yamnet/1"
 yamnet = hub.load(MODEL_URL)
-class_map_path = yamnet.class_map_path().numpy().decode()
-class_names = pd.read_csv(class_map_path)["display_name"].tolist()
+class_names = pd.read_csv(yamnet.class_map_path().numpy().decode())["display_name"].tolist()
 assert len(class_names) == 521
 speech_columns = [i for i, label in enumerate(class_names)
                   if label in {"Speech", "Conversation", "Narration, monologue", "Child speech, kid speaking"}]
 assert len(speech_columns) == 4
 N_MFCC = 40
-rows, vectors, mfcc_vectors = [], [], []
-for k, item in enumerate(CATALOG):
-    signal, sr = librosa.load(item["path"], sr=16000, mono=True)
-    assert sr == 16000 and np.isfinite(signal).all() and len(signal) > 0
-    if len(signal) < 15600:  # YAMNet necesita 0,975 s; los segmentos de 1 s pueden quedar justos
-        signal = np.pad(signal, (0, 15600 - len(signal)))
-    scores, embeddings, _ = yamnet(tf.convert_to_tensor(signal, dtype=tf.float32))
+LOUDNESS_KEYS = ("rms_dbfs", "lufs_aprox", "pico_dbfs", "factor_cresta_db")
+PATHS = {c["clip"]: c["path"] for c in CATALOG}
+CLIP_SOURCE = {c["clip"]: c["fuente"] for c in CATALOG}
+FILE_SHA256 = {c["clip"]: hashlib.sha256(Path(c["path"]).read_bytes()).hexdigest() for c in CATALOG}
+DATA_INVENTORY_SHA256 = inventory_sha256(FILE_SHA256.items())
+CHECKPOINTS = BASE / "checkpoints"
+CHECKPOINTS.mkdir(exist_ok=True)
+EMB_CONTEXT = f"{MODEL_URL}|{TARGET_SR}|{N_MFCC}|{CODE_VERSION}"
+YAMNET_SHARD = 256
+CACHE_KEY = embedding_cache_key(DATA_INVENTORY_SHA256, MODEL_URL, TARGET_SR, CODE_VERSION)
+print("Inventario de datos SHA-256:", DATA_INVENTORY_SHA256)
+
+def yamnet_features(signal):
+    padded = signal if len(signal) >= 15600 else np.pad(signal, (0, 15600 - len(signal)))
+    scores, embeddings, _ = yamnet(tf.convert_to_tensor(padded, dtype=tf.float32))
     score_array, embedding_array = scores.numpy(), embeddings.numpy()
     assert embedding_array.shape[1] == 1024
-    vectors.append(embedding_array.mean(axis=0))
-    mfcc_vectors.append(librosa.feature.mfcc(y=signal, sr=16000, n_mfcc=40).mean(axis=1))
-    rows.append({"clip": item["clip"], "fuente": item["fuente"], "clase": item["clase"],
-                 "dron": item["dron"], "grupo": item["grupo"], "split": item["split"],
-                 "segundos": round(len(signal) / 16000, 2), "ventanas": len(score_array),
-                 "max_speech_score": round(float(score_array[:, speech_columns].max()), 3),
-                 "evento_YAMNet": class_names[int(score_array.mean(axis=0).argmax())]})
-    if (k + 1) % 1000 == 0:
-        print(f"  YAMNet {k + 1}/{len(CATALOG)}")
+    loud = loudness_features(signal, TARGET_SR)
+    mfcc = librosa.feature.mfcc(y=padded, sr=TARGET_SR, n_mfcc=N_MFCC).mean(axis=1)
+    feats = np.concatenate([mfcc, [loud[k] for k in LOUDNESS_KEYS]]).astype(np.float32)
+    return score_array, embedding_array, feats, loud
+
+def load_normalized(clip):
+    raw, sr = librosa.load(PATHS[clip], sr=None, mono=False)
+    return normalize_format(raw, sr)
+
+def pack_or_empty(blocks):
+    return pack_frames(blocks) if blocks else (np.zeros((0, 1024), np.float32), np.zeros(1, np.int64))
+
+def yamnet_shard(items):
+    rows, means, mfcc_loud, frame_blocks, quality_dropped = [], [], [], [], []
+    for item in items:
+        try:
+            raw, sr = librosa.load(item["path"], sr=None, mono=False)
+            quality = clip_quality(raw, sr)
+        except Exception as exc:  # fichero ilegible => corrupto (se informa; nunca se corrige)
+            raw, sr = None, 0
+            quality = {"status": "corrupto", "error": type(exc).__name__}
+        if quality["status"] != "ok":
+            quality_dropped.append({"clip": item["clip"], "fuente": item["fuente"],
+                                    "motivo": "calidad: " + quality["status"],
+                                    "detalle": json.dumps(quality, default=str, sort_keys=True)})
+            continue
+        signal = normalize_format(raw, sr)
+        assert signal.dtype == np.float32 and signal.ndim == 1 and np.isfinite(signal).all()
+        score_array, embedding_array, feats, loud = yamnet_features(signal)
+        means.append(embedding_array.mean(axis=0))
+        frame_blocks.append(embedding_array)
+        mfcc_loud.append(feats)
+        rows.append({"clip": item["clip"], "fuente": item["fuente"], "clase": item["clase"],
+                     "dron": int(item["dron"]), "grupo": item["grupo"],
+                     "tipo": "dron" if item["dron"] else negative_type(item["fuente"], item["clase"]),
+                     "segundos": round(len(signal) / TARGET_SR, 3), "ventanas": int(len(embedding_array)),
+                     "max_speech_score": round(float(score_array[:, speech_columns].max()), 3),
+                     "evento_YAMNet": class_names[int(score_array.mean(axis=0).argmax())],
+                     "pcm_sha256": pcm_sha256(signal), "file_sha256": FILE_SHA256[item["clip"]],
+                     **{key: round(float(v), 2) for key, v in loud.items()}})
+    frames, offsets = pack_or_empty(frame_blocks)
+    arrays = {"means": np.asarray(means, np.float32).reshape(-1, 1024),
+              "mfcc_loud": np.asarray(mfcc_loud, np.float32).reshape(-1, N_MFCC + len(LOUDNESS_KEYS)),
+              "frames": frames, "offsets": offsets}
+    return arrays, {"rows": rows, "quality": quality_dropped}
+
+rows, QUALITY_DROPPED, shard_arrays = [], [], []
+ranges = shard_ranges(len(CATALOG), YAMNET_SHARD)
+reused = 0
+for n, (a, b) in enumerate(ranges, 1):
+    items = CATALOG[a:b]
+    key = shard_key([(c["clip"], FILE_SHA256[c["clip"]]) for c in items], EMB_CONTEXT)
+    path = CHECKPOINTS / f"yamnet_{a:06d}_{key[:16]}.npz"
+    loaded = load_shard(path, key)
+    if loaded is None:
+        loaded = yamnet_shard(items)
+        save_shard(path, key, *loaded)  # guardado incremental: un corte solo pierde el lote en curso
+    else:
+        reused += 1
+    arrays, meta = loaded
+    rows += meta["rows"]
+    QUALITY_DROPPED += meta["quality"]
+    shard_arrays.append(arrays)
+    print(f"  YAMNet: lote {n}/{len(ranges)} ({b}/{len(CATALOG)} clips; {reused} lotes reutilizados)")
+MEANS = np.vstack([s["means"] for s in shard_arrays])
+MFCC_LOUD = np.vstack([s["mfcc_loud"] for s in shard_arrays])
+FRAMES, OFFSETS = pack_or_empty([unpack_frames(s["frames"], s["offsets"], i)
+                                 for s in shard_arrays for i in range(len(s["offsets"]) - 1)])
+del shard_arrays
+assert len(MEANS) == len(MFCC_LOUD) == len(rows) == len(OFFSETS) - 1
 df = pd.DataFrame(rows)
+print(f"Audio procesado: {df['segundos'].sum()/3600:.2f} h en {len(df)} clips; ventanas YAMNet: {len(FRAMES)}")
+print("Descartados por calidad (silencioso/saturado/corrupto):", len(QUALITY_DROPPED))
+if QUALITY_DROPPED:
+    display(pd.DataFrame(QUALITY_DROPPED))
+print("Sonoridad por fuente (solo característica; mediana):")
+display(df.groupby("fuente")[list(LOUDNESS_KEYS)].median().round(1))
 display(df.sort_values("max_speech_score", ascending=False).head(15))
-print(f"Audio procesado: {df['segundos'].sum()/3600:.2f} h en {len(df)} clips")
 """),
         code("""# Puerta automática de privacidad (código probado: apply_speech_gate) en TODAS las fuentes.
 # Excluye del entrenamiento Y de la evaluación los clips con max_speech_score >= 0,30
@@ -501,165 +660,397 @@ print(f"Excluidos por posible voz (umbral {SPEECH_EXCLUSION_THRESHOLD:.2f}): {le
 print(SPEECH_GATE["note"])
 display(excluded_speech.merge(df[["clip", "fuente"]], on="clip").groupby("fuente").size().rename("excluidos"))
 display(excluded_speech.sort_values("max_speech_score", ascending=False).head(30))
+SPEECH_DROPPED = [{"clip": e["clip"], "fuente": CLIP_SOURCE[e["clip"]], "motivo": "posible voz",
+                   "detalle": f"{e['motivo']}; max_speech_score={e['max_speech_score']}"}
+                  for e in SPEECH_GATE["excluded"]]
 keep = list(SPEECH_GATE["kept_indices"])
 df = df.iloc[keep].reset_index(drop=True)
-vectors = [vectors[i] for i in keep]
-mfcc_vectors = [mfcc_vectors[i] for i in keep]
+MEANS, MFCC_LOUD = MEANS[keep], MFCC_LOUD[keep]
+FRAMES, OFFSETS = pack_frames([unpack_frames(FRAMES, OFFSETS, i) for i in keep])
 assert not set(df["clip"]) & set(excluded_speech["clip"])
+assert len(MEANS) == len(MFCC_LOUD) == len(df) == len(OFFSETS) - 1
 print("Clips que siguen al entrenamiento y la evaluación:", len(df))
-display(df.groupby(["fuente", "dron"]).agg(clips=("clip", "size"), grupos=("grupo", "nunique")))
 """),
-        code("""# Entrenamiento y evaluación por grupos. El umbral se elige SOLO en validación con criterio de
-# recall (el más alto con recall >= TARGET_RECALL); test solo mide.
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import ConfusionMatrixDisplay
-
+        code("""# Duplicados exactos (hash del PCM normalizado) y casi duplicados (coseno de la media de
+# embeddings YAMNet >= NEAR_DUPLICATE_COSINE, solo entre grupos distintos). Un componente de casi
+# duplicados que abarca varios grupos conserva solo el grupo que más aporta: así ningún casi
+# duplicado puede quedar a ambos lados de una partición por grupos. Informe de TODO lo descartado.
 assert TRAINING_ALLOWED, "Entrenamiento bloqueado: intake de derechos, privacidad y grupos pendiente."
-CAPTION = metric_caption(provisional=PILOT["group_status"] != "verified")  # Svanström sigue provisional
-X = {"YAMNet + reg. logística": np.asarray(vectors), "MFCC(40) + reg. logística": np.asarray(mfcc_vectors)}
-assert all(len(v) == len(df) for v in X.values()), "la puerta de voz debe aplicarse a ambos rasgos"
+exact = exact_duplicates(df["pcm_sha256"].tolist(), df["clip"].tolist())
+pairs = [(i, j, s) for i, j, s in near_duplicate_pairs(MEANS, threshold=NEAR_DUPLICATE_COSINE,
+                                                        groups=df["grupo"].tolist())
+         if i not in exact and j not in exact]
+near = resolve_near_duplicates(pairs, df["grupo"].tolist(), df["clip"].tolist())
+DUP_DROPPED = [{"clip": df["clip"][i], "fuente": df["fuente"][i], "motivo": "duplicado exacto",
+                "detalle": "se conserva " + df["clip"][d["kept"]]} for i, d in exact.items()]
+DUP_DROPPED += [{"clip": df["clip"][i], "fuente": df["fuente"][i], "motivo": "casi duplicado entre grupos",
+                 "detalle": f"coseno >= {NEAR_DUPLICATE_COSINE}; grupo conservado {g}"}
+                for i, g in near["dropped"].items()]
+drop = set(exact) | set(near["dropped"])
+keep = [i for i in range(len(df)) if i not in drop]
+df = df.iloc[keep].reset_index(drop=True)
+MEANS, MFCC_LOUD = MEANS[keep], MFCC_LOUD[keep]
+FRAMES, OFFSETS = pack_frames([unpack_frames(FRAMES, OFFSETS, i) for i in keep])
+residual = near_duplicate_pairs(MEANS, threshold=NEAR_DUPLICATE_COSINE, groups=df["grupo"].tolist())
+assert not residual, "quedan casi duplicados entre grupos distintos"
+print(f"Pares casi duplicados entre grupos: {len(pairs)} en {near['cross_group_clusters']} componentes")
+DISCARDS = pd.DataFrame(QUALITY_DROPPED + SPEECH_DROPPED + DUP_DROPPED,
+                        columns=["clip", "fuente", "motivo", "detalle"]).sort_values(["motivo", "clip"])
+DISCARDS_CSV = DISCARDS.to_csv(index=False, lineterminator="\\n").encode("utf-8")
+DISCARDS_SHA256 = hashlib.sha256(DISCARDS_CSV).hexdigest()
+(BASE / "descartes.csv").write_bytes(DISCARDS_CSV)
+print("Informe de descartes: descartes.csv · SHA-256", DISCARDS_SHA256)
+display(DISCARDS.groupby(["fuente", "motivo"]).size().rename("descartados"))
+display(DISCARDS.head(40))
 y = df["dron"].to_numpy().astype(int)
 groups = df["grupo"].tolist()
 src = df["fuente"].tolist()
+display(df.groupby(["fuente", "dron"]).agg(clips=("clip", "size"), grupos=("grupo", "nunique"),
+                                           horas=("segundos", lambda s: round(s.sum() / 3600, 2))))
+"""),
+        code("""# Aumento de datos en forma de onda (código probado: augment), SOLO para entrenamiento.
+# Plan determinista de N_MIXES mezclas: dron grabado + fondo negativo a SNR nominal -10..+20 dB,
+# ganancia -6..+6 dB y desplazamiento temporal; drones y fondos se eligen equilibrando fuentes.
+# En cada fold solo se usan las mezclas cuyo dron Y fondo están en el entrenamiento de ese fold
+# (mixes_for_training): ningún audio de validación o test entra por una mezcla.
+print(SYNTHETIC_NOTE)
+positives = [i for i in range(len(y)) if y[i] == 1]
+negatives = [i for i in range(len(y)) if y[i] == 0]
+MIX_PLAN = plan_mixes(positives, negatives, src, df["segundos"].tolist(), n=N_MIXES, seed=SEED)
+_, MIX_PLAN_SHA256 = canonical_json([{**m, "drone": df["clip"][m["drone"]],
+                                      "background": df["clip"][m["background"]]} for m in MIX_PLAN])
+MIX_SHARD = 250
+mix_means, mix_blocks = [], []
+mix_ranges = shard_ranges(len(MIX_PLAN), MIX_SHARD)
+for n, (a, b) in enumerate(mix_ranges, 1):
+    items = [(m["id"], canonical_json({**m, "drone": df["clip"][m["drone"]], "background": df["clip"][m["background"]],
+                                        "drone_sha256": df["file_sha256"][m["drone"]],
+                                        "background_sha256": df["file_sha256"][m["background"]]})[1])
+             for m in MIX_PLAN[a:b]]
+    key = shard_key(items, EMB_CONTEXT + "|mezclas")
+    path = CHECKPOINTS / f"mezclas_{a:06d}_{key[:16]}.npz"
+    loaded = load_shard(path, key)
+    if loaded is None:
+        means_part, blocks_part = [], []
+        for m in MIX_PLAN[a:b]:
+            mix = render_mix(m, load_normalized(df["clip"][m["drone"]]),
+                             load_normalized(df["clip"][m["background"]]), TARGET_SR)
+            _, embedding_array, _, _ = yamnet_features(mix)
+            means_part.append(embedding_array.mean(axis=0))
+            blocks_part.append(embedding_array)
+        frames, offsets = pack_frames(blocks_part)
+        loaded = ({"means": np.asarray(means_part, np.float32), "frames": frames, "offsets": offsets}, {})
+        save_shard(path, key, *loaded)
+    arrays, _ = loaded
+    mix_means.append(arrays["means"])
+    mix_blocks += [unpack_frames(arrays["frames"], arrays["offsets"], i) for i in range(len(arrays["offsets"]) - 1)]
+    print(f"  Mezclas: lote {n}/{len(mix_ranges)} ({b}/{len(MIX_PLAN)})")
+MIX_MEANS = np.vstack(mix_means)
+MIX_FRAMES, MIX_OFFSETS = pack_frames(mix_blocks)
+assert len(MIX_MEANS) == len(MIX_PLAN) == len(MIX_OFFSETS) - 1
+print("Plan de mezclas SHA-256:", MIX_PLAN_SHA256)
+plan_df = pd.DataFrame(MIX_PLAN)
+plan_df["fuente_dron"] = [src[i] for i in plan_df["drone"]]
+plan_df["tipo_fondo"] = [df["tipo"][i] for i in plan_df["background"]]
+display(plan_df[["snr_db", "gain_db", "seconds"]].describe().round(2))
+display(plan_df["fuente_dron"].value_counts().rename("mezclas por fuente de dron"))
+display(plan_df["tipo_fondo"].value_counts().rename("mezclas por tipo de fondo"))
+"""),
+        code("""# Evaluación (iteración 5). Dos esquemas:
+#  - sgkf5: StratifiedGroupKFold por grupo (5 folds). Vuelta f: test = fold f, validación = fold
+#    f+1 (calibración y umbral), entrenamiento = el resto.
+#  - loso: leave-one-source-out; cada fuente entera es test nunca vista (generalización entre fuentes).
+# En cada partición: grupos disjuntos y comprobación independiente de que ningún casi duplicado
+# cruza particiones. Pesos por clase y por fuente (class_source_weights). Calibración Platt e
+# isotónica ajustadas en validación; umbral = el más alto con recall >= 0,90 en validación (Platt).
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
-def make_model(name):
-    lr = LogisticRegression(max_iter=2000, class_weight="balanced", random_state=SEED)
-    return make_pipeline(StandardScaler(), lr) if name.startswith("MFCC") else lr
+assert TRAINING_ALLOWED, "Entrenamiento bloqueado: intake de derechos, privacidad y grupos pendiente."
+CAPTION = metric_caption(provisional=PILOT["group_status"] != "verified")  # Svanström sigue provisional
+CLIP_VARIANTS = ("YAMNet media", "YAMNet media + aumento",
+                 "YAMNet media + aumento + negativos difíciles", "MFCC+sonoridad")
+WINDOW_VARIANTS = tuple(f"YAMNet ventanas + aumento · {a}" for a in AGGREGATIONS)
+VARIANTS = CLIP_VARIANTS + WINDOW_VARIANTS
+FA_VARIANT = "YAMNet ventanas + aumento · max_suavizado"
 
-def fit_predict(name, train, validation, test):
-    model = make_model(name).fit(X[name][list(train)], y[list(train)])
-    rule = choose_threshold_for_recall(y[list(validation)], model.predict_proba(X[name][list(validation)])[:, 1],
-                                       target_recall=TARGET_RECALL)
-    return model, rule, model.predict_proba(X[name][list(test)])[:, 1]
+def fit_lr(X, labels, weights, scale=False):
+    lr = LogisticRegression(max_iter=3000, random_state=SEED)
+    if scale:
+        return make_pipeline(StandardScaler(), lr).fit(X, labels, logisticregression__sample_weight=weights)
+    return lr.fit(X, labels, sample_weight=weights)
 
-def ic(row, name):
-    if row["ic95"]["status"] != "OK":
-        return f"NO DISPONIBLE ({row['ic95']['n_groups']} grupos < {row['ic95']['min_groups']})"
-    iv = row["ic95"]["intervals"][name]
+def raw_scores(train, parts):
+    # Puntuaciones sin calibrar de cada variante en cada parte (validación, test).
+    train = list(train)
+    mix_ids = mixes_for_training(MIX_PLAN, train)
+    out = {}
+    w = class_source_weights(y[train], [src[i] for i in train])
+    model = fit_lr(MEANS[train], y[train], w)
+    out["YAMNet media"] = [model.predict_proba(MEANS[list(p)])[:, 1] for p in parts]
+    Xa = np.vstack([MEANS[train], MIX_MEANS[mix_ids]])
+    ya = np.concatenate([y[train], np.ones(len(mix_ids), dtype=int)])
+    wa = class_source_weights(ya, [src[i] for i in train] + ["sintetico"] * len(mix_ids))
+    model = fit_lr(Xa, ya, wa)
+    out["YAMNet media + aumento"] = [model.predict_proba(MEANS[list(p)])[:, 1] for p in parts]
+    # Minería de negativos difíciles (2.ª ronda): puntuaciones del propio entrenamiento (sesgo
+    # optimista documentado); nunca se mira validación ni test.
+    wh, hard = hard_negative_weights(wa, ya, model.predict_proba(Xa)[:, 1],
+                                     fraction=HN_FRACTION, factor=HN_FACTOR)
+    model = fit_lr(Xa, ya, wh)
+    out["YAMNet media + aumento + negativos difíciles"] = [model.predict_proba(MEANS[list(p)])[:, 1] for p in parts]
+    model = fit_lr(MFCC_LOUD[train], y[train], w, scale=True)
+    out["MFCC+sonoridad"] = [model.predict_proba(MFCC_LOUD[list(p)])[:, 1] for p in parts]
+    Xf, yf, owner = frame_training_set(FRAMES, OFFSETS, y, train, max_frames=MAX_FRAMES)
+    frame_src = [src[o] for o in owner]
+    if mix_ids:
+        Xm, ym, _ = frame_training_set(MIX_FRAMES, MIX_OFFSETS, [1] * len(MIX_PLAN), mix_ids,
+                                       max_frames=MAX_FRAMES)
+        Xf, yf = np.vstack([Xf, Xm]), np.concatenate([yf, ym])
+        frame_src += ["sintetico"] * len(ym)
+    window_model = fit_lr(Xf, yf, class_source_weights(yf, frame_src))
+    frame_probs = window_model.predict_proba(FRAMES)[:, 1]
+    def windows_of(i):
+        return frame_probs[OFFSETS[i]:OFFSETS[i + 1]]
+    for agg in AGGREGATIONS:
+        out[f"YAMNet ventanas + aumento · {agg}"] = [
+            np.array([aggregate_window_scores(windows_of(i), agg) for i in p]) for p in parts]
+    return out, {"mezclas": len(mix_ids), "negativos_dificiles": [train[i] for i in hard],
+                 "ventanas": windows_of}
+
+PRED_ROWS, CALIBRATORS, FA_STREAMS, MINED = [], {}, [], []
+
+def evaluate(scheme, partition, train, validation, test):
+    assign = np.full(len(y), "fuera", dtype=object)
+    for name, part in (("train", train), ("val", validation), ("test", test)):
+        assign[list(part)] = name
+    seen = [{groups[i] for i in part} for part in (train, validation, test)]
+    assert not (seen[0] & seen[1] or seen[0] & seen[2] or seen[1] & seen[2]), "un grupo cruza particiones"
+    used = np.flatnonzero(assign != "fuera")
+    crossing = near_duplicate_pairs(MEANS[used], threshold=NEAR_DUPLICATE_COSINE, groups=assign[used].tolist())
+    assert_no_cross_partition_pairs(crossing, assign[used].tolist())
+    scores, info = raw_scores(train, [validation, test])
+    yv = y[list(validation)]
+    for v in VARIANTS:
+        pv, pt = scores[v]
+        platt, iso = fit_calibrator(yv, pv, "platt"), fit_calibrator(yv, pv, "isotonica")
+        rule = choose_threshold_for_recall(yv, apply_calibration(platt, pv), target_recall=TARGET_RECALL)
+        CALIBRATORS[(scheme, partition, v)] = {"platt": platt, "umbral": rule["threshold"],
+                                               "recall_validacion": rule["validation_recall"]}
+        for i, a, b, c in zip(test, apply_calibration(platt, pt), pt, apply_calibration(iso, pt)):
+            PRED_ROWS.append({"modelo": v, "esquema": scheme, "particion": partition, "fuente": src[i],
+                              "clip": df["clip"][i], "grupo": groups[i], "tipo": df["tipo"][i],
+                              "dron": int(y[i]), "puntuacion": float(a), "puntuacion_cruda": float(b),
+                              "puntuacion_isotonica": float(c), "umbral": rule["threshold"]})
+    if scheme == "sgkf5":
+        rule = CALIBRATORS[(scheme, partition, FA_VARIANT)]
+        for i in test:
+            if y[i] == 0:  # flujo por ventanas suavizado y calibrado de cada negativo de test
+                FA_STREAMS.append((partition, apply_calibration(rule["platt"], smooth_scores(info["ventanas"](i))),
+                                   rule["umbral"]))
+        MINED.extend(df["tipo"][i] for i in info["negativos_dificiles"])
+    print(f"  {scheme} {partition}: train/val/test = {len(train)}/{len(validation)}/{len(test)} clips; "
+          f"mezclas en entrenamiento {info['mezclas']}")
+    return info
+
+folds = stratified_group_folds(y.tolist(), groups, k=N_FOLDS, seed=SEED)
+for f, (tr, va, te) in enumerate(rotating_folds(folds, N_FOLDS)):
+    info = evaluate("sgkf5", f"fold{f}", tr, va, te)
+    if f == 0:
+        WINDOW_DEMO = (te, info["ventanas"], CALIBRATORS[("sgkf5", "fold0", FA_VARIANT)])
+LOSO = leave_one_source_out(y.tolist(), groups, src, seed=SEED)
+for split in LOSO:
+    evaluate("loso", "sin_" + split["fuente"], split["train"], split["validation"], split["test"])
+pred = pd.DataFrame(PRED_ROWS)
+assert pred.groupby(["modelo", "esquema"])["clip"].apply(lambda c: c.is_unique).all()
+print("Predicciones fuera de fold:", len(pred), "filas", CAPTION)
+"""),
+        code("""# Resumen: cada clip aparece una vez por modelo y esquema (fuera de fold, con el umbral de su
+# fold). IC 95 % remuestreando grupos completos sobre las decisiones. PR-AUC y ECE sobre la
+# puntuación calibrada (Platt); ECE también sin calibrar y con isotónica.
+from sklearn.metrics import average_precision_score
+
+def interval(boot, name):
+    if boot["status"] != "OK":
+        return f"NO DISPONIBLE ({boot['n_groups']} grupos)"
+    iv = boot["intervals"][name]
     return "—" if iv is None else f"[{iv[0]:.3f}, {iv[1]:.3f}]"
 
-def table(rows, label, threshold):
-    out = []
-    for r in rows:
-        out.append({"modelo": label, "fuente": r["fuente"], "n": r["n"], "positivos": r["positivos"],
-                    "grupos": r["grupos"], "umbral": round(threshold, 4),
-                    **{k: r[k] for k in ("tn", "fp", "fn", "tp")},
-                    **{k: (None if np.isnan(r[k]) else round(r[k], 3)) for k in ("precision", "recall", "fpr", "pr_auc")},
-                    **{f"IC95_{k}": ic(r, k) for k in ("precision", "recall", "fpr", "pr_auc")}})
-    return out
+def summarize(sub):
+    yy = sub["dron"].to_numpy()
+    alarm = (sub["puntuacion"] >= sub["umbral"]).to_numpy().astype(float)
+    m = binary_metrics(yy, alarm, 0.5)
+    boot = group_bootstrap(yy, alarm, sub["grupo"].tolist(), 0.5, n_boot=500, seed=SEED)
+    both = len(set(yy.tolist())) == 2
+    r = lambda v: None if v is None or np.isnan(v) else round(float(v), 3)
+    return {"n": len(sub), "positivos": int(yy.sum()), **{k: m[k] for k in ("tn", "fp", "fn", "tp")},
+            "precision": r(m["precision"]), "IC95_precision": interval(boot, "precision"),
+            "recall": r(m["recall"]), "IC95_recall": interval(boot, "recall"),
+            "fpr": r(m["fpr"]), "IC95_fpr": interval(boot, "fpr"),
+            "pr_auc": r(average_precision_score(yy, sub["puntuacion"])) if both else None,
+            "ece_cruda": r(expected_calibration_error(yy, sub["puntuacion_cruda"])),
+            "ece_platt": r(expected_calibration_error(yy, sub["puntuacion"])),
+            "ece_isotonica": r(expected_calibration_error(yy, sub["puntuacion_isotonica"])),
+            "brier": r(brier_score(yy, sub["puntuacion"]))}
 
-# 1) Partición única: ITU ARIS con el split interval_disjoint de los autores; el resto por grupos.
-preassigned = {i: s for i, s in enumerate(df["split"]) if isinstance(s, str)}
-train_idx, validation_idx, test_idx = split_with_preassigned(y.tolist(), groups, preassigned, seed=SEED)
-part_groups = [{groups[i] for i in part} for part in (train_idx, validation_idx, test_idx)]
-assert not (part_groups[0] & part_groups[1] or part_groups[0] & part_groups[2]
-            or part_groups[1] & part_groups[2]), "un grupo aparece en dos particiones"
-print("Partición única · clips train/val/test:", len(train_idx), len(validation_idx), len(test_idx),
-      "| grupos:", [len(g) for g in part_groups], CAPTION)
-PRED_ROWS, SPLIT_TABLE, RULES, MODELS = [], [], {}, {}
-for name in X:
-    model, rule, proba = fit_predict(name, train_idx, validation_idx, test_idx)
-    MODELS[name], RULES[name] = model, rule
-    test_rows = metrics_by_source(y[list(test_idx)], proba, [src[i] for i in test_idx],
-                                  [groups[i] for i in test_idx], rule["threshold"], seed=SEED)
-    SPLIT_TABLE += table(test_rows, name, rule["threshold"])
-    for i, p in zip(test_idx, proba):
-        PRED_ROWS.append({"modelo": name, "esquema": "split", "particion": "test", "fuente": src[i],
-                          "clip": df["clip"][i], "grupo": groups[i], "dron": int(y[i]),
-                          "puntuacion": float(p), "umbral": rule["threshold"]})
-    print(f"{name}: umbral {rule['threshold']:.4f} ({rule['criterion']}; recall val. "
-          f"{rule['validation_recall']:.3f}, precisión val. {rule['validation_precision']:.3f})")
-print("Test de la partición única por fuente y TOTAL", CAPTION)
-display(pd.DataFrame(SPLIT_TABLE))
-
-# 2) Validación cruzada por grupos (5 folds): test = fold f, validación = fold f+1, train = resto.
-folds = group_folds(y.tolist(), groups, k=N_FOLDS, seed=SEED)
-CV_TABLE, OOF = [], {name: np.full(len(y), np.nan) for name in X}
-for f, (tr, va, te) in enumerate(rotating_folds(folds, N_FOLDS)):
-    for name in X:
-        _, rule, proba = fit_predict(name, tr, va, te)
-        OOF[name][list(te)] = proba
-        m = binary_metrics(y[list(te)], proba, rule["threshold"])
-        CV_TABLE.append({"modelo": name, "fold": f, "umbral": round(rule["threshold"], 4),
-                         "n_test": len(te), "grupos_test": len({groups[i] for i in te}),
-                         **{k: m[k] for k in ("tn", "fp", "fn", "tp")},
-                         **{k: round(m[k], 3) for k in ("precision", "recall", "fpr", "pr_auc")}})
-        for i, p in zip(te, proba):
-            PRED_ROWS.append({"modelo": name, "esquema": f"cv{N_FOLDS}", "particion": f"fold{f}",
-                              "fuente": src[i], "clip": df["clip"][i], "grupo": groups[i],
-                              "dron": int(y[i]), "puntuacion": float(p), "umbral": rule["threshold"]})
-cv = pd.DataFrame(CV_TABLE)
-display(cv)
-print(f"Validación cruzada por grupos ({N_FOLDS} folds): media ± desviación por modelo", CAPTION)
-display(cv.groupby("modelo")[["precision", "recall", "fpr", "pr_auc"]].agg(["mean", "std"]).round(3))
+cv_pred = pred[pred["esquema"] == "sgkf5"]
+CV_SUMMARY = pd.DataFrame([{"modelo": v, **summarize(cv_pred[cv_pred["modelo"] == v])} for v in VARIANTS])
+print(f"StratifiedGroupKFold ({N_FOLDS} folds), TOTAL fuera de fold", CAPTION)
+display(CV_SUMMARY)
+per_fold = cv_pred.assign(alarma=cv_pred["puntuacion"] >= cv_pred["umbral"]).groupby(["modelo", "particion"]).apply(
+    lambda s: pd.Series({"recall": s.loc[s["dron"] == 1, "alarma"].mean(), "fpr": s.loc[s["dron"] == 0, "alarma"].mean()}))
+print("Estabilidad entre folds (media ± desviación):")
+display(per_fold.groupby("modelo").agg(["mean", "std"]).round(3))
+print("Por fuente (StratifiedGroupKFold):")
+display(pd.DataFrame([{"modelo": v, "fuente": s, **summarize(g)} for v in ("YAMNet media", "YAMNet media + aumento", FA_VARIANT)
+                      for s, g in cv_pred[cv_pred["modelo"] == v].groupby("fuente")]))
+loso_pred = pred[pred["esquema"] == "loso"]
+LOSO_SUMMARY = pd.DataFrame([{"modelo": v, "fuente_no_vista": p.replace("sin_", ""), **summarize(g)}
+                             for (v, p), g in loso_pred.groupby(["modelo", "particion"])])
+print("Leave-one-source-out (generalización a una fuente nunca vista)", CAPTION)
+display(LOSO_SUMMARY[["modelo", "fuente_no_vista", "n", "positivos", "recall", "IC95_recall", "fpr",
+                      "IC95_fpr", "pr_auc", "ece_platt"]])
+print("Comparación de agregaciones por ventana frente a la media por clip (sgkf5):")
+display(CV_SUMMARY[CV_SUMMARY["modelo"].isin(("YAMNet media + aumento",) + WINDOW_VARIANTS)][
+    ["modelo", "recall", "fpr", "pr_auc", "ece_platt"]])
 """),
-        code("""# Exportación de predicciones con SHA-256: las métricas se recalculan con
-# pilots/acoustic/recompute_metrics.py (script independiente) en vez de copiarse de la salida.
-csv_bytes, csv_sha256 = predictions_csv(PRED_ROWS)
+        code("""# Calibración (diagrama de fiabilidad), curvas DET y PR sobre las predicciones fuera de fold.
+from scipy.stats import norm
+from sklearn.metrics import precision_recall_curve
+
+fig, axes = plt.subplots(1, 3, figsize=(16, 4.8))
+ax = axes[0]
+sub = cv_pred[cv_pred["modelo"] == FA_VARIANT]
+for col, label in (("puntuacion_cruda", "sin calibrar"), ("puntuacion", "Platt"), ("puntuacion_isotonica", "isotónica")):
+    bins = reliability_bins(sub["dron"].to_numpy(), sub[col].to_numpy())
+    ece = expected_calibration_error(sub["dron"].to_numpy(), sub[col].to_numpy())
+    ax.plot([b["confianza_media"] for b in bins], [b["fraccion_positivos"] for b in bins], "o-", label=f"{label} (ECE {ece:.3f})")
+ax.plot([0, 1], [0, 1], "k--", lw=0.8)
+ax.set(xlabel="Probabilidad predicha", ylabel="Fracción de drones", title=f"Fiabilidad · {FA_VARIANT}")
+ax.legend(fontsize=8)
+clip_ppf = lambda v: norm.ppf(np.clip(v, 1e-4, 1 - 1e-4))
+for v in VARIANTS:
+    s = cv_pred[cv_pred["modelo"] == v]
+    fpr_d, fnr_d, _ = det_points(s["dron"].to_numpy(), s["puntuacion"].to_numpy())
+    axes[1].plot(clip_ppf(fpr_d), clip_ppf(fnr_d), label=v, lw=1)
+    prec, rec, _ = precision_recall_curve(s["dron"].to_numpy(), s["puntuacion"].to_numpy())
+    axes[2].plot(rec, prec, label=v, lw=1)
+ticks = [0.001, 0.01, 0.05, 0.2, 0.5]
+axes[1].set_xticks(clip_ppf(np.array(ticks)), [str(t) for t in ticks])
+axes[1].set_yticks(clip_ppf(np.array(ticks)), [str(t) for t in ticks])
+axes[1].set(xlabel="Tasa de falsas alarmas (por clip)", ylabel="Tasa de fallos", title="Curva DET")
+axes[2].set(xlabel="Recall", ylabel="Precisión", title="Curva PR")
+axes[2].legend(fontsize=6)
+fig.suptitle("StratifiedGroupKFold, fuera de fold · " + CAPTION, fontsize=9)
+plt.tight_layout(); plt.show()
+"""),
+        code("""# Punto de operación y falsas alarmas por hora ESTIMADAS.
+# Umbral elegido en validación (recall >= 0,90, Platt) para el modelo por ventanas con máximo
+# suavizado: equivale a alarmar cuando la probabilidad suavizada de una ventana supera el umbral.
+# Los negativos de test de cada fold se concatenan (flujos de puntuación por ventana) y se cuentan
+# flancos de alarma con un periodo refractario. ESTIMACIÓN NO VERIFICADA: no es una grabación
+# continua de un emplazamiento ni sustituye a la medida en campo.
+by_fold = {}
+for partition, stream, thr in FA_STREAMS:
+    by_fold.setdefault(partition, {"streams": [], "umbral": thr})["streams"].append(stream)
+fa_rows = []
+for partition, item in sorted(by_fold.items()):
+    est = false_alarms_per_hour_estimate(item["streams"], item["umbral"], hop_s=YAMNET_HOP_S,
+                                         refractory_s=REFRACTORY_S)
+    fa_rows.append({"fold": partition, "umbral": round(item["umbral"], 4), "horas_negativas": round(est["horas"], 2),
+                    "alarmas": est["eventos"], "FA_por_hora_estimada": None if est["valor"] is None else round(est["valor"], 2)})
+fa_table = pd.DataFrame(fa_rows)
+total_hours, total_events = fa_table["horas_negativas"].sum(), int(fa_table["alarmas"].sum())
+FA_ESTIMATE = {"modelo": FA_VARIANT, "status": FA_ESTIMATE_STATUS, "nota": FA_ESTIMATE_NOTE,
+               "horas": float(total_hours), "alarmas": total_events,
+               "valor": float(total_events / total_hours) if total_hours else None,
+               "refractario_s": REFRACTORY_S}
+display(fa_table)
+print(f"FA/h {FA_ESTIMATE_STATUS}: {FA_ESTIMATE['valor']} ({total_events} alarmas en {total_hours:.2f} h de negativos concatenados)")
+print(FA_ESTIMATE_NOTE)
+fa = false_alarms_per_hour(0, continuous_negative_seconds=30.0, min_hours=24.0)
+print("FA/h como métrica de campo:", fa["status"], "(no hay 24 h de negativo continuo conocido)", CAPTION)
+"""),
+        code("""# Negativos difíciles y matriz de confusión por TIPO de negativo (orienta qué grabar en Ceuta).
+TYPE_TABLES = {}
+for v in ("YAMNet media + aumento", "YAMNet media + aumento + negativos difíciles", FA_VARIANT):
+    s = cv_pred[cv_pred["modelo"] == v]
+    TYPE_TABLES[v] = confusion_by_negative_type(s["tipo"].tolist(), s["dron"].tolist(),
+                                                s["puntuacion"].tolist(), s["umbral"].tolist())
+type_df = pd.concat([pd.DataFrame(t).assign(modelo=v) for v, t in TYPE_TABLES.items()])
+display(type_df.pivot(index="tipo", columns="modelo", values="fpr").round(3)
+        .join(pd.DataFrame(TYPE_TABLES[FA_VARIANT]).set_index("tipo")[["n"]]).sort_values(FA_VARIANT, ascending=False))
+main_types = pd.DataFrame(TYPE_TABLES[FA_VARIANT])
+fig, ax = plt.subplots(figsize=(9, 4))
+ax.barh(main_types["tipo"][::-1], main_types["fpr"][::-1])
+ax.set(xlabel="Tasa de falsas alarmas por clip (fuera de fold)", title=f"Falsas alarmas por tipo de negativo · {FA_VARIANT}")
+plt.tight_layout(); plt.show()
+PRIORITIES = recording_priorities(TYPE_TABLES[FA_VARIANT], top=5)
+print("Qué grabar primero en Ceuta (más falsas alarmas en esta prueba técnica):", ", ".join(PRIORITIES) or "—")
+print("Negativos reponderados en la minería (por tipo, sumando folds):")
+display(pd.Series(MINED).value_counts().rename("negativos difíciles"))
+s = cv_pred[(cv_pred["modelo"] == FA_VARIANT) & (cv_pred["dron"] == 0)]
+display(s.nlargest(20, "puntuacion")[["clip", "fuente", "tipo", "puntuacion", "umbral"]])
+"""),
+        code("""# Exportación de predicciones y registro del experimento (código probado: predictions, experiment).
+# Las métricas se recalculan con pilots/acoustic/recompute_metrics.py (script independiente).
+csv_bytes, csv_sha256 = predictions_csv(PRED_ROWS, columns=EXTENDED_COLUMNS)
 pred_path = BASE / "predicciones.csv"
 pred_path.write_bytes(csv_bytes)
-MODEL_RECORD = {
-    "iteracion": 4, "yamnet": MODEL_URL, "seed": SEED, "group_status_svanstrom": PILOT["group_status"],
-    "criterio_umbral": f"umbral más alto con recall de validación >= {TARGET_RECALL:.2f}",
-    "umbrales_particion_unica": {k: v["threshold"] for k, v in RULES.items()},
-    "particiones": {k: sorted(df["clip"].iloc[list(v)]) for k, v in
-                    (("train", train_idx), ("validacion", validation_idx), ("test", test_idx))},
-    "folds": dict(zip(df["clip"], map(int, folds))),
-    "coef_sha256": {name: hashlib.sha256((m[-1] if hasattr(m, "steps") else m).coef_.tobytes()).hexdigest()
-                    for name, m in MODELS.items()},
-    "puerta_voz": {"umbral": SPEECH_GATE["threshold"], "nota": SPEECH_GATE["note"]},
-    "excluidos_por_voz": SPEECH_GATE["excluded"], "revisiones_humanas": SPEECH_GATE["human_cleared"],
-    "predicciones_csv_sha256": csv_sha256, "filas_predicciones": len(PRED_ROWS),
-}
+DEPENDENCIES = dependency_versions(["tensorflow", "tensorflow-hub", "tf-keras", "librosa", "soundfile",
+                                   "scikit-learn", "scipy", "numpy", "pandas", "matplotlib"])
+MODEL_RECORD = experiment_record(
+    config={"iteracion": 5, "semilla": SEED, "n_folds": N_FOLDS, "target_recall": TARGET_RECALL,
+            "yamnet": MODEL_URL, "sr": TARGET_SR, "n_mezclas": N_MIXES, "snr_db": list(MIX_SNR_RANGE_DB),
+            "ganancia_db": list(MIX_GAIN_RANGE_DB), "max_frames": MAX_FRAMES, "hn_fraccion": HN_FRACTION,
+            "hn_factor": HN_FACTOR, "refractario_s": REFRACTORY_S, "calibracion": OPERATING_CALIBRATION,
+            "casi_duplicado_coseno": NEAR_DUPLICATE_COSINE, "silencio_rms_dbfs": SILENCE_RMS_DBFS,
+            "saturacion": [SATURATION_LEVEL, SATURATION_MAX_FRACTION], "duracion_minima_s": MIN_SECONDS,
+            "voz_umbral": SPEECH_GATE["threshold"], "agregaciones": list(AGGREGATIONS),
+            "suavizado_ventanas": SMOOTH_WINDOWS, "variantes": list(VARIANTS)},
+    data={"inventario_sha256": DATA_INVENTORY_SHA256, "clave_cache_embeddings": CACHE_KEY, "descartes_csv_sha256": DISCARDS_SHA256,
+          "plan_mezclas_sha256": MIX_PLAN_SHA256, "clips_evaluados": len(df),
+          "descartados": {k: int(v) for k, v in DISCARDS["motivo"].value_counts().items()},
+          "group_status_svanstrom": PILOT["group_status"], "folds": dict(zip(df["clip"], map(int, folds)))},
+    dependencies=DEPENDENCIES, predictions_sha256=csv_sha256, notebook_code_sha256=NOTEBOOK_CODE_SHA256,
+    extra={"umbrales": {"|".join(k): v["umbral"] for k, v in CALIBRATORS.items()},
+           "calibradores_platt": {"|".join(k): v["platt"] for k, v in CALIBRATORS.items()},
+           "puerta_voz": {"umbral": SPEECH_GATE["threshold"], "nota": SPEECH_GATE["note"]},
+           "excluidos_por_voz": SPEECH_GATE["excluded"], "revisiones_humanas": SPEECH_GATE["human_cleared"],
+           "fa_h_estimada": FA_ESTIMATE, "prioridades_grabacion": PRIORITIES,
+           "nota_sintetico": SYNTHETIC_NOTE, "filas_predicciones": len(PRED_ROWS)})
+assert verify_record(MODEL_RECORD)
 (BASE / "modelo_piloto.json").write_text(json.dumps(MODEL_RECORD, ensure_ascii=False, indent=1))
 print("predicciones.csv:", len(PRED_ROWS), "filas · SHA-256", csv_sha256)
-print("Recalcular: uv run python recompute_metrics.py predicciones.csv --sha256", csv_sha256)
+print("Registro del experimento SHA-256:", MODEL_RECORD["registro_sha256"], "· código del cuaderno", NOTEBOOK_CODE_SHA256)
+print("Recalcular: uv run python recompute_metrics.py predicciones.csv --sha256", csv_sha256,
+      "--record modelo_piloto.json")
 try:
     from google.colab import files  # descarga al navegador del usuario; no monta Drive
-    files.download(str(pred_path))
-    files.download(str(BASE / "modelo_piloto.json"))
+    for name in ("predicciones.csv", "modelo_piloto.json", "descartes.csv"):
+        files.download(str(BASE / name))
 except ImportError:
     pass
 """),
-        code("""# Matrices de confusión de la partición única y FA/h.
-FA_MIN_CONTINUOUS_HOURS = 24.0
-LONGEST_CONTINUOUS_NEGATIVE_S = 30.0  # el clip negativo continuo más largo (FSD50K ≤ 30 s)
-fa = false_alarms_per_hour(0, continuous_negative_seconds=LONGEST_CONTINUOUS_NEGATIVE_S,
-                           min_hours=FA_MIN_CONTINUOUS_HOURS)
-print("Falsas alarmas por hora:", fa["status"],
-      f"(negativo continuo conocido {fa['hours']*3600:.0f} s < {FA_MIN_CONTINUOUS_HOURS:.0f} h)", CAPTION)
-fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-for ax, name in zip(axes, X):
-    p = np.asarray([r["puntuacion"] for r in PRED_ROWS if r["modelo"] == name and r["esquema"] == "split"])
-    ConfusionMatrixDisplay.from_predictions(y[list(test_idx)], (p >= RULES[name]["threshold"]).astype(int),
-                                            labels=[0, 1], display_labels=["no dron", "dron"], ax=ax, colorbar=False)
-    ax.set_title(f"{name}\\numbral {RULES[name]['threshold']:.3f} (recall val. ≥ {TARGET_RECALL:.2f})", fontsize=9)
-fig.suptitle("Test de la partición única · " + CAPTION, fontsize=9)
-plt.tight_layout(); plt.show()
-"""),
-        code("""# Ilustración sobre un clip de dron de test: espectrograma y puntuación por ventana.
-# AVISO: el clasificador se entrenó con la MEDIA de embeddings por clip. Aplicarlo a ventanas
-# sueltas de 0,96 s (salto 0,48 s) queda fuera de su distribución de entrenamiento: la curva
-# NO está calibrada y el umbral (fijado por clip en validación) no es un umbral por ventana.
-head = MODELS["YAMNet + reg. logística"]
-threshold = RULES["YAMNet + reg. logística"]["threshold"]
-candidates = [i for i in test_idx if y[i] == 1]
-chosen = max(candidates, key=lambda i: (df["segundos"][i], df["clip"][i])) if candidates else test_idx[0]
-name = df.iloc[chosen]["clip"]
-signal, _ = librosa.load(next(c["path"] for c in CATALOG if c["clip"] == name), sr=16000, mono=True)
-_, frames, _ = yamnet(tf.convert_to_tensor(signal, dtype=tf.float32))
-window_scores = head.predict_proba(frames.numpy())[:, 1]
-db = librosa.power_to_db(librosa.feature.melspectrogram(y=signal, sr=16000, n_mels=64), ref=np.max)
+        code("""# Ilustración: un clip de dron de test (fold 0) con su espectrograma y la probabilidad por ventana
+# del modelo por ventanas del fold 0 (suavizada y calibrada con Platt) frente al umbral elegido
+# en validación. Ahora el modelo SÍ se entrenó por ventanas; la curva sigue siendo de un solo clip.
+test0, windows_of0, rule0 = WINDOW_DEMO
+candidates = [i for i in test0 if y[i] == 1]
+chosen = max(candidates, key=lambda i: (df["ventanas"][i], df["clip"][i])) if candidates else test0[0]
+name = df["clip"][chosen]
+signal = load_normalized(name)
+curve = apply_calibration(rule0["platt"], smooth_scores(windows_of0(chosen)))
+db = librosa.power_to_db(librosa.feature.melspectrogram(y=signal, sr=TARGET_SR, n_mels=64), ref=np.max)
 fig, (a, b) = plt.subplots(2, 1, figsize=(11, 6), sharex=True)
-librosa.display.specshow(db, sr=16000, x_axis="time", y_axis="mel", ax=a)
+librosa.display.specshow(db, sr=TARGET_SR, x_axis="time", y_axis="mel", ax=a)
 a.set_title(f"{name} · espectrograma")
-b.plot(np.arange(len(window_scores)) * 0.48, window_scores)
-b.axhline(threshold, color="red", linestyle="--", label="umbral por clip (validación); no válido por ventana")
-b.set(ylim=(0, 1), ylabel="Puntuación sin calibrar", xlabel="Tiempo (s)")
+b.plot(np.arange(len(curve)) * YAMNET_HOP_S, curve, label="probabilidad suavizada y calibrada")
+b.axhline(rule0["umbral"], color="red", linestyle="--", label="umbral (validación, recall ≥ 0,90)")
+b.set(ylim=(0, 1), ylabel="Probabilidad", xlabel="Tiempo (s)")
 b.legend()
-fig.suptitle("Modelo por clip (media de embeddings) aplicado a ventanas: curva NO calibrada, solo ilustrativa\\n" + CAPTION, fontsize=9)
+fig.suptitle(FA_VARIANT + " · " + CAPTION, fontsize=9)
 plt.tight_layout(); plt.show()
 """),
         md("""## Fuentes para las siguientes pruebas
@@ -712,6 +1103,16 @@ vuelo/sitio.
         cells[speech_cell],
         cells[gate_cell],
     )
+    # Hash del código del cuaderno: SHA-256 del JSON canónico de las celdas con el marcador; se
+    # sustituye después (el cuaderno no puede contener su propio hash final).
+    code_sha256 = hashlib.sha256(
+        json.dumps(cells, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    marker_cells = [c for c in cells if CODE_SHA_PLACEHOLDER in "".join(c["source"])]
+    assert len(marker_cells) == 1
+    marker_cells[0]["source"] = [
+        line.replace(CODE_SHA_PLACEHOLDER, code_sha256) for line in marker_cells[0]["source"]
+    ]
     notebook = {
         # nbformat 4.5 exige un id por celda; ids deterministas para que la salida sea reproducible.
         "cells": [{"id": f"celda-{i:02d}", **cell} for i, cell in enumerate(cells)],
