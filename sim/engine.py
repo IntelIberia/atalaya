@@ -9,7 +9,7 @@
 
 El flujo sin comprimir es una sucesión de `Envelope` precedidos por su longitud en varint
 (delimitado como `writeDelimitedTo`); el `.pb.zst` es ese flujo comprimido con zstd de nivel fijo.
-El formato de replay con cabecera de versión y hash llega en T1.15.
+El fichero de replay versionado (cabecera, hash y verdad terreno) está en `sim.replay` (T1.15).
 
 El emisor propio es el latido `NodeStatus` de cada nodo cada 30 s simulados (tiempo y batería
 sintéticos). Desde T1.13 respeta los fallos programados (`sim.faults`): un nodo caído no publica,

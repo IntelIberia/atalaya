@@ -6,10 +6,10 @@ Generado por `scripts/traceability.py` (no editar a mano). Fases tratadas como c
 |---|---|---|---|---|---|
 | REQ-FUN-001 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-002 | MUST | 1 | 35 | verde | en curso |
-| REQ-FUN-003 | MUST | 1 | 42 | verde | en curso |
+| REQ-FUN-003 | MUST | 1 | 44 | verde | en curso |
 | REQ-FUN-004 | MUST | 1 | 185 | verde | en curso |
 | REQ-FUN-005 | MUST | 1 | 44 | verde | en curso |
-| REQ-FUN-006 | MUST | 1 | 0 | sin tests | pendiente (fase abierta) |
+| REQ-FUN-006 | MUST | 1 | 81 | verde | en curso |
 | REQ-FUN-007 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-008 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
 | REQ-FUN-009 | MUST | 2 | 0 | sin tests | pendiente (fase abierta) |
