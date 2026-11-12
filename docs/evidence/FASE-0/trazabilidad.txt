@@ -1,4 +1,4 @@
-# commit: e480c87d8a78751e849e8555ea15842c98651330 · fecha UTC: 2026-11-10T07:50:26Z
+# commit: fa5a8973bf6b3291b02ae01e789101ebce0a3eea · fecha UTC: 2026-11-10T07:28:15Z
 $ uv run --frozen python -m scripts.traceability --fase 0 --out docs/evidence/FASE-0/TRAZABILIDAD.md --require-integration --junit reports/junit.xml --junit reports/junit-integracion.xml
 traceability: informes JUnit: ['junit.xml', 'junit-integracion.xml']
 traceability: fases cerradas [-1, 0]; MUST en ellas: 18; huecos: 0; IDs desconocidos: 0

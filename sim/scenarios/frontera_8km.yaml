@@ -1,0 +1,146 @@
+# Escenario SINTÉTICO de Atalaya (T1.9, REQ-FUN-005). Centro FICTICIO sobre mar abierto,
+# redondeado a 0,01° (D-8): no reproduce ningún emplazamiento ni perímetro real. Todas las
+# posiciones son desplazamientos locales en metros (este, norte, arriba) respecto al centro.
+# launch_point equivale al origen probable: FCSE_ONLY (REQ-LEG-007).
+schema_version: 1
+name: frontera_8km
+description: Tramo lineal sintético de 8 km con dos emplazamientos para probar el traspaso de pistas;
+  vuelos de largo alcance. Centros ficticios sobre mar abierto (D-8).
+seed_policy:
+  default_seed: 20261114
+  derivation: sha256-component
+duration_s: 600
+geometry: frontera_8km.nodes.geo.json
+environment:
+  temperature_c: 16.0
+  relative_humidity_pct: 65.0
+  wind:
+    speed_mps: 7.0
+    from_deg: 315.0
+  background_bands:
+  - center_hz: 125.0
+    level_db_spl: 44.0
+  - center_hz: 250.0
+    level_db_spl: 41.0
+  - center_hz: 500.0
+    level_db_spl: 38.0
+  - center_hz: 1000.0
+    level_db_spl: 35.0
+  - center_hz: 2000.0
+    level_db_spl: 32.0
+  - center_hz: 4000.0
+    level_db_spl: 28.0
+sites:
+- id: tramo-oeste
+  center:
+    lat_deg: 36.4
+    lon_deg: -3.2
+  objectives:
+  - id: linea-oeste
+    kind: perimeter
+    offset_m:
+      east_m: 0.0
+      north_m: 0.0
+      up_m: 0.0
+    radius_m: 2000.0
+- id: tramo-este
+  center:
+    lat_deg: 36.4
+    lon_deg: -3.11
+  objectives:
+  - id: linea-este
+    kind: perimeter
+    offset_m:
+      east_m: 0.0
+      north_m: 0.0
+      up_m: 0.0
+    radius_m: 2000.0
+threats:
+- id: amenaza-1
+  class: C6
+  site: tramo-oeste
+  start_s: 20.0
+  speed_mps: 25.0
+  route:
+  - east_m: -3000.0
+    north_m: -4000.0
+    up_m: 150.0
+  - east_m: 0.0
+    north_m: 0.0
+    up_m: 120.0
+  - east_m: 8000.0
+    north_m: 500.0
+    up_m: 120.0
+  remote_id:
+    mode: none
+  launch_point:
+    sensitivity: FCSE_ONLY
+    offset_m:
+      east_m: -3000.0
+      north_m: -4000.0
+      up_m: 0.0
+- id: amenaza-2
+  class: C7
+  site: tramo-este
+  start_s: 180.0
+  speed_mps: 30.0
+  route:
+  - east_m: 4000.0
+    north_m: -5000.0
+    up_m: 300.0
+  - east_m: -6000.0
+    north_m: 800.0
+    up_m: 250.0
+  remote_id:
+    mode: forged
+    standard: ASTM_F3411
+  launch_point:
+    sensitivity: FCSE_ONLY
+    offset_m:
+      east_m: 4000.0
+      north_m: -5000.0
+      up_m: 0.0
+- id: amenaza-3
+  class: C3
+  site: tramo-este
+  start_s: 360.0
+  speed_mps: 15.0
+  route:
+  - east_m: 2000.0
+    north_m: -3000.0
+    up_m: 100.0
+  - east_m: 0.0
+    north_m: 0.0
+    up_m: 80.0
+  remote_id:
+    mode: compliant
+    standard: EN_4709_002
+  launch_point:
+    sensitivity: FCSE_ONLY
+    offset_m:
+      east_m: 2000.0
+      north_m: -3000.0
+      up_m: 0.0
+manned_aircraft:
+- id: SIM401
+  class: C8
+  site: tramo-oeste
+  start_s: 90.0
+  speed_mps: 80.0
+  route:
+  - east_m: -6000.0
+    north_m: 6000.0
+    up_m: 1200.0
+  - east_m: 14000.0
+    north_m: 6000.0
+    up_m: 1200.0
+faults:
+- kind: node_down
+  node: fe-pps-2
+  start_s: 200.0
+  duration_s: 240.0
+- kind: reorder
+  node: fo-rx-1
+  start_s: 0.0
+  duration_s: 600.0
+  magnitude: 0.1

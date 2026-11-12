@@ -19,18 +19,58 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 KILLED, SURVIVED = 1, 0
+_CONTRACT_SOURCE_PREFIX = "proto/python/atalaya_contracts/"
 
 
-def tests_digest(root: Path, tests_dir: str = "tests/guardrails") -> str:
-    """SHA-256 conjunto de los tests de mutación: si se debilitan, la evidencia caduca."""
+def mutation_meta_path(root: Path, rel: str) -> Path:
+    """Ubica el resultado de mutmut para el código real, sin cambiar su ruta de evidencia.
+
+    mutmut 3.7 solo resuelve correctamente los imports del paquete bajo ``src/``;
+    ``run_mutmut.py`` crea temporalmente ese alias durante la ejecución.
+    """
+    if rel.startswith(_CONTRACT_SOURCE_PREFIX):
+        rel = "src/atalaya_contracts/" + rel.removeprefix(_CONTRACT_SOURCE_PREFIX)
+    return root / "mutants" / f"{rel}.meta"
+
+
+def mutation_test_paths(root: Path) -> tuple[str, ...]:
+    """Devuelve la selección real de tests configurada en mutmut."""
+    config_path = root / "pyproject.toml"
+    config = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    selected = config.get("tool", {}).get("mutmut", {}).get("pytest_add_cli_args_test_selection")
+    if selected is None:
+        return ("tests/",)
+    if (
+        not isinstance(selected, list)
+        or not selected
+        or any(not isinstance(path, str) or not path for path in selected)
+    ):
+        raise ValueError("pytest_add_cli_args_test_selection debe ser una lista no vacía")
+    return tuple(selected)
+
+
+def tests_digest(root: Path) -> str:
+    """SHA-256 de la selección completa de tests que mutmut ejecuta."""
     h = hashlib.sha256()
-    for f in sorted((root / tests_dir).rglob("*.py")):
+    selected = mutation_test_paths(root)
+    files: set[Path] = set()
+    for rel in selected:
+        path = root / rel
+        if path.is_file():
+            files.add(path)
+        elif path.is_dir():
+            files.update(path.rglob("*.py"))
+        else:
+            raise ValueError(f"ruta de tests de mutmut inexistente: {rel}")
+    if not files:
+        raise ValueError("la selección de mutmut no contiene archivos de test Python")
+    for f in sorted(files):
         h.update(f.relative_to(root).as_posix().encode() + b"\0" + f.read_bytes())
     return h.hexdigest()
 
 
 def report(root: Path, rel: str) -> dict[str, Any]:
-    meta = json.loads((root / "mutants" / f"{rel}.meta").read_text(encoding="utf-8"))
+    meta = json.loads(mutation_meta_path(root, rel).read_text(encoding="utf-8"))
     codes: dict[str, int | None] = meta["exit_code_by_key"]
     run = {k: v for k, v in codes.items() if v is not None}
     killed = sum(1 for v in run.values() if v == KILLED)
@@ -76,11 +116,19 @@ def input_state(root: Path, files: list[str]) -> dict[str, str]:
     """Identifica los inputs antes de ejecutar mutmut, incluidos sus tests y configuración."""
     paths = {root / rel for rel in files}
     paths.update((root / "tests").rglob("*.py"))
+    for copied_python_root in (root / "scripts", root / "proto"):
+        if copied_python_root.is_dir():
+            paths.update(
+                path
+                for path in copied_python_root.rglob("*")
+                if path.is_file() and path.suffix in {".py", ".pyi", ".proto"}
+            )
     paths.update(
         root / name
         for name in (
             "pyproject.toml",
             "uv.lock",
+            "Makefile",
             "conftest.py",
             "scripts/guardrails_allowlist.txt",
             "scripts/mutation_report.py",
@@ -100,7 +148,7 @@ def inputs_digest(root: Path, files: list[str]) -> str:
 
 def snapshot_inputs(root: Path, files: list[str], destination: Path) -> None:
     """Solo inicia una ejecución nueva, nunca vuelve a fechar resultados existentes."""
-    if any((root / "mutants" / f"{rel}.meta").exists() for rel in files):
+    if any(mutation_meta_path(root, rel).exists() for rel in files):
         raise ValueError("elimina mutants antes de registrar los inputs de una ejecución nueva")
     state = input_state(root, files)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -112,7 +160,7 @@ def verify_inputs(root: Path, files: list[str], snapshot: Path) -> None:
     if recorded != input_state(root, files):
         raise ValueError("los inputs cambiaron desde el inicio de la ejecución de mutación")
     for rel in files:
-        meta = root / "mutants" / f"{rel}.meta"
+        meta = mutation_meta_path(root, rel)
         if meta.stat().st_mtime_ns < snapshot.stat().st_mtime_ns:
             raise ValueError(f"{rel}: resultados anteriores al registro de inputs")
 

@@ -30,6 +30,9 @@ def test_phase_capture_records_real_failures(
         cwd=tmp_path,
         check=True,
     )
+    closed = tmp_path / "docs" / "requirements" / "FASES-CERRADAS.txt"
+    closed.parent.mkdir(parents=True)
+    closed.write_text("# ninguna fase cerrada en este fixture\n", encoding="utf-8")
     monkeypatch.setattr(evidence, "ROOT", tmp_path)
     monkeypatch.setattr(
         evidence,

@@ -1,0 +1,118 @@
+# Escenario SINTÉTICO de Atalaya (T1.9, REQ-FUN-005). Centro FICTICIO sobre mar abierto,
+# redondeado a 0,01° (D-8): no reproduce ningún emplazamiento ni perímetro real. Todas las
+# posiciones son desplazamientos locales en metros (este, norte, arriba) respecto al centro.
+# launch_point equivale al origen probable: FCSE_ONLY (REQ-LEG-007).
+schema_version: 1
+name: puerto_ceuta
+description: Zona portuaria sintética con fondo acústico elevado (maquinaria y oleaje); vigilancia de
+  muelles. Centro ficticio sobre mar abierto (D-8).
+seed_policy:
+  default_seed: 20261112
+  derivation: sha256-component
+duration_s: 600
+geometry: puerto_ceuta.nodes.geo.json
+environment:
+  temperature_c: 21.0
+  relative_humidity_pct: 80.0
+  wind:
+    speed_mps: 9.0
+    from_deg: 270.0
+  background_bands:
+  - center_hz: 125.0
+    level_db_spl: 61.0
+  - center_hz: 250.0
+    level_db_spl: 58.0
+  - center_hz: 500.0
+    level_db_spl: 55.0
+  - center_hz: 1000.0
+    level_db_spl: 52.0
+  - center_hz: 2000.0
+    level_db_spl: 49.0
+  - center_hz: 4000.0
+    level_db_spl: 45.0
+sites:
+- id: muelles
+  center:
+    lat_deg: 36.0
+    lon_deg: -3.6
+  objectives:
+  - id: darsena
+    kind: perimeter
+    offset_m:
+      east_m: 0.0
+      north_m: 0.0
+      up_m: 0.0
+    radius_m: 600.0
+  - id: terminal
+    kind: point
+    offset_m:
+      east_m: -250.0
+      north_m: 120.0
+      up_m: 0.0
+    radius_m: 60.0
+threats:
+- id: amenaza-1
+  class: C3
+  site: muelles
+  start_s: 60.0
+  speed_mps: 14.0
+  route:
+  - east_m: 2500.0
+    north_m: -1800.0
+    up_m: 120.0
+  - east_m: -250.0
+    north_m: 120.0
+    up_m: 60.0
+  remote_id:
+    mode: compliant
+    standard: ASTM_F3411
+  launch_point:
+    sensitivity: FCSE_ONLY
+    offset_m:
+      east_m: 2500.0
+      north_m: -1800.0
+      up_m: 0.0
+- id: amenaza-2
+  class: C4
+  site: muelles
+  start_s: 200.0
+  speed_mps: 18.0
+  route:
+  - east_m: -3000.0
+    north_m: 2000.0
+    up_m: 150.0
+  - east_m: 0.0
+    north_m: 0.0
+    up_m: 80.0
+  remote_id:
+    mode: none
+  launch_point:
+    sensitivity: FCSE_ONLY
+    offset_m:
+      east_m: -3000.0
+      north_m: 2000.0
+      up_m: 0.0
+manned_aircraft:
+- id: SIM202
+  class: C8
+  site: muelles
+  start_s: 30.0
+  speed_mps: 60.0
+  route:
+  - east_m: -8000.0
+    north_m: -3000.0
+    up_m: 600.0
+  - east_m: 8000.0
+    north_m: -2500.0
+    up_m: 600.0
+faults:
+- kind: packet_loss
+  node: pt-and-1
+  start_s: 100.0
+  duration_s: 200.0
+  magnitude: 0.2
+- kind: latency
+  node: pt-rx-1
+  start_s: 0.0
+  duration_s: 600.0
+  magnitude: 150.0

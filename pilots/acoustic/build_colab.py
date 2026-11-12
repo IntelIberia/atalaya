@@ -16,6 +16,7 @@ MANIFEST = ROOT / "ml/datasets/svanstrom/manifest.json"
 OUTPUT = ROOT / "pilots/acoustic/Atalaya_YAMNet_Colab.ipynb"
 # Código probado en pilots/acoustic/tests; se incrusta literalmente (Colab no accede al repo).
 GROUPED_EVAL = ROOT / "pilots/acoustic/acoustic_pilot/grouped_eval.py"
+SPEECH_GATE = ROOT / "pilots/acoustic/acoustic_pilot/speech_gate.py"
 UPSTREAM_LICENSE_SHA256 = "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
 
 
@@ -52,6 +53,8 @@ def main() -> None:
     assert manifest["group_status"] in {"provisional", "verified"}
     grouped_eval_source = GROUPED_EVAL.read_text(encoding="utf-8")
     assert "__future__" not in grouped_eval_source  # se incrusta a mitad de cuaderno
+    speech_gate_source = SPEECH_GATE.read_text(encoding="utf-8")
+    assert "__future__" not in speech_gate_source
     config = {
         "source_commit": manifest["commit"],
         "license_sha256": UPSTREAM_LICENSE_SHA256,
@@ -73,10 +76,19 @@ y que el audio se extrajo de los vídeos o se grabó aparte; la
 sitúa 49 clips externos en el vídeo visible. No está documentado si algún WAV procede de ellos.
 
 **Recuento de clips:** el inventario fijado contiene **90 WAV** (30 por clase), verificados por
-SHA-256 en el preflight local de la data card. Este cuaderno usa una **muestra de 24**
-(`N_PER_CLASS = 8` por clase, sin duplicados exactos) y verifica cada WAV contra ese inventario.
-Las nuevas descargas y el entrenamiento quedan **bloqueados** hasta aclarar derechos por
-archivo, revisar voz y completar el intake. Los audios se pueden escuchar abajo para esa revisión.
+SHA-256 en el preflight local de la data card. Esta iteración usa **todos los elegibles**
+(`N_PER_CLASS = 30`): 89 WAV, porque el duplicado exacto `BACKGROUND_019` está marcado
+`training_excluded` y queda fuera. Cada WAV se verifica contra ese inventario. Descarga y
+entrenamiento están abiertos **solo para esta prueba técnica** por decisión del usuario
+(2026-11-11); el intake del repositorio sigue sin aprobar.
+
+**Puerta automática de privacidad:** tras YAMNet se excluyen del entrenamiento y la evaluación
+los clips con `max_speech_score >= SPEECH_EXCLUSION_THRESHOLD` (0,30). Es una revisión
+automática que **no sustituye** a la escucha humana; los excluidos se listan en una tabla y en
+el registro del modelo.
+
+**Línea base espectral:** regresión logística sobre la media de 40 MFCC (librosa) con la
+**misma partición** y su propio umbral elegido en validación, comparada con YAMNet.
 
 Pesos de [YAMNet](https://www.kaggle.com/models/google/yamnet) (Google, vía TF Hub/Kaggle):
 licencia Apache 2.0 según la ficha oficial de Kaggle (véase la model card del piloto).
@@ -118,21 +130,23 @@ import tensorflow as tf
 import tensorflow_hub as hub
 from IPython.display import Audio, display
 # Las funciones split_indices_by_group, choose_threshold, binary_metrics, group_bootstrap,
-# false_alarms_per_hour y metric_caption se definen en la celda siguiente (código probado).
+# false_alarms_per_hour y metric_caption se definen en la celda siguiente, y apply_speech_gate
+# con SPEECH_EXCLUSION_THRESHOLD en la otra (código probado en pilots/acoustic/tests).
 
 PILOT = json.loads('''"""
             + json.dumps(config, ensure_ascii=False, separators=(",", ":"))
             + """''')
 SEED = 20261111
-N_PER_CLASS = 8  # muestra de 24 de los 90 WAV inventariados (~42 MB); máx. 30 tras revisar coste y privacidad.
+N_PER_CLASS = 30  # todos los WAV inventariados por clase (~157 MB); el duplicado excluido sigue fuera.
 BASE = Path("/content/atalaya_piloto")
 BASE.mkdir(parents=True, exist_ok=True)
 COMMIT = PILOT["source_commit"]
 print("Fuente fijada:", COMMIT, "| clips inventariados:", len(PILOT["clips"]),
-      "| muestra prevista:", 3 * N_PER_CLASS, "| grupos:", PILOT["group_status"])
+      "| máximo por clase:", N_PER_CLASS, "| grupos:", PILOT["group_status"])
 """
         ),
         code(grouped_eval_source),
+        code(speech_gate_source),
         code("""# Verifica la licencia original antes de descargar datos. Las redirecciones son restringidas.
 ALLOWED_HOSTS = {"raw.githubusercontent.com", "api.github.com"}
 def read_https(url, allowed_hosts, timeout=90):
@@ -168,9 +182,11 @@ for prefix in ("BACKGROUND", "HELICOPTER", "DRONE"):
     assert len(candidates) == 30
     candidates = [c for c in candidates if not c["training_excluded"]]
     # La fuente contiene al menos un duplicado exacto: nunca meterlo dos veces.
-    unique = {c["sha256"]: c for c in candidates}
-    assert len(unique) >= N_PER_CLASS
-    selected += randomizer.sample(sorted(unique.values(), key=lambda c: c["name"]), N_PER_CLASS)
+    unique = sorted({c["sha256"]: c for c in candidates}.values(), key=lambda c: c["name"])
+    assert len(unique) == len(candidates), "duplicado exacto sin marcar training_excluded"
+    # Con N_PER_CLASS = 30 se toman todos los elegibles (29 en BACKGROUND por el duplicado).
+    selected += randomizer.sample(unique, min(N_PER_CLASS, len(unique)))
+assert len({c["sha256"] for c in selected}) == len(selected)
 
 for item in selected:
     name = item["name"]
@@ -191,10 +207,11 @@ print(f"Descargados y verificados {len(selected)} WAV ({sum(c['bytes'] for c in 
         md("""## Revisión de privacidad
 
 Escucha al menos una muestra aleatoria de cada clase y comprueba que no haya voz
-identificable u otros datos personales. El resultado automático de YAMNet más abajo
-sirve de ayuda, **no sustituye** esta escucha. Si aparece voz, no entrenes; documenta
-el clip y resuelve su tratamiento antes de seguir. Los WAV permanecen solo en el
-almacenamiento temporal de este entorno de Colab.
+identificable u otros datos personales. Tras YAMNet, una **puerta automática** excluye del
+entrenamiento y la evaluación los clips con `max_speech_score >= 0,30` y los lista; es una
+revisión automática que **no sustituye** esta escucha. Si la escucha detecta voz en un clip
+no excluido, no entrenes; documenta el clip y resuelve su tratamiento antes de seguir. Los
+WAV permanecen solo en el almacenamiento temporal de este entorno de Colab.
 """),
         code("""# Reproducción de tres clips públicos, uno por clase, para revisión humana.
 review_names = []
@@ -219,7 +236,9 @@ class_map_path = yamnet.class_map_path().numpy().decode()
 class_names = pd.read_csv(class_map_path)["display_name"].tolist()
 assert len(class_names) == 521
 
-rows, vectors, frame_vectors, waveforms = [], [], {}, {}
+# Línea base espectral: media temporal de 40 MFCC (librosa) sobre la MISMA señal de 16 kHz.
+N_MFCC = 40
+rows, vectors, mfcc_vectors, frame_vectors, waveforms = [], [], [], {}, {}
 for item in selected:
     name = item["name"]
     signal, sr = librosa.load(BASE / name, sr=16000, mono=True)
@@ -228,6 +247,7 @@ for item in selected:
     score_array, embedding_array = scores.numpy(), embeddings.numpy()
     assert embedding_array.shape[1] == 1024
     vectors.append(embedding_array.mean(axis=0))
+    mfcc_vectors.append(librosa.feature.mfcc(y=signal, sr=16000, n_mfcc=40).mean(axis=1))
     frame_vectors[name] = embedding_array
     waveforms[name] = signal
     speech_columns = [i for i, label in enumerate(class_names)
@@ -239,6 +259,28 @@ for item in selected:
 df = pd.DataFrame(rows)
 display(df.sort_values("max_speech_score", ascending=False).head(10))
 print("Si YAMNet marca voz, revisa esos clips y no uses material con datos personales sin base resuelta.")
+"""),
+        code("""# Puerta automática de privacidad (código probado: apply_speech_gate).
+# Excluye del entrenamiento Y de la evaluación los clips con max_speech_score >= 0,30
+# o sin puntuación válida. Revisión AUTOMÁTICA: NO sustituye a la escucha humana.
+# Revisiones humanas: clip escuchado por una persona y declarado SIN voz (revisor, fecha, nota).
+HUMAN_CLEARED = {
+    "BACKGROUND_006.wav": "usuario, 2026-11-11: escuchado; crujido de madera, no es voz",
+}
+SPEECH_GATE = apply_speech_gate(df["clip"].tolist(), df["max_speech_score"].tolist(),
+                                threshold=SPEECH_EXCLUSION_THRESHOLD, human_cleared=HUMAN_CLEARED)
+print("Reincorporados por revisión humana:", SPEECH_GATE["human_cleared"])
+excluded_speech = pd.DataFrame(SPEECH_GATE["excluded"], columns=["clip", "max_speech_score", "motivo"])
+print(f"Excluidos por posible voz (umbral {SPEECH_EXCLUSION_THRESHOLD:.2f}): {len(excluded_speech)}")
+print(SPEECH_GATE["note"])
+display(excluded_speech)
+keep = list(SPEECH_GATE["kept_indices"])
+df = df.iloc[keep].reset_index(drop=True)
+vectors = [vectors[i] for i in keep]
+mfcc_vectors = [mfcc_vectors[i] for i in keep]
+assert not set(df["clip"]) & set(excluded_speech["clip"])
+print("Clips que siguen al entrenamiento y la evaluación:", len(df),
+      df["clase"].value_counts().to_dict())
 """),
         code("""# Clasificador simple: regresión logística sobre la MEDIA de embeddings YAMNet por clip.
 # Partición train/validación/test por group_id (ningún grupo en dos particiones).
@@ -252,6 +294,8 @@ PROVISIONAL = PILOT["group_status"] != "verified"
 CAPTION = metric_caption(provisional=PROVISIONAL)
 GROUP_OF = {c["name"]: c["group_id"] for c in PILOT["clips"]}
 X = np.asarray(vectors)  # una fila por clip: media temporal de los embeddings de 1024 dimensiones
+X_mfcc = np.asarray(mfcc_vectors)  # una fila por clip: media temporal de 40 MFCC
+assert len(X) == len(X_mfcc) == len(df), "la puerta de voz debe aplicarse a ambos rasgos"
 y = df["dron"].to_numpy().astype(int)
 groups = [GROUP_OF[n] for n in df["clip"]]
 train_idx, validation_idx, test_idx = (np.asarray(part) for part in
@@ -263,6 +307,14 @@ assert not (part_groups[0] & part_groups[1] or part_groups[0] & part_groups[2]
 head = LogisticRegression(max_iter=1000, class_weight="balanced", random_state=SEED)
 head.fit(X[train_idx], y[train_idx])
 threshold = choose_threshold(y[validation_idx], head.predict_proba(X[validation_idx])[:, 1])
+# Línea base espectral: MISMA partición, mismo procedimiento de umbral (máximo F1 en validación).
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+baseline = make_pipeline(StandardScaler(),
+                         LogisticRegression(max_iter=1000, class_weight="balanced", random_state=SEED))
+baseline.fit(X_mfcc[train_idx], y[train_idx])
+baseline_threshold = choose_threshold(y[validation_idx], baseline.predict_proba(X_mfcc[validation_idx])[:, 1])
+baseline_lr = baseline[-1]
 MODEL_RECORD = {
     "modelo": "LogisticRegression sobre media de embeddings YAMNet por clip",
     "yamnet": MODEL_URL, "seed": SEED, "group_status": PILOT["group_status"],
@@ -270,6 +322,14 @@ MODEL_RECORD = {
     "particiones": {k: sorted(df["clip"].iloc[v]) for k, v in
                     (("train", train_idx), ("validacion", validation_idx), ("test", test_idx))},
     "coef_sha256": hashlib.sha256(head.coef_.tobytes() + head.intercept_.tobytes()).hexdigest(),
+    "puerta_voz": {"umbral": SPEECH_GATE["threshold"], "nota": SPEECH_GATE["note"]},
+    "excluidos_por_voz": SPEECH_GATE["excluded"],
+    "linea_base": {
+        "modelo": "StandardScaler + LogisticRegression sobre media de 40 MFCC (librosa) por clip",
+        "umbral": baseline_threshold, "umbral_elegido_en": "validación (misma partición)",
+        "coef_sha256": hashlib.sha256(baseline_lr.coef_.tobytes()
+                                      + baseline_lr.intercept_.tobytes()).hexdigest(),
+    },
 }
 (BASE / "modelo_piloto.json").write_text(json.dumps(MODEL_RECORD, ensure_ascii=False, indent=1))
 print("Umbral fijado en validación y guardado en modelo_piloto.json:", round(threshold, 4))
@@ -301,6 +361,26 @@ ConfusionMatrixDisplay.from_predictions(y[test_idx], (proba >= threshold).astype
                                         labels=[0, 1], display_labels=["no dron", "dron"])
 plt.title(f"Test · umbral de validación {threshold:.3f}\\n{CAPTION}", fontsize=9)
 plt.show()
+
+# Comparación YAMNet frente a la línea base MFCC sobre la MISMA partición de test.
+baseline_proba = baseline.predict_proba(X_mfcc[test_idx])[:, 1]
+test_groups = [groups[i] for i in test_idx]
+comparison = []
+for label, scores_test, thr in (("YAMNet + reg. logística", proba, threshold),
+                                ("MFCC(40) + reg. logística", baseline_proba, baseline_threshold)):
+    mm = binary_metrics(y[test_idx], scores_test, thr)
+    bb = group_bootstrap(y[test_idx], scores_test, test_groups, thr, seed=SEED)
+    row = {"modelo": label, "umbral_validación": round(thr, 4),
+           **{k: mm[k] for k in ("tn", "fp", "fn", "tp")}}
+    for name in ("precision", "recall", "pr_auc"):
+        row[name] = round(mm[name], 3)
+        row[f"IC95_{name}"] = (f"[{bb['intervals'][name][0]:.3f}, {bb['intervals'][name][1]:.3f}]"
+                               if bb["status"] == "OK" else f"NO DISPONIBLE ({bb['n_groups']} grupos)")
+    row["FA/h"] = fa["status"] if fa["value"] is None else round(fa["value"], 3)
+    row["rótulo"] = CAPTION
+    comparison.append(row)
+print("Comparación en test (misma partición; umbral de cada modelo fijado en validación)", CAPTION)
+display(pd.DataFrame(comparison))
 """),
         code("""# Ilustración sobre un clip de test: espectrograma y puntuación por ventana.
 # AVISO: el clasificador se entrenó con la MEDIA de embeddings por clip. Aplicarlo a ventanas
@@ -361,9 +441,9 @@ Para eso se necesitan grabaciones de campo independientes, negativos continuos,
 revisión de privacidad y una evaluación congelada por vuelo/sitio.
 """),
     ]
-    # Los scores preentrenados de YAMNet ayudan a dirigir la revisión, pero solo
-    # la declaración humana desbloquea el entrenamiento posterior.
-    cells[8], cells[9] = cells[9], cells[8]
+    # Orden de ejecución: YAMNet puntúa la voz y la puerta automática excluye clips ANTES de
+    # la celda de TRAINING_ALLOWED y del entrenamiento.
+    cells[9], cells[10], cells[11] = cells[10], cells[11], cells[9]
     notebook = {
         "cells": cells,
         "metadata": {
