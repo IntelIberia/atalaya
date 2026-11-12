@@ -28,3 +28,12 @@ sintéticos con prefijo `SIM`.
   `varint(longitud) ‖ Envelope`) y `file_sha256` (zstd nivel 10).
 - Por ahora solo se emite el latido `NodeStatus` de cada nodo cada 30 s simulados (datos
   sintéticos); trayectorias, sensores, red, fallos, replay con cabecera y MQTT llegan en T1.11–T1.16.
+
+## Trayectorias (T1.11, REQ-FUN-004)
+
+- `classes.py`: cinemática C1-C8 (crucero, máxima, aceleración y tasa de giro), cada valor con su
+  procedencia; **hoy todos NO VERIFICADO** (estimaciones; C6/C7 declarados, no medidos). C9 no vuela.
+- `trajectory.py`: `Trajectory(clase, puntos_de_paso, velocidad)` con tramos rectos y giros
+  coordinados (radio `max(v/ω, 2v²/a)`), altitud con `smoothstep` y, solo en C1-C2, arranque y
+  parada en reposo y vuelo estacionario (`hover_s`). Rutas imposibles → `ValueError` con la clase y
+  el límite. `state(t)` da posición, velocidad y aceleración ENU.
