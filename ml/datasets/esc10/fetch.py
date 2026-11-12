@@ -63,7 +63,9 @@ def _get(url: str, limit: int) -> bytes:
 
 def _blob_sha1(data: bytes) -> str:
     header = f"blob {len(data)}\0".encode("ascii")
-    return hashlib.sha1(header + data, usedforsecurity=False).hexdigest()
+    # SHA-1 = identificador de objeto de git, solo para comparar con el blob publicado por GitHub;
+    # no es un control criptográfico (semgrep: insecure-hash-algorithm-sha1). Integridad: SHA-256.
+    return hashlib.sha1(header + data, usedforsecurity=False).hexdigest()  # nosemgrep
 
 
 def _check_source(manifest: dict[str, Any]) -> None:
