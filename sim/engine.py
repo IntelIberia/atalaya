@@ -11,8 +11,10 @@ El flujo sin comprimir es una sucesión de `Envelope` precedidos por su longitud
 (delimitado como `writeDelimitedTo`); el `.pb.zst` es ese flujo comprimido con zstd de nivel fijo.
 El formato de replay con cabecera de versión y hash llega en T1.15.
 
-En esta tarea el único emisor es el latido `NodeStatus` de cada nodo cada 30 s simulados (estado
-sano, tiempo y batería sintéticos); trayectorias, sensores, red y fallos llegan en T1.11–T1.14.
+El emisor propio es el latido `NodeStatus` de cada nodo cada 30 s simulados (tiempo y batería
+sintéticos). Desde T1.13 respeta los fallos programados (`sim.faults`): un nodo caído no publica,
+el PPS perdido se refleja en `TimeQuality` y en la salud, y la deriva sin PPS desplaza el reloj.
+La red (latencia, pérdidas, duplicados, desorden) se aplica después con `sim.network`.
 """
 
 from __future__ import annotations
@@ -25,10 +27,11 @@ from typing import Any
 
 import zstandard
 from atalaya.v1.envelope_pb2 import Envelope
-from atalaya.v1.node_status_pb2 import NODE_HEALTH_HEALTHY, NodeStatus
+from atalaya.v1.node_status_pb2 import NODE_HEALTH_DEGRADED, NODE_HEALTH_HEALTHY, NodeStatus
 from google.protobuf.message import Message
 
 from sim import clock, geo
+from sim.faults import FaultSchedule
 from sim.rng import RngRegistry, check_seed
 from sim.scenario import Scenario
 
@@ -112,7 +115,9 @@ def _nodes(scenario: Scenario) -> list[dict[str, Any]]:
     ]
 
 
-def node_status_component(site: dict[str, Any], node: dict[str, Any]) -> Component:
+def node_status_component(
+    site: dict[str, Any], node: dict[str, Any], schedule: FaultSchedule | None = None
+) -> Component:
     """Latido `NodeStatus` periódico de un nodo, con fase, reloj y batería sintéticos."""
     node_id = node["id"]
     offset = node["offset_m"]
@@ -128,6 +133,7 @@ def node_status_component(site: dict[str, Any], node: dict[str, Any]) -> Compone
     location = (quantize(lat, DEGREE_STEP), quantize(lon, DEGREE_STEP), quantize(alt, METRE_STEP))
     pps = bool(node["pps"])
     period_ns = clock.seconds_to_ns(NODE_STATUS_PERIOD_S)
+    faults = schedule or FaultSchedule([])
 
     def setup(engine: Engine) -> None:
         phase = engine.rng(f"fase/{node_id}")
@@ -137,12 +143,19 @@ def node_status_component(site: dict[str, Any], node: dict[str, Any]) -> Compone
 
         def beat(e: Engine) -> None:
             elapsed_s = e.now_ns / clock.NS_PER_S
-            sigma_ms = 0.001 if pps else 20.0
+            e.schedule(e.now_ns + period_ns, beat)
+            if faults.is_down(node_id, elapsed_s):
+                return
+            pps_now = faults.pps_valid(node_id, elapsed_s, pps)
+            sigma_ms = clock.clock_sigma_ms(pps_now)
+            offset_ms = clock_rng.gauss(0.0, sigma_ms) + faults.drift_offset_ms(
+                node_id, elapsed_s, pps_now
+            )
             status = NodeStatus(
                 site_id=site["id"],
                 node_id=node_id,
                 observed_at=clock.to_timestamp(e.now_ns),
-                health=NODE_HEALTH_HEALTHY,
+                health=NODE_HEALTH_HEALTHY if pps_now == pps else NODE_HEALTH_DEGRADED,
                 battery_percent=quantize(
                     max(0.0, battery0 - BATTERY_DRAIN_PCT_PER_S * elapsed_s), PERCENT_STEP
                 ),
@@ -150,11 +163,10 @@ def node_status_component(site: dict[str, Any], node: dict[str, Any]) -> Compone
             )
             status.location.latitude_deg, status.location.longitude_deg = location[:2]
             status.location.altitude_m = location[2]
-            status.time_quality.pps_valid = pps
-            status.time_quality.clock_offset_ms = quantize(clock_rng.gauss(0.0, sigma_ms), MS_STEP)
+            status.time_quality.pps_valid = pps_now
+            status.time_quality.clock_offset_ms = quantize(offset_ms, MS_STEP)
             status.time_quality.uncertainty_ms = quantize(3 * sigma_ms, MS_STEP)
             e.emit(site["id"], node_id, status)
-            e.schedule(e.now_ns + period_ns, beat)
 
         engine.schedule(start_ns, beat)
 
@@ -177,8 +189,9 @@ def build_engine(
         raise ValueError(f"duración inválida: {duration_s!r} (segundos finitos > 0)")
     engine = Engine(seed, end_ns=clock.seconds_to_ns(duration_s))
     sites = {site["id"]: site for site in scenario.data["sites"]}
+    schedule = FaultSchedule(scenario.data["faults"])
     components: list[Component] = [
-        node_status_component(sites[node["site"]], node) for node in _nodes(scenario)
+        node_status_component(sites[node["site"]], node, schedule) for node in _nodes(scenario)
     ]
     components.extend(extra_components)
     for component in components:

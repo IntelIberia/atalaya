@@ -25,6 +25,8 @@ import yaml
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError, best_match
 
+from sim.faults import fault_problems
+
 SCHEMA_DIR = Path(__file__).resolve().parent / "schemas"
 SCENARIO_SCHEMA_PATH = SCHEMA_DIR / "scenario.schema.json"
 GEOMETRY_SCHEMA_PATH = SCHEMA_DIR / "nodes.geo.schema.json"
@@ -132,6 +134,8 @@ def validate_scenario(
             if item["id"] in ids:
                 raise ScenarioError(source, f"{group}/{index}/id", "duplicado")
             ids.add(item["id"])
+    for path, message in fault_problems(data["faults"]):
+        raise ScenarioError(source, path, message)
     if geometry is not None:
         _check_against_geometry(data, geometry, source)
     return data

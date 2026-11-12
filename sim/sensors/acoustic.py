@@ -36,6 +36,7 @@ from atalaya.v1.detection_pb2 import SENSOR_TYPE_ACOUSTIC, Detection
 from sim import acoustics, clock, geo
 from sim.acoustics import Vec3
 from sim.engine import Component, Engine
+from sim.faults import FaultSchedule
 from sim.scenario import Scenario
 from sim.trajectory import Trajectory, Waypoint
 
@@ -261,6 +262,7 @@ def build_detection(
     model: DetectionModel,
     rng: Random,
     clock_rng: Random,
+    drift_offset_ms: float = 0.0,
 ) -> Detection:
     """`Detection` acústica con sus incertidumbres (REQ-FUN-062)."""
     _, scores = model.classify(true_class, rng)  # la predicha es la de mayor puntuación
@@ -276,9 +278,11 @@ def build_detection(
         bearing_uncertainty_deg=_quantize(sigma, DEG_STEP),
         detection_confidence=math.floor(obs.detection_probability * _MICRO) / _MICRO,
     )
-    clock_sigma_ms = 0.001 if pps else 20.0
+    clock_sigma_ms = clock.clock_sigma_ms(pps)
     det.time_quality.pps_valid = pps
-    det.time_quality.clock_offset_ms = _quantize(clock_rng.gauss(0.0, clock_sigma_ms), MS_STEP)
+    det.time_quality.clock_offset_ms = _quantize(
+        clock_rng.gauss(0.0, clock_sigma_ms) + drift_offset_ms, MS_STEP
+    )
     det.time_quality.uncertainty_ms = _quantize(3 * clock_sigma_ms, MS_STEP)
     det.class_scores.extend(ClassScore(class_id=c, probability=p) for c, p in scores)
     for freq in sorted(obs.band_signal_db):
@@ -348,14 +352,13 @@ def acoustic_components(
         for f in scenario.geometry["features"]
         if f["properties"]["role"] == "node" and f["properties"]["kind"] in ACOUSTIC_NODE_KINDS
     ]
-    components: list[Component] = []
-    for node in nodes:
-        components.append(
-            _node_component(
-                node, centers, targets, environment, detector, speed_of_sound, period_ns
-            )
+    schedule = FaultSchedule(scenario.data["faults"])
+    return [
+        _node_component(
+            node, centers, targets, environment, detector, speed_of_sound, period_ns, schedule
         )
-    return components
+        for node in nodes
+    ]
 
 
 def _node_component(
@@ -366,6 +369,7 @@ def _node_component(
     model: DetectionModel,
     speed_of_sound: float,
     period_ns: int,
+    schedule: FaultSchedule,
 ) -> Component:
     node_id = node["id"]
     site_id = node["site"]
@@ -380,6 +384,12 @@ def _node_component(
 
         def tick(e: Engine) -> None:
             t_s = e.now_ns / clock.NS_PER_S
+            if e.end_ns is None or e.now_ns + period_ns <= e.end_ns:
+                e.schedule(e.now_ns + period_ns, tick)
+            if schedule.is_down(node_id, t_s):
+                return
+            pps_now = schedule.pps_valid(node_id, t_s, pps)
+            drift_ms = schedule.drift_offset_ms(node_id, t_s, pps_now)
             for target in targets:
                 now = _position(target, t_s)
                 if now is None:
@@ -404,14 +414,13 @@ def _node_component(
                     site_id=site_id,
                     node_id=node_id,
                     now_ns=e.now_ns,
-                    pps=pps,
+                    pps=pps_now,
                     model=model,
                     rng=rng,
                     clock_rng=clock_rng,
+                    drift_offset_ms=drift_ms,
                 )
                 e.emit(site_id, node_id, det)
-            if e.end_ns is None or e.now_ns + period_ns <= e.end_ns:
-                e.schedule(e.now_ns + period_ns, tick)
 
         engine.schedule(start_ns, tick)
 

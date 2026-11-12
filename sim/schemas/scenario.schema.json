@@ -165,7 +165,7 @@
         "required": ["kind", "node", "start_s", "duration_s"],
         "properties": {
           "kind": {
-            "enum": ["node_down", "pps_invalid", "clock_drift", "latency", "packet_loss", "duplicate", "reorder"]
+            "enum": ["node_down", "pps_invalid", "clock_drift", "latency", "packet_loss", "duplicate", "reorder", "link_down"]
           },
           "node": { "$ref": "#/$defs/identifier" },
           "start_s": { "type": "number", "minimum": 0 },
