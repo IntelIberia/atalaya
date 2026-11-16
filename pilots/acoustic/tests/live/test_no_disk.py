@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import ctypes
 import http.client
 import importlib.util
 import json
+import mmap
 import os
 import signal
 import socket
+import sqlite3
 import subprocess
 import sys
 import textwrap
@@ -111,6 +114,52 @@ def test_static_layer_catches_each_forbidden_pattern(snippet: str) -> None:
 
 def test_static_layer_allows_reading_and_scalar_logs() -> None:
     ok = "open('a.json', 'rb')\nlogger.info('estado %s p=%.2f', state, prob)\nprint(len(rows))\n"
+    assert scan_source(ok, "ok.py") == []
+
+
+# Revisión P1: rodeos que la versión anterior del análisis estático dejaba pasar.
+@pytest.mark.parametrize(
+    "snippet",
+    [
+        "import subprocess",
+        "import urllib.request",
+        "from urllib import request",
+        "import socket",
+        "import ctypes",
+        "import http.client",
+        "from http import client",
+        "import importlib",
+        "import multiprocessing",
+        "import mmap",
+        "import shutil",
+        "import zipfile",
+        "from logging.handlers import RotatingFileHandler",
+        "logging.basicConfig(filename='a.log')",
+        "logging.FileHandler('a.log')",
+        "h = logging.FileHandler\nh('a.log')",
+        "getattr(np, 'save')(p, buf)",
+        "getattr(os, name)(fd)",
+        "getattr(obj, 'tofile')(p)",
+        "__import__('wave')",
+        "importlib.import_module('pickle')",
+        "sf = np.save\nsf(p, x)",
+        "f = buf.tofile\nf(p)",
+        "from numpy import save as guardar",
+        "logger.info('%s', data)",
+        "print(chunk)",
+        "print(frames)",
+    ],
+)
+def test_static_layer_catches_evasions(snippet: str) -> None:
+    assert scan_source(snippet, "bad.py"), snippet
+
+
+def test_static_layer_allows_the_local_server_imports() -> None:
+    ok = (
+        "from urllib.parse import parse_qs, urlsplit\n"
+        "from http.server import ThreadingHTTPServer\n"
+        "x = getattr(status, 'input_overflow', False)\n"
+    )
     assert scan_source(ok, "ok.py") == []
 
 
@@ -259,6 +308,61 @@ def test_record_only_mode_does_not_block(tmp_path: Path) -> None:
     with WriteAudit(block=False) as audit:
         (tmp_path / "x.txt").write_text("x", encoding="utf-8")
     assert len(audit.events) == 1
+
+
+# Revisión P1: ejecución de procesos, bibliotecas nativas y bases de datos durante la sesión.
+@pytest.mark.parametrize(
+    "action",
+    [
+        pytest.param(
+            lambda d: subprocess.run(["/bin/sh", "-c", f"echo x > {d}/sub.raw"], check=False),
+            id="subprocess",
+        ),
+        pytest.param(lambda d: os.system(f"echo x > {d}/sys.raw"), id="os.system"),  # noqa: S605
+        pytest.param(
+            lambda d: sqlite3.connect(str(d / "db.sqlite")).execute("create table t(x)"),
+            id="sqlite3",
+        ),
+        pytest.param(lambda d: ctypes.CDLL("libc.dylib"), id="ctypes"),
+        pytest.param(lambda d: mmap.mmap(-1, 4096), id="mmap"),
+        pytest.param(
+            lambda d: os.posix_spawn("/usr/bin/true", ["true"], dict(os.environ)),
+            id="posix_spawn",
+        ),
+        pytest.param(
+            lambda d: socket.socket(socket.AF_INET, socket.SOCK_DGRAM).bind(("0.0.0.0", 0)),  # noqa: S104
+            id="bind-no-local",
+        ),
+    ],
+)
+def test_dynamic_layer_blocks_process_native_and_db_escapes(tmp_path: Path, action) -> None:
+    with WriteAudit() as audit, pytest.raises(AuditViolation):
+        action(tmp_path)
+    assert audit.events
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    ("event", "args"),
+    [
+        ("os.fork", ()),
+        ("os.forkpty", ()),
+        ("os.exec", ("/bin/sh", ["sh"], None)),
+        ("os.spawn", (0, "/bin/sh", ["sh"], None)),
+        ("os.posix_spawn", ("/bin/sh", ["sh"], None)),
+        ("ctypes.dlopen", ("libc.dylib",)),
+        ("sqlite3.connect", ("db.sqlite",)),
+        ("mmap.__new__", (3, 4096, 0, 0)),
+        ("tempfile.mkstemp", ("/tmp/x",)),  # noqa: S108
+        ("os.chown", ("/tmp/x", 0, 0, -1)),  # noqa: S108
+    ],
+)
+def test_dynamic_layer_blocks_dangerous_events(event: str, args: tuple) -> None:
+    # Eventos que no conviene provocar de verdad dentro de pytest (fork, exec): se emiten con
+    # sys.audit, que recorre los mismos ganchos.
+    with WriteAudit() as audit, pytest.raises(AuditViolation):
+        sys.audit(event, *args)
+    assert audit.events
 
 
 def test_snapshot_detects_new_files(tmp_path: Path) -> None:

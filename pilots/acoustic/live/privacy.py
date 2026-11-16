@@ -12,9 +12,16 @@ Tres capas, todas usadas por ``tests/live/test_no_disk.py`` y por la ejecución 
 (c) **Proceso**: ``disable_core_dumps`` (``RLIMIT_CORE = 0``) e ``install_wipe_on_signals``
     (borrado del búfer ante SIGINT/SIGTERM).
 
-Riesgo residual declarado: la memoria del proceso puede paginarse a la swap del sistema; no se
-puede impedir desde Python sin privilegios (macOS cifra la swap; comprobado con ``sysctl
-vm.swapusage`` en el registro de tareas).
+Riesgos residuales declarados (no se eliminan, se documentan):
+
+- la memoria del proceso puede paginarse a la swap del sistema; no se puede impedir desde Python
+  sin privilegios (la swap de este Mac está cifrada: ``sysctl vm.swapusage`` → ``encrypted``);
+- el gancho solo ve lo que pasa por Python: una escritura hecha desde **código nativo**
+  (onnxruntime, PortAudio, CoreAudio) no genera eventos de auditoría. Se mitiga con las
+  instantáneas de directorios y con opciones de onnxruntime que no escriben (sin perfilado ni
+  modelo optimizado a disco), pero no se puede probar desde Python;
+- otros procesos del sistema con permiso de micrófono (``coreaudiod``) y los informes de fallo de
+  macOS quedan fuera del alcance de este proceso.
 """
 
 from __future__ import annotations
@@ -37,6 +44,7 @@ LIVE_DIR = Path(__file__).resolve().parent
 
 FORBIDDEN_MODULES = frozenset(
     {
+        # sonido y serialización
         "wave",
         "aifc",
         "sunau",
@@ -51,22 +59,106 @@ FORBIDDEN_MODULES = frozenset(
         "sqlite3",
         "dbm",
         "tempfile",
-        "scipy.io.wavfile",
         "scipy.io",
+        # ficheros y archivos comprimidos
+        "io",
+        "codecs",
+        "builtins",
+        "shutil",
+        "mmap",
+        "zipfile",
+        "tarfile",
+        "gzip",
+        "bz2",
+        "lzma",
+        "logging.handlers",
+        # procesos, código nativo e importación dinámica
+        "subprocess",
+        "multiprocessing",
+        "pty",
+        "asyncio",
+        "ctypes",
+        "cffi",
+        "importlib",
+        "webbrowser",
+        # red (el servidor local usa http.server; ver ALLOWED_MODULES)
+        "socket",
+        "socketserver",
+        "ssl",
+        "urllib",
+        "http.client",
+        "ftplib",
+        "smtplib",
+        "xmlrpc",
+        "requests",
+        "httpx",
     }
 )
+# Excepciones acotadas y justificadas: ``live/server.py`` necesita ``http.server`` (que usa
+# ``socket`` por dentro y se enlaza solo a 127.0.0.1, comprobado en tests y por el gancho de
+# auditoría) y ``urllib.parse`` (solo analiza texto de la URL, sin red).
+ALLOWED_MODULES = frozenset({"http.server", "urllib.parse"})
 FORBIDDEN_NUMPY_CALLS = frozenset(
-    {"save", "savez", "savez_compressed", "savetxt", "tofile", "memmap", "dump"}
+    {"save", "savez", "savez_compressed", "savetxt", "tofile", "memmap", "dump", "lib"}
 )
 FORBIDDEN_METHODS = frozenset({"write_bytes", "write_text", "tofile", "dump"})
-FORBIDDEN_OS_CALLS = frozenset({"open", "write", "pwrite", "writev", "replace", "rename"})
+FORBIDDEN_OS_CALLS = frozenset(
+    {
+        "open",
+        "write",
+        "pwrite",
+        "writev",
+        "replace",
+        "rename",
+        "system",
+        "popen",
+        "fork",
+        "forkpty",
+        "posix_spawn",
+        "posix_spawnp",
+        "execv",
+        "execve",
+        "execl",
+        "execle",
+        "execlp",
+        "execlpe",
+        "execvp",
+        "execvpe",
+        "spawnv",
+        "spawnve",
+        "spawnl",
+        "spawnle",
+        "spawnlp",
+        "spawnlpe",
+        "spawnvp",
+        "spawnvpe",
+        "startfile",
+        "mkfifo",
+        "mknod",
+    }
+)
+FORBIDDEN_ATTRS = frozenset(
+    {
+        "FileHandler",
+        "RotatingFileHandler",
+        "TimedRotatingFileHandler",
+        "WatchedFileHandler",
+        "import_module",
+        "__import__",
+    }
+)
+# Módulos de E/S sobre los que ``getattr`` dinámico se trata como un rodeo.
+IO_MODULE_NAMES = frozenset(
+    {"np", "numpy", "os", "io", "sys", "shutil", "builtins", "logging", "pathlib", "codecs"}
+)
 LOG_FUNCS = frozenset(
     {"print", "debug", "info", "warning", "warn", "error", "exception", "critical", "log"}
 )
 # Identificadores que contienen sonido o representaciones suyas: no pueden ir a logs ni a print.
 SIGNAL_NAMES = re.compile(
     r"(?i)^(samples?|window|block|indata|emb|embeddings?|scores|audio|buf|segment|resampled|"
-    r"arr|wave|signal|ring)$"
+    r"arr|wave|signal|ring|data|chunks?|frames?|pcm|sound|waveform|mel|spec(trogram)?|"
+    r"features?)$"
 )
 # Único módulo que podrá abrir un fichero en escritura (H2.13, resumen sin sonido).
 EXPORT_ALLOWLIST: frozenset[str] = frozenset({"export.py"})
@@ -118,7 +210,29 @@ def _signal_args(call: ast.Call) -> list[str]:
     return hits
 
 
+def _module_forbidden(name: str) -> bool:
+    parts = name.split(".")
+    for i in range(len(parts), 0, -1):  # el prefijo más largo decide
+        prefix = ".".join(parts[:i])
+        if prefix in ALLOWED_MODULES:
+            return False
+        if prefix in FORBIDDEN_MODULES:
+            return True
+    return False
+
+
+def _forbidden_attr(head: str, attr: str, allow_write: bool) -> bool:
+    return (
+        (head in {"np", "numpy"} and attr in FORBIDDEN_NUMPY_CALLS)
+        or (head == "os" and attr in FORBIDDEN_OS_CALLS)
+        or (attr in FORBIDDEN_METHODS and not allow_write)
+        or attr in FORBIDDEN_ATTRS
+    )
+
+
 def scan_source(source: str, filename: str) -> list[Violation]:
+    """Análisis estático. Se comprueban **referencias**, no solo llamadas, para atrapar alias
+    (``sf = np.save``), ``getattr`` dinámico sobre módulos de E/S e importaciones dinámicas."""
     tree = ast.parse(source, filename=filename)
     out: list[Violation] = []
     allow_write = Path(filename).name in EXPORT_ALLOWLIST
@@ -129,33 +243,45 @@ def scan_source(source: str, filename: str) -> list[Violation]:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                if alias.name in FORBIDDEN_MODULES or alias.name.split(".")[0] in FORBIDDEN_MODULES:
+                if _module_forbidden(alias.name):
                     add(node, "import-prohibido", alias.name)
         elif isinstance(node, ast.ImportFrom):
             module = node.module or ""
-            full = {f"{module}.{a.name}" for a in node.names} | {module}
-            if any(m in FORBIDDEN_MODULES or m.split(".")[0] in FORBIDDEN_MODULES for m in full):
-                add(node, "import-prohibido", module)
-            if module in {"numpy", "os"}:
-                bad = FORBIDDEN_NUMPY_CALLS if module == "numpy" else FORBIDDEN_OS_CALLS
-                for alias in node.names:
-                    if alias.name in bad:
-                        add(node, "llamada-prohibida", f"{module}.{alias.name}")
-        elif isinstance(node, ast.Call):
-            name = _dotted(node.func)
-            head, _, attr = name.rpartition(".")
-            if name == "open" or name in {"io.open", "builtins.open"}:
-                mode = _mode_of_open(node)
-                if (mode == "?" or _WRITE_MODE.search(mode or "")) and not allow_write:
-                    add(node, "open-escritura", f"open(..., {mode!r})")
-            elif (
-                (head in {"np", "numpy"} and attr in FORBIDDEN_NUMPY_CALLS)
-                or (head == "os" and attr in FORBIDDEN_OS_CALLS)
-                or (attr in FORBIDDEN_METHODS and not allow_write)
+            if _module_forbidden(module) or any(
+                _module_forbidden(f"{module}.{a.name}") for a in node.names
             ):
-                add(node, "llamada-prohibida", name)
-            if (name in LOG_FUNCS or attr in LOG_FUNCS) and (hits := _signal_args(node)):
-                add(node, "sonido-en-log", f"{name}({', '.join(hits)})")
+                add(node, "import-prohibido", module)
+            if module in {"numpy", "os", "logging"}:
+                for alias in node.names:
+                    if _forbidden_attr(
+                        {"numpy": "np"}.get(module, module), alias.name, allow_write
+                    ):
+                        add(node, "llamada-prohibida", f"{module}.{alias.name}")
+        elif isinstance(node, ast.Name) and node.id in FORBIDDEN_ATTRS:
+            add(node, "llamada-prohibida", node.id)
+        elif isinstance(node, ast.Attribute):
+            head = _dotted(node.value)
+            if _forbidden_attr(head, node.attr, allow_write):
+                add(node, "llamada-prohibida", f"{head}.{node.attr}" if head else node.attr)
+        if not isinstance(node, ast.Call):
+            continue
+        name = _dotted(node.func)
+        head, _, attr = name.rpartition(".")
+        if name == "open" or name in {"io.open", "builtins.open"}:
+            mode = _mode_of_open(node)
+            if (mode == "?" or _WRITE_MODE.search(mode or "")) and not allow_write:
+                add(node, "open-escritura", f"open(..., {mode!r})")
+        if name == "getattr" and len(node.args) >= 2:
+            target, key = node.args[0], node.args[1]
+            const = key.value if isinstance(key, ast.Constant) else None
+            if (isinstance(target, ast.Name) and target.id in IO_MODULE_NAMES) or (
+                isinstance(const, str) and _forbidden_attr("np", const, allow_write)
+            ):
+                add(node, "getattr-dinamico", ast.unparse(node)[:60])
+        if attr == "basicConfig" and any(k.arg in {"filename", "handlers"} for k in node.keywords):
+            add(node, "log-a-fichero", name)
+        if (name in LOG_FUNCS or attr in LOG_FUNCS) and (hits := _signal_args(node)):
+            add(node, "sonido-en-log", f"{name}({', '.join(hits)})")
     return out
 
 
@@ -171,6 +297,7 @@ def scan_package(directory: Path = LIVE_DIR) -> list[Violation]:
 _WRITE_FLAGS = os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_APPEND | os.O_TRUNC
 _FS_EVENTS = frozenset(
     {
+        # sistema de ficheros
         "os.rename",
         "os.remove",
         "os.rmdir",
@@ -179,15 +306,47 @@ _FS_EVENTS = frozenset(
         "os.link",
         "os.symlink",
         "os.chmod",
+        "os.chown",
+        "os.chflags",
+        "os.lchflags",
+        "os.lchmod",
+        "os.lchown",
+        "os.mkfifo",
+        "os.mknod",
+        "os.setxattr",
+        "os.removexattr",
         "os.utime",
         "shutil.copyfile",
         "shutil.copymode",
         "shutil.copystat",
         "shutil.copytree",
+        "shutil.chown",
         "shutil.move",
         "shutil.rmtree",
         "shutil.make_archive",
         "shutil.unpack_archive",
+        "tempfile.mkstemp",
+        "tempfile.mkdtemp",
+        "mmap.__new__",
+        "sqlite3.connect",
+        "sqlite3.connect/handle",
+        "sqlite3.enable_load_extension",
+        "sqlite3.load_extension",
+        # procesos y código nativo (un hijo o una biblioteca escaparían del gancho)
+        "subprocess.Popen",
+        "os.system",
+        "os.exec",
+        "os.spawn",
+        "os.posix_spawn",
+        "os.fork",
+        "os.forkpty",
+        "os.startfile",
+        "pty.spawn",
+        "ctypes.dlopen",
+        "ctypes.dlsym",
+        "ctypes.dlsym/handle",
+        # red no local por URL
+        "urllib.Request",
     }
 )
 _LOCAL_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
@@ -226,8 +385,10 @@ def _hook(event: str, args: tuple[Any, ...]) -> None:
         reason = f"open en escritura: {args[0]!r}"
     elif event in _FS_EVENTS:
         reason = f"{event}: {args[0]!r}" if args else event
-    elif event in {"socket.connect", "socket.sendto"} and _is_remote(args[1]):
-        reason = f"{event} a destino no local: {args[1]!r}"
+    elif event in {"socket.connect", "socket.sendto", "socket.sendmsg", "socket.bind"} and (
+        len(args) < 2 or _is_remote(args[1])
+    ):
+        reason = f"{event} a destino no local: {args[1:2]!r}"
     if reason is None:
         return
     for audit in list(_AuditState.active):
