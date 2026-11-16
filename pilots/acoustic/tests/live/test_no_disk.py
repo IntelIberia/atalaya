@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import http.client
 import importlib.util
+import json
 import os
 import signal
 import socket
@@ -17,9 +19,11 @@ import pytest
 from live_helpers import write_artifact
 
 from live import privacy
+from live.alert import AlertMachine
 from live.artifact import load_artifact
 from live.capture import CaptureEngine
 from live.privacy import AuditViolation, WriteAudit, scan_package, scan_source, snapshot
+from live.server import AlertBoard, LocalAlertServer
 from live.synthetic import SyntheticSource, harmonic_comb
 
 pytestmark = pytest.mark.req("REQ-PRIV-002", "REQ-LEG-005", "REQ-LEG-006", "REQ-PRIV-003")
@@ -132,21 +136,55 @@ def test_full_simulated_session_writes_nothing(tmp_path: Path, monkeypatch) -> N
 
     src = SyntheticSource(48_000, harmonic_comb(), seed=7)
     engine = CaptureEngine(src)
-    inferred = 0
+    machine = AlertMachine(loaded.config.alert)
+    board = AlertBoard()
+    inferred = statuses = 0
     with WriteAudit() as audit:
+        page = LocalAlertServer(board, 0)  # la página va incluida en la sesión auditada
+        page.start_in_thread()
         engine.start()
-        for _ in range(120 * 4):  # 120 s simulados en bloques de 0,25 s
+        for step in range(120 * 4):  # 120 s simulados en bloques de 0,25 s
             src.pump(0.25)
             while (window := engine.next_window()) is not None:
                 emb, scores = loaded.model.infer(window.samples)
+                # Probabilidad de juguete (el clasificador real es H2.10): solo un escalar sale.
+                prob = 0.9 if (inferred // 20) % 2 else 0.1
+                d = machine.update(window.start / 16_000, probability=prob)
+                board.publish({"state": d.state.value, "probability": d.probability})
                 inferred += 1
                 del emb, scores, window
+            if step % 40 == 0:
+                statuses += _exercise_page(page, board)
         engine.stop()
+        page.stop()
 
     assert audit.events == []
-    assert inferred >= 240
+    assert inferred >= 240 and statuses == 12 * 4
     assert snapshot(watched) == before
     assert not engine.ring.raw_view_for_tests().any()
+
+
+def _exercise_page(page: LocalAlertServer, board: AlertBoard) -> int:
+    """GET de la página, del estado y de eventos, y un POST de etiqueta; devuelve los 200."""
+    port = page.server_address[1]
+    ok = 0
+    for method, path, body in (
+        ("GET", "/", None),
+        ("GET", "/state", None),
+        ("POST", "/label", json.dumps({"label": "dron"}).encode()),
+    ):
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+        headers = {"X-Atalaya-Token": board.token, "Content-Type": "application/json"}
+        conn.request(method, path, body=body, headers=headers)
+        ok += conn.getresponse().status == 200
+        conn.close()
+    page.max_events = 1
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+    conn.request("GET", f"/events?token={board.token}")
+    resp = conn.getresponse()
+    ok += resp.status == 200 and resp.read().startswith(b"data: ")
+    conn.close()
+    return ok
 
 
 # wave.Wave_write.__del__ falla al limpiar un fichero que nunca llegó a abrirse: es lo esperado.
