@@ -436,6 +436,74 @@ def snapshot(directories: Iterable[Path]) -> dict[str, tuple[int, int]]:
     return state
 
 
+# Extensiones de ficheros que delatarían sonido, arrays o volcados (revisión P7).
+SENSITIVE_SUFFIXES = frozenset(
+    {
+        ".wav",
+        ".wave",
+        ".flac",
+        ".ogg",
+        ".oga",
+        ".opus",
+        ".mp3",
+        ".m4a",
+        ".aac",
+        ".aif",
+        ".aiff",
+        ".caf",
+        ".raw",
+        ".pcm",
+        ".npy",
+        ".npz",
+        ".pkl",
+        ".pickle",
+        ".joblib",
+        ".sqlite",
+        ".db",
+        ".core",
+        ".dmp",
+    }
+)
+
+
+def default_watch_roots() -> list[tuple[Path, int]]:
+    """Directorios REALES a vigilar en una sesión: temporal del sistema, HOME y ``/cores``.
+
+    El HOME sale de la base de usuarios (``pwd``), no de ``$HOME``, para que un entorno aislado
+    no oculte el HOME real. Profundidad acotada para que la vigilancia tarde < 1 s.
+    """
+    import pwd
+
+    tmp = os.environ.get("TMPDIR") or "/tmp"  # noqa: S108 (solo se lee)
+    # Profundidad 2: más abajo están los tmp_path de pytest de otros procesos (falsos positivos).
+    roots = [(Path(tmp), 2), (Path(pwd.getpwuid(os.getuid()).pw_dir), 2)]
+    if Path("/cores").is_dir():
+        roots.append((Path("/cores"), 1))
+    return roots
+
+
+def snapshot_roots(
+    roots: Iterable[tuple[Path, int]], suffixes: frozenset[str] = SENSITIVE_SUFFIXES
+) -> dict[str, tuple[int, int]]:
+    """Como ``snapshot`` pero con profundidad máxima y solo ficheros con extensión sensible."""
+    state: dict[str, tuple[int, int]] = {}
+    for base, depth in roots:
+        base_depth = len(Path(base).parts)
+        for root, dirs, files in os.walk(base):
+            if len(Path(root).parts) - base_depth >= depth:
+                dirs[:] = []
+            for name in files:
+                if Path(name).suffix.lower() not in suffixes and not name.startswith("core."):
+                    continue
+                path = Path(root, name)
+                try:
+                    st = path.stat()
+                except OSError:
+                    continue
+                state[str(path)] = (st.st_size, st.st_mtime_ns)
+    return state
+
+
 # --- (c) proceso -------------------------------------------------------------------------
 
 

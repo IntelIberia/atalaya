@@ -183,6 +183,10 @@ def test_full_simulated_session_writes_nothing(tmp_path: Path, monkeypatch) -> N
     loaded = load_artifact(json_path, hashes_file=hashes)  # la carga lee; sucede antes
     watched = [tmp_path, home, PILOT_DIR / "live"]
     before = snapshot(watched)
+    # Revisión P7: también el directorio temporal REAL y el HOME REAL (no solo los aislados),
+    # filtrando por extensiones sensibles para no depender de otros procesos del Mac.
+    real_roots = privacy.default_watch_roots()
+    real_before = privacy.snapshot_roots(real_roots)
 
     src = SyntheticSource(48_000, harmonic_comb(), seed=7)
     engine = CaptureEngine(src)
@@ -211,6 +215,7 @@ def test_full_simulated_session_writes_nothing(tmp_path: Path, monkeypatch) -> N
     assert audit.events == []
     assert inferred >= 240 and statuses == 12 * 4
     assert snapshot(watched) == before
+    assert privacy.snapshot_roots(real_roots) == real_before
     assert not engine.ring.raw_view_for_tests().any()
 
 
@@ -364,6 +369,30 @@ def test_dynamic_layer_blocks_dangerous_events(event: str, args: tuple) -> None:
     with WriteAudit() as audit, pytest.raises(AuditViolation):
         sys.audit(event, *args)
     assert audit.events
+
+
+def test_default_watch_roots_are_the_real_tmp_and_home(monkeypatch, tmp_path: Path) -> None:
+    import pwd
+    import tempfile
+
+    monkeypatch.setenv("HOME", str(tmp_path))  # el HOME aislado no engaña a la vigilancia
+    roots = {os.path.realpath(path) for path, _depth in privacy.default_watch_roots()}
+    assert os.path.realpath(tempfile.gettempdir()) in roots
+    assert os.path.realpath(pwd.getpwuid(os.getuid()).pw_dir) in roots
+
+
+def test_real_tmp_snapshot_detects_a_new_wav() -> None:
+    import tempfile
+    import uuid
+
+    roots = privacy.default_watch_roots()
+    before = privacy.snapshot_roots(roots)
+    leak = Path(tempfile.gettempdir()) / f"atalaya-p7-{uuid.uuid4().hex}.wav"
+    try:
+        leak.write_bytes(b"\x00")
+        assert privacy.snapshot_roots(roots) != before
+    finally:
+        leak.unlink()
 
 
 def test_snapshot_detects_new_files(tmp_path: Path) -> None:
