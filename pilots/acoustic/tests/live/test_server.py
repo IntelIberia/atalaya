@@ -238,3 +238,24 @@ def test_requests_are_not_logged(running: LocalAlertServer, capsys) -> None:
     captured = capsys.readouterr()
     assert running.board.token not in captured.err + captured.out
     assert "GET" not in captured.err
+
+
+# --- Revisión P8: sensibilidad declarada junto al esquema -------------------------------
+
+
+def test_every_event_field_declares_operator_sensitivity() -> None:
+    allowed = {"PUBLIC", "OPERATOR", "FCSE_ONLY"}
+    assert set(srv.EVENT_SCHEMA) == set(srv.EVENT_KEYS)
+    assert set(srv.EVENT_SCHEMA.values()) <= allowed
+    assert all(v == "OPERATOR" for v in srv.EVENT_SCHEMA.values())
+    assert srv.LABEL_SENSITIVITY == "OPERATOR"
+    assert srv.BANNER_SENSITIVITY == "PUBLIC"
+
+
+def test_snapshot_only_emits_declared_fields() -> None:
+    board = AlertBoard()
+    board.publish({k: None for k in srv.EVENT_KEYS if k != "state"})
+    board.add_label("dron")
+    _, event = board.snapshot()
+    declared = set(srv.EVENT_SCHEMA) | {"banner"}
+    assert set(event) <= declared

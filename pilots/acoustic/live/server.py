@@ -36,21 +36,27 @@ LABELS: Mapping[str, str] = {
     "silencio": "Silencio",
     "fin": "Fin del tramo",
 }
-EVENT_KEYS = frozenset(
-    {
-        "state",
-        "probability",
-        "t",
-        "latency_ms",
-        "windows",
-        "speech_windows",
-        "alerts",
-        "overruns",
-        "alert_active",
-        "label",
-        "model_id",
-    }
-)
+# Sensibilidad de cada campo (niveles del producto: PUBLIC / OPERATOR / FCSE_ONLY, REQ-FUN-002).
+# Todo lo que ve la página es OPERATOR: estado de un sensor en una vivienda, no apto para
+# publicarse. Ningún campo es FCSE_ONLY ni identifica a nadie (revisión P8).
+EVENT_SCHEMA: Mapping[str, str] = {
+    "state": "OPERATOR",
+    "probability": "OPERATOR",
+    "t": "OPERATOR",
+    "latency_ms": "OPERATOR",
+    "windows": "OPERATOR",
+    "speech_windows": "OPERATOR",
+    "alerts": "OPERATOR",
+    "overruns": "OPERATOR",
+    "alert_active": "OPERATOR",
+    "label": "OPERATOR",
+    "model_id": "OPERATOR",
+}
+EVENT_KEYS = frozenset(EVENT_SCHEMA)
+# Etiquetas de tramo puestas por el usuario: OPERATOR (cuándo reproducía qué en su casa).
+LABEL_SENSITIVITY = "OPERATOR"
+# Rótulo fijo, igual para todos.
+BANNER_SENSITIVITY = "PUBLIC"
 MAX_BODY = 512
 MAX_LABELS = 10_000
 SSE_INTERVAL_S = 0.5
