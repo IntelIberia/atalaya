@@ -9,8 +9,8 @@ Tres capas, todas usadas por ``tests/live/test_no_disk.py`` y por la ejecución 
 (b) **Dinámica** (``WriteAudit``): gancho ``sys.addaudithook`` que, mientras está activo, bloquea
     y registra aperturas en escritura, renombrados, borrados, copias de ``shutil`` y conexiones de
     red a destinos que no sean locales; ``snapshot`` compara directorios antes y después.
-(c) **Proceso**: ``disable_core_dumps`` (``RLIMIT_CORE = 0``) e ``install_wipe_on_signals``
-    (borrado del búfer ante SIGINT/SIGTERM).
+(c) **Proceso**: ``disable_core_dumps`` (``RLIMIT_CORE = 0``) y ``stop_on_signals`` (SIGINT/SIGTERM
+    solo marcan la parada; el bucle principal cierra y borra el búfer en su ``finally``).
 
 Riesgos residuales declarados (no se eliminan, se documentan):
 
@@ -33,7 +33,7 @@ import resource
 import signal
 import sys
 import threading
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -445,19 +445,36 @@ def disable_core_dumps() -> tuple[int, int]:
     return resource.getrlimit(resource.RLIMIT_CORE)
 
 
+class StopRequest:
+    """Petición de parada marcada por SIGINT/SIGTERM.
+
+    El manejador **solo asigna un atributo**: no toma cerrojos, no hace E/S y no lanza. Así no
+    puede interbloquearse si la señal llega mientras el hilo principal tiene tomado el cerrojo
+    del búfer (revisión P2). El bucle principal consulta ``requested`` y, en su ``finally``,
+    llama a ``stop()`` del motor, que cierra el origen y borra el búfer.
+    """
+
+    def __init__(self) -> None:
+        self.signum: int | None = None
+
+    def _on_signal(self, signum: int, frame: FrameType | None) -> None:
+        self.signum = signum
+
+    @property
+    def requested(self) -> bool:
+        return self.signum is not None
+
+    def exit_code(self) -> int:
+        return 0 if self.signum is None else 128 + self.signum
+
+
 @contextmanager
-def install_wipe_on_signals(wipe: Callable[[], None]) -> Iterator[Callable[[int, Any], None]]:
-    """Ante SIGINT/SIGTERM borra el búfer y termina; restaura los manejadores al salir."""
-
-    def _handler(signum: int, frame: FrameType | None) -> None:
-        wipe()
-        if signum == signal.SIGINT:
-            raise KeyboardInterrupt
-        raise SystemExit(128 + signum)
-
-    previous = {s: signal.signal(s, _handler) for s in (signal.SIGINT, signal.SIGTERM)}
+def stop_on_signals() -> Iterator[StopRequest]:
+    """Instala el manejador de SIGINT/SIGTERM durante la sesión y restaura los anteriores."""
+    request = StopRequest()
+    previous = {s: signal.signal(s, request._on_signal) for s in (signal.SIGINT, signal.SIGTERM)}
     try:
-        yield _handler
+        yield request
     finally:
         for s, h in previous.items():
             signal.signal(s, h)

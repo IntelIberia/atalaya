@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import ctypes
 import http.client
 import importlib.util
@@ -389,24 +390,65 @@ def test_core_dumps_disabled_in_a_fresh_process() -> None:
     assert out == "(0, 0) (0, 0)"
 
 
-def test_sigterm_wipes_the_buffer() -> None:
-    src = SyntheticSource(16_000, harmonic_comb(), seed=8)
+# Revisión P2: el manejador de señal no toma cerrojos; solo marca la petición de parada y el
+# bucle principal hace stop()/wipe(). Se prueba con la señal REAL llegando con el cerrojo del
+# búfer tomado (con el diseño anterior el proceso se quedaba interbloqueado).
+SIGNAL_SCRIPT = textwrap.dedent(
+    """
+    import os, signal, sys
+    from live.capture import CaptureEngine
+    from live.privacy import stop_on_signals
+    from live.synthetic import SyntheticSource, noise
+
+    src = SyntheticSource(16_000, noise(0.2), seed=1)
     engine = CaptureEngine(src)
-    engine.start()
-    src.pump(2.0)
-    assert engine.ring.raw_view_for_tests().any()
-    with privacy.install_wipe_on_signals(engine.stop), pytest.raises(SystemExit) as exc:
-        os.kill(os.getpid(), signal.SIGTERM)
-    assert exc.value.code == 128 + signal.SIGTERM
-    assert not engine.ring.raw_view_for_tests().any() and src.stopped
+    with stop_on_signals() as stop:
+        try:
+            engine.start()
+            src.pump(2.0)
+            with engine.ring._lock:  # la señal llega con el cerrojo tomado
+                os.kill(os.getpid(), signal.SIG{name})
+                sum(range(10_000))
+            while not stop.requested:
+                src.pump(0.1)
+                engine.next_window()
+        finally:
+            engine.stop()
+    print("borrado", not engine.ring.raw_view_for_tests().any(), src.stopped, flush=True)
+    sys.exit(stop.exit_code())
+    """
+)
 
 
-def test_sigint_wipes_the_buffer() -> None:
-    src = SyntheticSource(16_000, harmonic_comb(), seed=9)
-    engine = CaptureEngine(src)
-    engine.start()
-    src.pump(1.0)
-    with privacy.install_wipe_on_signals(engine.stop) as handler, pytest.raises(KeyboardInterrupt):
-        handler(signal.SIGINT, None)
-    assert not engine.ring.raw_view_for_tests().any()
+@pytest.mark.parametrize("name", ["TERM", "INT"])
+def test_real_signal_with_lock_held_wipes_and_exits(name: str) -> None:
+    proc = subprocess.run(  # noqa: S603 (intérprete propio, sin shell)
+        [sys.executable, "-c", SIGNAL_SCRIPT.replace("{name}", name)],
+        cwd=PILOT_DIR,
+        capture_output=True,
+        text=True,
+        timeout=20,  # un interbloqueo haría saltar este límite
+    )
+    signum = getattr(signal, f"SIG{name}")
+    assert proc.stdout.strip() == "borrado True True", proc.stderr
+    assert proc.returncode == 128 + signum
+
+
+def test_stop_handler_only_marks_and_restores_handlers() -> None:
+    previous = signal.getsignal(signal.SIGTERM)
+    with privacy.stop_on_signals() as stop:
+        assert not stop.requested and stop.exit_code() == 0
+        handler = signal.getsignal(signal.SIGTERM)
+        handler(signal.SIGTERM, None)  # no lanza, no toma cerrojos, no borra por sí mismo
+        assert stop.requested and stop.exit_code() == 128 + signal.SIGTERM
+    assert signal.getsignal(signal.SIGTERM) == previous
     assert signal.getsignal(signal.SIGINT) is signal.default_int_handler
+
+
+def test_stop_handler_source_has_no_locks_or_calls() -> None:
+    import inspect
+
+    source = inspect.getsource(privacy.StopRequest._on_signal)
+    body = ast.parse(textwrap.dedent(source)).body[0].body
+    calls = [n for stmt in body for n in ast.walk(stmt) if isinstance(n, ast.Call)]
+    assert calls == [], "el manejador solo puede asignar un atributo"
