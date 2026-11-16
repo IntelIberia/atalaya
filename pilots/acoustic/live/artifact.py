@@ -30,6 +30,8 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from live.alert import AlertConfig
+
 DEFAULT_HASHES_FILE = Path(__file__).resolve().with_name("MODEL_HASHES")
 SCHEMA_VERSION = 1
 SAMPLE_RATE = 16_000
@@ -92,7 +94,7 @@ class ModelConfig:
     platt_b: float
     speech_class_indices: tuple[int, ...]
     speech_threshold: float
-    alert: Mapping[str, float | int]
+    alert: AlertConfig
     normalization: Mapping[str, float | int | str | bool]
     golden_vectors: tuple[Mapping[str, float | int], ...]
 
@@ -287,14 +289,10 @@ def _validate(obj: Mapping[str, Any]) -> ModelConfig:
         raise ArtifactError("speech_class_indices: índices duplicados")
 
     alert = _exact_keys(obj["alert"], _ALERT_KEYS, "alert")
-    alert_cfg: dict[str, float | int] = {
-        "theta_on": _num(alert["theta_on"], "alert.theta_on", lo=0.0, hi=1.0),
-        "theta_off": _num(alert["theta_off"], "alert.theta_off", lo=0.0, hi=1.0),
-        "k": _int(alert["k"], "alert.k", lo=1, hi=64),
-        "n": _int(alert["n"], "alert.n", lo=1, hi=64),
-        "off_windows": _int(alert["off_windows"], "alert.off_windows", lo=1, hi=64),
-        "refractory_s": _num(alert["refractory_s"], "alert.refractory_s", lo=0.0, hi=600.0),
-    }
+    try:
+        alert_cfg = AlertConfig.from_mapping(alert)
+    except ValueError as exc:
+        raise ArtifactError(f"alert: {exc}") from exc
 
     normalization = obj["normalization"]
     if not isinstance(normalization, dict) or len(normalization) > 64:
