@@ -138,3 +138,55 @@ Verificación local:
   `96bc96d155947391daa97bad32f2c7168dbbea5f98bf99a48a593b38e0b0003a`; hash del código incrustado
   `00046807668aa0581878d2593b36471e22091ffae5b4d34379072c5c41bad40c`; nbformat 4.5 válido;
   regeneración reproducible comprobada por test.
+
+# Iteración 5 — 2026-11-12 ~23:00 (commit 98455be; cuaderno 1aD06iV03c22v2yY8YMQJUuqtDZFVjN0a)
+Ejecución completa («Ejecutar todas», 39 celdas, sin errores) tras la corrección de mezclas sin
+energía. Fuentes descargadas y verificadas por hash en Colab: Svanström 89 WAV (157,0 MB), ESC-10
+318 clips (140,3 MB, CC BY 3.0), FSD50K 833 clips (769 MB; 410 CC0 + 423 CC BY 3.0 por clip; 502
+autores = grupos), ITU ARIS 5405 segmentos tras la puerta de voz. Predicciones fuera de fold: 115 848 filas.
+
+Cifras **transcritas a mano de capturas de pantalla** de las tablas del cuaderno (el navegador se
+desconectó antes de exportarlas): son orientativas; la fuente de verdad es una reejecución del commit.
+
+**Validación cruzada por grupos (StratifiedGroupKFold), fuentes vistas en entrenamiento:**
+
+| Modelo | Fuente | n | pos. | tn | fp | fn | tp | Precisión [IC95] | Recall [IC95] | FPR |
+|---|---|---|---|---|---|---|---|---|---|---|
+| YAMNet media | ITU ARIS | 5405 | 4485 | 859 | 61 | 400 | 4085 | 0,985 [0,954; 0,999] | 0,911 [0,873; 0,942] | 0,066 |
+| YAMNet media | ESC-10 | 269 | 0 | 268 | 1 | 0 | 0 | — | — | 0,004 |
+| YAMNet media | FSD50K | 682 | 0 | 671 | 11 | 0 | 0 | — | — | 0,016 |
+| YAMNet media | Svanström | 80 | 28 | 52 | 0 | 6 | 22 | 1,000 | 0,786 [0,613; 0,932] | 0,000 |
+| YAMNet media + aumento | ITU ARIS | 5405 | 4485 | 842 | 78 | 390 | 4095 | 0,981 | 0,913 [0,883; 0,942] | 0,085 |
+| YAMNet media + aumento | FSD50K | 682 | 0 | 657 | 25 | 0 | 0 | — | — | 0,037 |
+| YAMNet ventanas + aumento · max suavizado | Svanström | 80 | 28 | — | 7 | 1 | 27 | — | 0,794 [0,657; 0,925] | — (PR-AUC 0,964) |
+
+**Leave-one-source-out (fuente nunca vista en entrenamiento):**
+
+| Modelo | Fuente no vista | Recall [IC95] | FPR [IC95] | PR-AUC |
+|---|---|---|---|---|
+| MFCC + sonoridad | ITU ARIS | 0,168 [0,081; 0,249] | 0,422 [0,328; 0,521] | 0,737 |
+| MFCC + sonoridad | Svanström | 0,000 | 0,000 | 0,449 |
+| MFCC + sonoridad | ESC-10 / FSD50K | — | 0,112 / 0,082 | — |
+| YAMNet media | ITU ARIS | 0,002 [0,000; 0,005] | 0,001 | 0,740 |
+| YAMNet media | Svanström | 0,000 | 0,000 | 0,789 |
+| YAMNet media | ESC-10 / FSD50K | — | 0,004 / 0,104 | — |
+| YAMNet media + aumento + negativos difíciles | ITU ARIS | 0,010 [0,001; 0,020] | 0,024 | 0,751 |
+| YAMNet ventanas + aumento · atención | ITU ARIS / Svanström | 0,008 / 0,179 [0,044; 0,338] | 0,003 / 0,019 | 0,793 / 0,717 |
+| YAMNet ventanas + aumento · atención | FSD50K | — | 0,400 [0,360; 0,437] | — |
+| YAMNet ventanas + aumento · max | Svanström / FSD50K | 0,286 [0,115; 0,467] / — | 0,058 / 0,521 | 0,713 / — |
+| YAMNet ventanas + aumento · media | ITU ARIS | 0,008 [0,001; 0,015] | 0,009 | 0,783 |
+
+**Lectura técnica.** Dentro de las fuentes vistas, YAMNet separa bien (ARIS recall 0,91 con precisión
+0,985; FPR 0,4–1,6 % en ESC-10/FSD50K). Ante una fuente **no vista** el sistema no generaliza: recall
+≈ 0 en ARIS con el umbral calibrado en las demás y hasta un 52 % de falsas alarmas en FSD50K. El
+PR-AUC (0,71–0,79) muestra que el orden de puntuaciones conserva algo de señal, pero el umbral y la
+calibración no se trasladan entre fuentes: el modelo aprende canal/micrófono/entorno de cada
+dataset (atajo de dominio). Más clips de las mismas fuentes no lo resuelven.
+
+**Siguiente iteración propuesta (pendiente de plan):** grabaciones propias en condiciones reales
+(reproducción con licencia captada por Android/Mac, hito 2) y ruido de entorno español; normalización
+de canal (remuestreo, banda, PCEN/sonoridad); aumento de canal (EQ y respuesta de micrófono
+aleatorias, reverberación, códec de móvil); mezclas cruzadas dron/fondo entre fuentes; rasgo
+armónico de hélices junto a YAMNet; adaptación del umbral con pocos clips por emplazamiento; y
+LOSO como métrica principal. Prueba técnica; contaminación entre particiones no descartada; nada
+entra en el producto.
