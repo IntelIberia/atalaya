@@ -98,16 +98,21 @@ def test_notebook_embeds_gate_and_filters_before_training() -> None:
     code = _notebook_code()
     assert Path(speech_gate.__file__).read_text(encoding="utf-8") in code
     gate_call = code.index('apply_speech_gate(df["clip"]')
-    assert gate_call < code.index("split_indices_by_group(y.tolist()")
+    assert gate_call < code.index("folds = stratified_group_folds(y.tolist()")
     assert '"excluidos_por_voz"' in code
 
 
 def test_notebook_uses_all_inventoried_clips_and_mfcc_baseline() -> None:
     code = _notebook_code()
     assert "N_PER_CLASS = 30" in code
-    assert "n_mfcc=40" in code
-    # La línea base usa la MISMA partición y su propio umbral elegido en validación.
-    assert "choose_threshold(y[validation_idx], baseline.predict_proba(" in code
+    assert "N_MFCC = 40" in code and "n_mfcc=N_MFCC" in code
+    # La línea base (MFCC + sonoridad) usa la MISMA partición y su propio umbral elegido en
+    # validación: todas las variantes salen de raw_scores con los mismos índices (iteración 5).
+    assert 'out["MFCC+sonoridad"] = [model.predict_proba(MFCC_LOUD[list(p)])' in code
+    assert (
+        "for v in VARIANTS:" in code
+        and "scores, info = raw_scores(train, [validation, test])" in code
+    )
     assert "DADS_ENABLED = False" in code
 
 

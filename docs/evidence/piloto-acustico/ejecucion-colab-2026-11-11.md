@@ -56,3 +56,137 @@ Lectura: añadir un solo clip cambia la partición y los resultados varían much
 en 16 clips de validación son demasiado altos. Conclusión técnica: hacen falta muchos más datos
 (positivos y, sobre todo, negativos), validación cruzada por grupos y elección de umbral orientada
 a recall. Prueba técnica; nada entra en el producto.
+
+# Iteración 4 — preparada el 2026-11-12 (más datos; cuaderno sin ejecutar en Colab)
+Encargo de la iteración 4 (estabilizar el modelo con más datos), dentro de la misma prueba técnica
+aislada (ADR 0016); nada entra en el producto. **Resultados en Colab: NO VERIFICADOS** hasta ejecutar
+el cuaderno; esta sección se completará con las cifras recalculadas desde `predicciones.csv`.
+- Fuentes nuevas con licencia verificada en la fuente original el 2026-11-12 (data cards
+  `docs/data-cards/fsd50k-subset.md` e `itu-aris.md`): ESC-10 (318 clips admitidos, CC BY 3.0 y
+  CC0/CC BY por clip), FSD50K subconjunto de confusores (solo CC0/CC BY por clip, sin etiquetas
+  humanas ni de música, sin menciones a drones, sin clips que ya estén en ESC-10) e ITU ARIS Lab
+  (CC BY 4.0, 5.491 segmentos con `groups.json` y split `interval_disjoint`).
+- Prohibidas y no descargadas: DADS, Al-Emadi, UrbanSound8K, ESC-50 fuera de ESC-10, Sonniss y
+  AeroSonicDB.
+- Evaluación: partición única (ITU ARIS con el split de los autores), validación cruzada por grupos
+  (5 folds), umbral más alto con recall ≥ 0,90 en validación, métricas por fuente y TOTAL con IC 95 %
+  por grupos, YAMNet frente a MFCC y exportación de `predicciones.csv` con SHA-256 para
+  `pilots/acoustic/recompute_metrics.py` (cierra el pendiente de ADR 0016 cuando se ejecute).
+- Cuaderno generado: `pilots/acoustic/Atalaya_YAMNet_Colab.ipynb`, SHA-256
+  `ad8708c9d03f90825e1ae97752583480300f769f752b7fba44804ec671fe6596` (regeneración reproducible
+  comprobada por test). Descarga prevista ≈ 1,24 GB: Svanström 157 MB, ESC-10 140 MB, FSD50K 769 MB
+  comprimidos (833 clips), ITU ARIS 169 MB.
+- Ensayo en seco local de las celdas de evaluación con rasgos **sintéticos** (sin TensorFlow ni
+  audio): partición, CV, umbral por recall, tablas por fuente, CSV y recálculo independiente
+  coinciden. No es un resultado del modelo.
+
+# Iteración 5 — preparada el 2026-11-12 (tratamiento de datos avanzado; cuaderno sin ejecutar en Colab)
+Misma prueba técnica aislada (ADR 0016), mismas fuentes con licencia verificada; prohibidas y no
+descargadas: DADS, Al-Emadi, UrbanSound8K, ESC-50 fuera de ESC-10, Sonniss y AeroSonicDB. Sin
+dependencias nuevas (numpy, SciPy y scikit-learn, BSD-3; cleanlab descartado por AGPL: lo necesario
+se implementa en `acoustic_pilot`). **Resultados en Colab: NO VERIFICADOS** hasta ejecutar el cuaderno.
+
+Técnicas (código en `pilots/acoustic/acoustic_pilot/`, probado en `pilots/acoustic/tests/` e
+incrustado tal cual por `build_colab.py`):
+1. `data_quality`: formato normalizado (mono, 16 kHz, float32, `resample_poly`); clip **silencioso**
+   si el RMS < −60 dBFS en todos los canales; **saturado** si > 1 % de muestras con |x| ≥ 0,999 en
+   algún canal original; **corrupto** si es ilegible, no finito o dura < 0,5 s. Sonoridad (RMS, LUFS
+   aproximado BS.1770 sin compuertas, pico, factor de cresta) **solo como característica**.
+   Duplicados exactos por SHA-256 del PCM normalizado; casi duplicados por coseno de la media de
+   embeddings YAMNet **≥ 0,995** (YAMNet da embeddings no negativos; clips distintos de una misma
+   escena quedan en ~0,95–0,98) solo entre grupos distintos; el componente conserva el grupo que
+   más aporta. Informe `descartes.csv` con SHA-256.
+2. `leakage`: `StratifiedGroupKFold` (5 folds) por grupo y leave-one-source-out; en cada partición
+   se recalculan los casi duplicados entre particiones y debe salir vacío (fallo cerrado).
+   La partición de autores de ITU ARIS ya no se usa; sus grupos (intervalo/bloque) sí.
+3. `balance`: pesos por clase y por fuente (cada clase suma N/2; dentro de cada clase, cada fuente
+   igual; las mezclas sintéticas cuentan como una fuente más) y muestreo balanceado.
+4. `augment`: 1.500 mezclas dron + fondo negativo a SNR nominal −10…+20 dB, ganancia −6…+6 dB y
+   desplazamiento circular, `synthetic=true`; en cada fold solo entran si dron **y** fondo están en
+   entrenamiento; nunca se puntúan. **No cuentan como rendimiento real.**
+5. `windows`: regresión logística por ventana YAMNet (≤ 8 ventanas por clip, etiqueta débil) con
+   agregación media, máximo, top-3, máximo suavizado (3 ventanas) y atención ligera (softmax,
+   T = 0,1), frente a la media de embeddings por clip.
+6. `calibration`: Platt e isotónica ajustadas en validación; ECE (15 bins), Brier, fiabilidad, DET
+   y PR; umbral = el más alto con recall ≥ 0,90 en validación (Platt); FA/h sobre concatenaciones
+   de negativos de test con refractario de 5 s: **ESTIMACIÓN, NO VERIFICADA como métrica de campo**.
+7. `hard_negatives`: segunda ronda que multiplica por 3 el peso del 10 % de negativos de
+   entrenamiento con mayor puntuación (sesgo optimista: puntuaciones del propio entrenamiento) y
+   falsas alarmas por tipo de negativo (motos, barcos, aviones, helicópteros, insectos, viento…)
+   con la lista «qué grabar primero en Ceuta».
+8. `experiment` y `predictions`: registro `modelo_piloto.json` con hash propio (semillas,
+   configuración, inventario de datos, descartes, plan de mezclas, versiones, hash del código del
+   cuaderno y de `predicciones.csv`); CSV ampliado (tipo, puntuaciones cruda/Platt/isotónica) con
+   precisión de ida y vuelta; `recompute_metrics.py --record` recalcula confusión, PR-AUC, ECE,
+   Brier y falsas alarmas por tipo sin importar `acoustic_pilot` ni numpy.
+9. `checkpoints` (tras la desconexión de la iteración 4 en Colab durante YAMNet): descargas en 8
+   hilos con límite global de 120 peticiones/minuto a Zenodo y reintentos, progreso por fuente,
+   reutilización de ficheros solo si su hash coincide, escritura atómica y YAMNet/mezclas por lotes
+   (256/250) guardados en `/content/atalaya_piloto/checkpoints` con hash de entrada. Sobrevive a un
+   reinicio del kernel; **no** a que Colab recicle la máquina (sin Drive por ADR 0016).
+
+Verificación local:
+- `cd pilots/acoustic && uv run pytest -q` → 181 tests en verde; `ruff check` y `ruff format --check` limpios.
+- Ensayo en seco con rasgos **sintéticos** (sin TensorFlow ni audio) de las celdas desde la puerta de
+  voz hasta la exportación, más el bucle de YAMNet por lotes con el modelo sustituido: se ejecutan
+  sin error, la reanudación reutiliza los lotes y solo recalcula el dañado, y el resumen del cuaderno
+  coincide con `recompute_metrics.py` en las 90 celdas modelo/esquema/fuente (confusión, PR-AUC, ECE).
+  Encontró dos errores ya corregidos con test de regresión: el informe de voz trataba como tuplas
+  los dicts de `apply_speech_gate` (y `float(None)` en puntuaciones no válidas), y 9 decimales
+  convertían en empates probabilidades calibradas saturadas. No es un resultado del modelo.
+- Cuaderno: `pilots/acoustic/Atalaya_YAMNet_Colab.ipynb`, SHA-256
+  `96bc96d155947391daa97bad32f2c7168dbbea5f98bf99a48a593b38e0b0003a`; hash del código incrustado
+  `00046807668aa0581878d2593b36471e22091ffae5b4d34379072c5c41bad40c`; nbformat 4.5 válido;
+  regeneración reproducible comprobada por test.
+
+# Iteración 5 — 2026-11-12 ~23:00 (commit 98455be; cuaderno 1aD06iV03c22v2yY8YMQJUuqtDZFVjN0a)
+Ejecución completa («Ejecutar todas», 39 celdas, sin errores) tras la corrección de mezclas sin
+energía. Fuentes descargadas y verificadas por hash en Colab: Svanström 89 WAV (157,0 MB), ESC-10
+318 clips (140,3 MB, CC BY 3.0), FSD50K 833 clips (769 MB; 410 CC0 + 423 CC BY 3.0 por clip; 502
+autores = grupos), ITU ARIS 5405 segmentos tras la puerta de voz. Predicciones fuera de fold: 115 848 filas.
+
+Cifras **transcritas a mano de capturas de pantalla** de las tablas del cuaderno (el navegador se
+desconectó antes de exportarlas): son orientativas; la fuente de verdad es una reejecución del commit.
+
+**Validación cruzada por grupos (StratifiedGroupKFold), fuentes vistas en entrenamiento:**
+
+| Modelo | Fuente | n | pos. | tn | fp | fn | tp | Precisión [IC95] | Recall [IC95] | FPR |
+|---|---|---|---|---|---|---|---|---|---|---|
+| YAMNet media | ITU ARIS | 5405 | 4485 | 859 | 61 | 400 | 4085 | 0,985 [0,954; 0,999] | 0,911 [0,873; 0,942] | 0,066 |
+| YAMNet media | ESC-10 | 269 | 0 | 268 | 1 | 0 | 0 | — | — | 0,004 |
+| YAMNet media | FSD50K | 682 | 0 | 671 | 11 | 0 | 0 | — | — | 0,016 |
+| YAMNet media | Svanström | 80 | 28 | 52 | 0 | 6 | 22 | 1,000 | 0,786 [0,613; 0,932] | 0,000 |
+| YAMNet media + aumento | ITU ARIS | 5405 | 4485 | 842 | 78 | 390 | 4095 | 0,981 | 0,913 [0,883; 0,942] | 0,085 |
+| YAMNet media + aumento | FSD50K | 682 | 0 | 657 | 25 | 0 | 0 | — | — | 0,037 |
+| YAMNet ventanas + aumento · max suavizado | Svanström | 80 | 28 | — | 7 | 1 | 27 | — | 0,794 [0,657; 0,925] | — (PR-AUC 0,964) |
+
+**Leave-one-source-out (fuente nunca vista en entrenamiento):**
+
+| Modelo | Fuente no vista | Recall [IC95] | FPR [IC95] | PR-AUC |
+|---|---|---|---|---|
+| MFCC + sonoridad | ITU ARIS | 0,168 [0,081; 0,249] | 0,422 [0,328; 0,521] | 0,737 |
+| MFCC + sonoridad | Svanström | 0,000 | 0,000 | 0,449 |
+| MFCC + sonoridad | ESC-10 / FSD50K | — | 0,112 / 0,082 | — |
+| YAMNet media | ITU ARIS | 0,002 [0,000; 0,005] | 0,001 | 0,740 |
+| YAMNet media | Svanström | 0,000 | 0,000 | 0,789 |
+| YAMNet media | ESC-10 / FSD50K | — | 0,004 / 0,104 | — |
+| YAMNet media + aumento + negativos difíciles | ITU ARIS | 0,010 [0,001; 0,020] | 0,024 | 0,751 |
+| YAMNet ventanas + aumento · atención | ITU ARIS / Svanström | 0,008 / 0,179 [0,044; 0,338] | 0,003 / 0,019 | 0,793 / 0,717 |
+| YAMNet ventanas + aumento · atención | FSD50K | — | 0,400 [0,360; 0,437] | — |
+| YAMNet ventanas + aumento · max | Svanström / FSD50K | 0,286 [0,115; 0,467] / — | 0,058 / 0,521 | 0,713 / — |
+| YAMNet ventanas + aumento · media | ITU ARIS | 0,008 [0,001; 0,015] | 0,009 | 0,783 |
+
+**Lectura técnica.** Dentro de las fuentes vistas, YAMNet separa bien (ARIS recall 0,91 con precisión
+0,985; FPR 0,4–1,6 % en ESC-10/FSD50K). Ante una fuente **no vista** el sistema no generaliza: recall
+≈ 0 en ARIS con el umbral calibrado en las demás y hasta un 52 % de falsas alarmas en FSD50K. El
+PR-AUC (0,71–0,79) muestra que el orden de puntuaciones conserva algo de señal, pero el umbral y la
+calibración no se trasladan entre fuentes: el modelo aprende canal/micrófono/entorno de cada
+dataset (atajo de dominio). Más clips de las mismas fuentes no lo resuelven.
+
+**Siguiente iteración propuesta (pendiente de plan):** grabaciones propias en condiciones reales
+(reproducción con licencia captada por Android/Mac, hito 2) y ruido de entorno español; normalización
+de canal (remuestreo, banda, PCEN/sonoridad); aumento de canal (EQ y respuesta de micrófono
+aleatorias, reverberación, códec de móvil); mezclas cruzadas dron/fondo entre fuentes; rasgo
+armónico de hélices junto a YAMNet; adaptación del umbral con pocos clips por emplazamiento; y
+LOSO como métrica principal. Prueba técnica; contaminación entre particiones no descartada; nada
+entra en el producto.
