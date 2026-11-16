@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import json
 import pickle
+import re
 import time
 from pathlib import Path
 
@@ -236,3 +237,40 @@ def test_artifact_hash_files_written_by_helper_match(tmp_path: Path) -> None:
     json_path, hashes = write_artifact(tmp_path / "m")
     pinned = read_pinned_hashes(hashes)
     assert pinned["modelo_hito2.json"] == sha256_hex(json_path.read_bytes())
+
+
+# --- L1 (revisión legal): la puerta de voz del artefacto no puede relajarse -------------
+
+
+@pytest.mark.parametrize("threshold", [1.0, 0.5, 0.31, 0.29, 0.0])
+def test_speech_threshold_must_equal_pilot_constant(make_artifact, threshold: float) -> None:
+    json_path, hashes = make_artifact(valid_config(speech_threshold=threshold))
+    with pytest.raises(ArtifactError, match="speech_threshold"):
+        load_artifact(json_path, hashes_file=hashes)
+
+
+@pytest.mark.parametrize("indices", [[10, 11, 12], [0, 1, 2], [1, 2, 3], [500]])
+def test_speech_indices_must_cover_canonical_yamnet_speech(make_artifact, indices) -> None:
+    json_path, hashes = make_artifact(valid_config(speech_class_indices=indices))
+    with pytest.raises(ArtifactError, match="speech_class_indices"):
+        load_artifact(json_path, hashes_file=hashes)
+
+
+def test_speech_indices_superset_is_accepted(make_artifact) -> None:
+    json_path, hashes = make_artifact(valid_config(speech_class_indices=[0, 1, 2, 3, 4]))
+    cfg = load_artifact(json_path, hashes_file=hashes).config
+    assert set(cfg.speech_class_indices) >= {0, 1, 2, 3}
+
+
+def test_threshold_comes_from_pilot_speech_gate() -> None:
+    from acoustic_pilot.speech_gate import SPEECH_EXCLUSION_THRESHOLD
+
+    assert artifact.SPEECH_EXCLUSION_THRESHOLD is SPEECH_EXCLUSION_THRESHOLD
+
+
+def test_canonical_speech_labels_match_colab_notebook() -> None:
+    # build_colab.py (no se modifica) fija las 4 clases de voz por nombre; aquí, por índice.
+    source = (Path(artifact.__file__).resolve().parents[1] / "build_colab.py").read_text("utf-8")
+    block = source.split("speech_columns = ")[1].split("assert")[0]
+    labels = set(re.findall(r'"([^"]+)"', block))
+    assert labels == set(artifact.YAMNET_SPEECH_CLASSES.values())

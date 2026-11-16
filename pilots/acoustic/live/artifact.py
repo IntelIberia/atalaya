@@ -30,6 +30,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from acoustic_pilot.speech_gate import SPEECH_EXCLUSION_THRESHOLD
 from live.alert import AlertConfig
 
 DEFAULT_HASHES_FILE = Path(__file__).resolve().with_name("MODEL_HASHES")
@@ -37,6 +38,14 @@ SCHEMA_VERSION = 1
 SAMPLE_RATE = 16_000
 # YAMNet: 0,96 s por parche. El valor exacto (15 360 o 15 600) lo fija el ONNX real (H2.7).
 ALLOWED_WINDOW_SAMPLES = (15_360, 15_600)
+# Clases de voz de YAMNet que usa la puerta del piloto (build_colab.py las fija por nombre;
+# índices de yamnet_class_map.csv). El artefacto puede añadir más, nunca quitar ninguna (L1).
+YAMNET_SPEECH_CLASSES: Mapping[int, str] = {
+    0: "Speech",
+    1: "Child speech, kid speaking",
+    2: "Conversation",
+    3: "Narration, monologue",
+}
 MAX_JSON_BYTES = 200 * 1024
 MAX_ONNX_BYTES = 64 * 1024 * 1024
 PICKLE_SUFFIXES = frozenset({".pkl", ".pickle", ".joblib", ".npy", ".npz", ".dill"})
@@ -287,6 +296,17 @@ def _validate(obj: Mapping[str, Any]) -> ModelConfig:
     speech_idx = tuple(_int(i, "speech_class_indices", lo=0, hi=num_classes - 1) for i in speech)
     if len(set(speech_idx)) != len(speech_idx):
         raise ArtifactError("speech_class_indices: índices duplicados")
+    missing_speech = sorted(set(YAMNET_SPEECH_CLASSES) - set(speech_idx))
+    if missing_speech:
+        raise ArtifactError(
+            f"speech_class_indices: faltan las clases de voz canónicas de YAMNet {missing_speech}"
+        )
+    speech_threshold = _num(obj["speech_threshold"], "speech_threshold", lo=0.0, hi=1.0)
+    if speech_threshold != SPEECH_EXCLUSION_THRESHOLD:
+        raise ArtifactError(
+            f"speech_threshold: {speech_threshold} ≠ {SPEECH_EXCLUSION_THRESHOLD} del piloto "
+            "(cambiarlo exige ADR)"
+        )
 
     alert = _exact_keys(obj["alert"], _ALERT_KEYS, "alert")
     try:
@@ -338,7 +358,7 @@ def _validate(obj: Mapping[str, Any]) -> ModelConfig:
         platt_a=_num(platt["a"], "platt.a"),
         platt_b=_num(platt["b"], "platt.b"),
         speech_class_indices=speech_idx,
-        speech_threshold=_num(obj["speech_threshold"], "speech_threshold", lo=0.0, hi=1.0),
+        speech_threshold=speech_threshold,
         alert=alert_cfg,
         normalization=norm,
         golden_vectors=tuple(golden_out),
