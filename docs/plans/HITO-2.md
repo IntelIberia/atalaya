@@ -148,6 +148,11 @@ Todos los tests nuevos llevan `@pytest.mark.req(...)` con los IDs de la tarea.
   iteración 5; `modelo_hito2.json` ≤ 200 kB. **Criterio de avance** (propuesta, decisión D-6):
   PR-AUC LOSO en ITU ARIS ≥ 0,85 y recall LOSO ARIS ≥ 0,50 con FPR LOSO FSD50K ≤ 0,10. Si no se
   alcanza, la demo puede seguir pero rotulada «modelo que no generaliza» y no se compara al alza.
+  **Enmienda propuesta (ADR 0018, pendiente de aprobación):** D-6 depende de la prevalencia de ARIS
+  (0,83: PR-AUC ≈ 0,83 por azar) y se sustituiría por el criterio C-LOSO, más exigente: por cada
+  fuente de dron retenida con ≥ 2 fuentes de dron entrenando, ROC-AUC ≥ 0,85 y recall ≥ 0,50 con
+  el umbral fijado sin verla; FPR ≤ 0,10 en los negativos de cada fuente retenida. El cuaderno y
+  `recompute_metrics.py --criterio c-loso` informan de ambos criterios.
 - **Prueba negativa:** el cuaderno se niega a exportar si la equivalencia ONNX supera 1e-4, si hay
   casi duplicados entre particiones o si aparece una fuente no aprobada (DADS, Al-Emadi…);
   `recompute_metrics.py` falla si el hash del CSV no coincide con el registrado.
