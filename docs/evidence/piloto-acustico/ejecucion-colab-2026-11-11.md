@@ -190,3 +190,356 @@ aleatorias, reverberación, códec de móvil); mezclas cruzadas dron/fondo entre
 armónico de hélices junto a YAMNet; adaptación del umbral con pocos clips por emplazamiento; y
 LOSO como métrica principal. Prueba técnica; contaminación entre particiones no descartada; nada
 entra en el producto.
+
+## Iteración 5 — cifras exactas recalculadas (2026-11-16)
+Las salidas del cuaderno se descargaron de Colab (fuera de Git): `predicciones.csv` SHA-256 `8ec5d2281682dd02cb11c3a0d9a74feb59df508325afdaa99a715d39a7c67407` (coincide con `predicciones_csv_sha256` de `modelo_piloto.json`, SHA-256 `61be895c3303f8d96e1264c96cf3816d40ac5b32b865bc76b54adce60001f3e1`), `descartes.csv` SHA-256 `67acce2c6fccb916a3a07b6d00e043440e227ab0fa4e8be2d022fac6ba24d9ea`.
+Recalculadas con `uv run python recompute_metrics.py predicciones.csv --sha256 <hash>` (script independiente del cuaderno). **Sustituyen a las cifras transcritas de capturas de la sección anterior, que coinciden.** Umbral de cada fila: el elegido sin ver la partición evaluada.
+
+| modelo | esquema | fuente | tn | fp | fn | tp | precision | recall | FPR | PR-AUC | ECE |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| MFCC+sonoridad | loso | TOTAL | 1449 | 474 | 3760 | 753 | 0.614 | 0.167 | 0.246 | 0.570 | 0.714 |
+| MFCC+sonoridad | loso | aris | 532 | 388 | 3732 | 753 | 0.660 | 0.168 | 0.422 | 0.737 | 0.814 |
+| MFCC+sonoridad | loso | esc10 | 239 | 30 | 0 | 0 | 0.000 | — | 0.112 | — | 0.258 |
+| MFCC+sonoridad | loso | fsd50k | 626 | 56 | 0 | 0 | 0.000 | — | 0.082 | — | 0.243 |
+| MFCC+sonoridad | loso | svanstrom | 52 | 0 | 28 | 0 | — | 0.000 | 0.000 | 0.449 | 0.346 |
+| MFCC+sonoridad | sgkf5 | TOTAL | 1702 | 221 | 501 | 4012 | 0.948 | 0.889 | 0.115 | 0.979 | 0.020 |
+| MFCC+sonoridad | sgkf5 | aris | 824 | 96 | 491 | 3994 | 0.977 | 0.891 | 0.104 | 0.993 | 0.045 |
+| MFCC+sonoridad | sgkf5 | esc10 | 230 | 39 | 0 | 0 | 0.000 | — | 0.145 | — | 0.247 |
+| MFCC+sonoridad | sgkf5 | fsd50k | 601 | 81 | 0 | 0 | 0.000 | — | 0.119 | — | 0.198 |
+| MFCC+sonoridad | sgkf5 | svanstrom | 47 | 5 | 10 | 18 | 0.783 | 0.643 | 0.096 | 0.856 | 0.135 |
+| YAMNet media | loso | TOTAL | 1850 | 73 | 4504 | 9 | 0.110 | 0.002 | 0.038 | 0.561 | 0.725 |
+| YAMNet media | loso | aris | 919 | 1 | 4476 | 9 | 0.900 | 0.002 | 0.001 | 0.740 | 0.827 |
+| YAMNet media | loso | esc10 | 268 | 1 | 0 | 0 | 0.000 | — | 0.004 | — | 0.044 |
+| YAMNet media | loso | fsd50k | 611 | 71 | 0 | 0 | 0.000 | — | 0.104 | — | 0.287 |
+| YAMNet media | loso | svanstrom | 52 | 0 | 28 | 0 | — | 0.000 | 0.000 | 0.789 | 0.337 |
+| YAMNet media | sgkf5 | TOTAL | 1850 | 73 | 406 | 4107 | 0.983 | 0.910 | 0.038 | 0.980 | 0.013 |
+| YAMNet media | sgkf5 | aris | 859 | 61 | 400 | 4085 | 0.985 | 0.911 | 0.066 | 0.982 | 0.017 |
+| YAMNet media | sgkf5 | esc10 | 268 | 1 | 0 | 0 | 0.000 | — | 0.004 | — | 0.034 |
+| YAMNet media | sgkf5 | fsd50k | 671 | 11 | 0 | 0 | 0.000 | — | 0.016 | — | 0.098 |
+| YAMNet media | sgkf5 | svanstrom | 52 | 0 | 6 | 22 | 1.000 | 0.786 | 0.000 | 0.966 | 0.066 |
+| YAMNet media + aumento | loso | TOTAL | 1811 | 112 | 4477 | 36 | 0.243 | 0.008 | 0.058 | 0.527 | 0.736 |
+| YAMNet media + aumento | loso | aris | 909 | 11 | 4449 | 36 | 0.766 | 0.008 | 0.012 | 0.751 | 0.825 |
+| YAMNet media + aumento | loso | esc10 | 269 | 0 | 0 | 0 | — | — | 0.000 | — | 0.078 |
+| YAMNet media + aumento | loso | fsd50k | 581 | 101 | 0 | 0 | 0.000 | — | 0.148 | — | 0.375 |
+| YAMNet media + aumento | loso | svanstrom | 52 | 0 | 28 | 0 | — | 0.000 | 0.000 | 0.657 | 0.328 |
+| YAMNet media + aumento | sgkf5 | TOTAL | 1816 | 107 | 396 | 4117 | 0.975 | 0.912 | 0.056 | 0.978 | 0.018 |
+| YAMNet media + aumento | sgkf5 | aris | 842 | 78 | 390 | 4095 | 0.981 | 0.913 | 0.085 | 0.982 | 0.029 |
+| YAMNet media + aumento | sgkf5 | esc10 | 265 | 4 | 0 | 0 | 0.000 | — | 0.015 | — | 0.104 |
+| YAMNet media + aumento | sgkf5 | fsd50k | 657 | 25 | 0 | 0 | 0.000 | — | 0.037 | — | 0.150 |
+| YAMNet media + aumento | sgkf5 | svanstrom | 52 | 0 | 6 | 22 | 1.000 | 0.786 | 0.000 | 0.969 | 0.051 |
+| YAMNet media + aumento + negativos difíciles | loso | TOTAL | 1779 | 144 | 4467 | 46 | 0.242 | 0.010 | 0.075 | 0.533 | 0.734 |
+| YAMNet media + aumento + negativos difíciles | loso | aris | 898 | 22 | 4439 | 46 | 0.676 | 0.010 | 0.024 | 0.751 | 0.823 |
+| YAMNet media + aumento + negativos difíciles | loso | esc10 | 268 | 1 | 0 | 0 | 0.000 | — | 0.004 | — | 0.084 |
+| YAMNet media + aumento + negativos difíciles | loso | fsd50k | 561 | 121 | 0 | 0 | 0.000 | — | 0.177 | — | 0.401 |
+| YAMNet media + aumento + negativos difíciles | loso | svanstrom | 52 | 0 | 28 | 0 | — | 0.000 | 0.000 | 0.622 | 0.316 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | TOTAL | 1814 | 109 | 405 | 4108 | 0.974 | 0.910 | 0.057 | 0.979 | 0.021 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | aris | 846 | 74 | 399 | 4086 | 0.982 | 0.911 | 0.080 | 0.983 | 0.030 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | esc10 | 263 | 6 | 0 | 0 | 0.000 | — | 0.022 | — | 0.112 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | fsd50k | 653 | 29 | 0 | 0 | 0.000 | — | 0.043 | — | 0.151 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | svanstrom | 52 | 0 | 6 | 22 | 1.000 | 0.786 | 0.000 | 0.971 | 0.064 |
+| YAMNet ventanas + aumento · atencion | loso | TOTAL | 1630 | 293 | 4470 | 43 | 0.128 | 0.010 | 0.152 | 0.532 | 0.777 |
+| YAMNet ventanas + aumento · atencion | loso | aris | 917 | 3 | 4447 | 38 | 0.927 | 0.008 | 0.003 | 0.793 | 0.825 |
+| YAMNet ventanas + aumento · atencion | loso | esc10 | 253 | 16 | 0 | 0 | 0.000 | — | 0.059 | — | 0.276 |
+| YAMNet ventanas + aumento · atencion | loso | fsd50k | 409 | 273 | 0 | 0 | 0.000 | — | 0.400 | — | 0.734 |
+| YAMNet ventanas + aumento · atencion | loso | svanstrom | 51 | 1 | 23 | 5 | 0.833 | 0.179 | 0.019 | 0.717 | 0.189 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | TOTAL | 1644 | 279 | 428 | 4085 | 0.936 | 0.905 | 0.145 | 0.976 | 0.019 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | aris | 854 | 66 | 426 | 4059 | 0.984 | 0.905 | 0.072 | 0.990 | 0.062 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | esc10 | 240 | 29 | 0 | 0 | 0.000 | — | 0.108 | — | 0.216 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | fsd50k | 507 | 175 | 0 | 0 | 0.000 | — | 0.257 | — | 0.395 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | svanstrom | 43 | 9 | 2 | 26 | 0.743 | 0.929 | 0.173 | 0.918 | 0.168 |
+| YAMNet ventanas + aumento · max | loso | TOTAL | 1537 | 386 | 4504 | 9 | 0.023 | 0.002 | 0.201 | 0.531 | 0.787 |
+| YAMNet ventanas + aumento · max | loso | aris | 920 | 0 | 4484 | 1 | 1.000 | 0.000 | 0.000 | 0.793 | 0.829 |
+| YAMNet ventanas + aumento · max | loso | esc10 | 241 | 28 | 0 | 0 | 0.000 | — | 0.104 | — | 0.296 |
+| YAMNet ventanas + aumento · max | loso | fsd50k | 327 | 355 | 0 | 0 | 0.000 | — | 0.521 | — | 0.763 |
+| YAMNet ventanas + aumento · max | loso | svanstrom | 49 | 3 | 20 | 8 | 0.727 | 0.286 | 0.058 | 0.713 | 0.161 |
+| YAMNet ventanas + aumento · max | sgkf5 | TOTAL | 1597 | 326 | 438 | 4075 | 0.926 | 0.903 | 0.170 | 0.957 | 0.020 |
+| YAMNet ventanas + aumento · max | sgkf5 | aris | 855 | 65 | 437 | 4048 | 0.984 | 0.903 | 0.071 | 0.988 | 0.072 |
+| YAMNet ventanas + aumento · max | sgkf5 | esc10 | 241 | 28 | 0 | 0 | 0.000 | — | 0.104 | — | 0.253 |
+| YAMNet ventanas + aumento · max | sgkf5 | fsd50k | 459 | 223 | 0 | 0 | 0.000 | — | 0.327 | — | 0.450 |
+| YAMNet ventanas + aumento · max | sgkf5 | svanstrom | 42 | 10 | 1 | 27 | 0.730 | 0.964 | 0.192 | 0.961 | 0.221 |
+| YAMNet ventanas + aumento · max_suavizado | loso | TOTAL | 1586 | 337 | 4507 | 6 | 0.017 | 0.001 | 0.175 | 0.529 | 0.781 |
+| YAMNet ventanas + aumento · max_suavizado | loso | aris | 920 | 0 | 4485 | 0 | — | 0.000 | 0.000 | 0.783 | 0.830 |
+| YAMNet ventanas + aumento · max_suavizado | loso | esc10 | 248 | 21 | 0 | 0 | 0.000 | — | 0.078 | — | 0.245 |
+| YAMNet ventanas + aumento · max_suavizado | loso | fsd50k | 369 | 313 | 0 | 0 | 0.000 | — | 0.459 | — | 0.714 |
+| YAMNet ventanas + aumento · max_suavizado | loso | svanstrom | 49 | 3 | 22 | 6 | 0.667 | 0.214 | 0.058 | 0.645 | 0.198 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | TOTAL | 1676 | 247 | 461 | 4052 | 0.943 | 0.898 | 0.128 | 0.973 | 0.016 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | aris | 867 | 53 | 460 | 4025 | 0.987 | 0.897 | 0.058 | 0.992 | 0.064 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | esc10 | 247 | 22 | 0 | 0 | 0.000 | — | 0.082 | — | 0.213 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | fsd50k | 517 | 165 | 0 | 0 | 0.000 | — | 0.242 | — | 0.397 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | svanstrom | 45 | 7 | 1 | 27 | 0.794 | 0.964 | 0.135 | 0.965 | 0.177 |
+| YAMNet ventanas + aumento · media | loso | TOTAL | 1849 | 74 | 4476 | 37 | 0.333 | 0.008 | 0.038 | 0.533 | 0.733 |
+| YAMNet ventanas + aumento · media | loso | aris | 912 | 8 | 4448 | 37 | 0.822 | 0.008 | 0.009 | 0.783 | 0.823 |
+| YAMNet ventanas + aumento · media | loso | esc10 | 269 | 0 | 0 | 0 | — | — | 0.000 | — | 0.077 |
+| YAMNet ventanas + aumento · media | loso | fsd50k | 616 | 66 | 0 | 0 | 0.000 | — | 0.097 | — | 0.411 |
+| YAMNet ventanas + aumento · media | loso | svanstrom | 52 | 0 | 28 | 0 | — | 0.000 | 0.000 | 0.682 | 0.308 |
+| YAMNet ventanas + aumento · media | sgkf5 | TOTAL | 1851 | 72 | 459 | 4054 | 0.983 | 0.898 | 0.037 | 0.989 | 0.015 |
+| YAMNet ventanas + aumento · media | sgkf5 | aris | 866 | 54 | 453 | 4032 | 0.987 | 0.899 | 0.059 | 0.991 | 0.031 |
+| YAMNet ventanas + aumento · media | sgkf5 | esc10 | 268 | 1 | 0 | 0 | 0.000 | — | 0.004 | — | 0.083 |
+| YAMNet ventanas + aumento · media | sgkf5 | fsd50k | 666 | 16 | 0 | 0 | 0.000 | — | 0.023 | — | 0.153 |
+| YAMNet ventanas + aumento · media | sgkf5 | svanstrom | 51 | 1 | 6 | 22 | 0.957 | 0.786 | 0.019 | 0.968 | 0.061 |
+| YAMNet ventanas + aumento · top3 | loso | TOTAL | 1510 | 413 | 4503 | 10 | 0.024 | 0.002 | 0.215 | 0.529 | 0.787 |
+| YAMNet ventanas + aumento · top3 | loso | aris | 920 | 0 | 4485 | 0 | — | 0.000 | 0.000 | 0.783 | 0.830 |
+| YAMNet ventanas + aumento · top3 | loso | esc10 | 239 | 30 | 0 | 0 | 0.000 | — | 0.112 | — | 0.269 |
+| YAMNet ventanas + aumento · top3 | loso | fsd50k | 302 | 380 | 0 | 0 | 0.000 | — | 0.557 | — | 0.761 |
+| YAMNet ventanas + aumento · top3 | loso | svanstrom | 49 | 3 | 18 | 10 | 0.769 | 0.357 | 0.058 | 0.684 | 0.182 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | TOTAL | 1600 | 323 | 461 | 4052 | 0.926 | 0.898 | 0.168 | 0.963 | 0.019 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | aris | 867 | 53 | 460 | 4025 | 0.987 | 0.897 | 0.058 | 0.992 | 0.076 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | esc10 | 241 | 28 | 0 | 0 | 0.000 | — | 0.104 | — | 0.240 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | fsd50k | 451 | 231 | 0 | 0 | 0.000 | — | 0.339 | — | 0.463 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | svanstrom | 41 | 11 | 1 | 27 | 0.711 | 0.964 | 0.212 | 0.974 | 0.237 |
+| modelo | esquema | tipo de negativo | n | fp | FPR |
+|---|---|---|---|---|---|
+| MFCC+sonoridad | loso | aves | 145 | 12 | 0.083 |
+| MFCC+sonoridad | loso | aviones | 101 | 2 | 0.020 |
+| MFCC+sonoridad | loso | barcos | 53 | 4 | 0.075 |
+| MFCC+sonoridad | loso | fondo de campo | 942 | 388 | 0.412 |
+| MFCC+sonoridad | loso | fuego | 38 | 7 | 0.184 |
+| MFCC+sonoridad | loso | helicópteros | 69 | 1 | 0.014 |
+| MFCC+sonoridad | loso | insectos | 77 | 16 | 0.208 |
+| MFCC+sonoridad | loso | lluvia | 124 | 15 | 0.121 |
+| MFCC+sonoridad | loso | mar y oleaje | 39 | 1 | 0.026 |
+| MFCC+sonoridad | loso | motores y maquinaria | 123 | 19 | 0.154 |
+| MFCC+sonoridad | loso | motos | 70 | 4 | 0.057 |
+| MFCC+sonoridad | loso | perros | 23 | 0 | 0.000 |
+| MFCC+sonoridad | loso | tictac | 36 | 4 | 0.111 |
+| MFCC+sonoridad | loso | viento | 83 | 1 | 0.012 |
+| MFCC+sonoridad | sgkf5 | aves | 145 | 15 | 0.103 |
+| MFCC+sonoridad | sgkf5 | aviones | 101 | 7 | 0.069 |
+| MFCC+sonoridad | sgkf5 | barcos | 53 | 10 | 0.189 |
+| MFCC+sonoridad | sgkf5 | fondo de campo | 942 | 100 | 0.106 |
+| MFCC+sonoridad | sgkf5 | fuego | 38 | 14 | 0.368 |
+| MFCC+sonoridad | sgkf5 | helicópteros | 69 | 2 | 0.029 |
+| MFCC+sonoridad | sgkf5 | insectos | 77 | 17 | 0.221 |
+| MFCC+sonoridad | sgkf5 | lluvia | 124 | 20 | 0.161 |
+| MFCC+sonoridad | sgkf5 | mar y oleaje | 39 | 2 | 0.051 |
+| MFCC+sonoridad | sgkf5 | motores y maquinaria | 123 | 17 | 0.138 |
+| MFCC+sonoridad | sgkf5 | motos | 70 | 7 | 0.100 |
+| MFCC+sonoridad | sgkf5 | perros | 23 | 0 | 0.000 |
+| MFCC+sonoridad | sgkf5 | tictac | 36 | 5 | 0.139 |
+| MFCC+sonoridad | sgkf5 | viento | 83 | 5 | 0.060 |
+| YAMNet media | loso | aves | 145 | 10 | 0.069 |
+| YAMNet media | loso | aviones | 101 | 4 | 0.040 |
+| YAMNet media | loso | barcos | 53 | 8 | 0.151 |
+| YAMNet media | loso | fondo de campo | 942 | 1 | 0.001 |
+| YAMNet media | loso | fuego | 38 | 0 | 0.000 |
+| YAMNet media | loso | helicópteros | 69 | 0 | 0.000 |
+| YAMNet media | loso | insectos | 77 | 22 | 0.286 |
+| YAMNet media | loso | lluvia | 124 | 2 | 0.016 |
+| YAMNet media | loso | mar y oleaje | 39 | 0 | 0.000 |
+| YAMNet media | loso | motores y maquinaria | 123 | 14 | 0.114 |
+| YAMNet media | loso | motos | 70 | 3 | 0.043 |
+| YAMNet media | loso | perros | 23 | 0 | 0.000 |
+| YAMNet media | loso | tictac | 36 | 0 | 0.000 |
+| YAMNet media | loso | viento | 83 | 9 | 0.108 |
+| YAMNet media | sgkf5 | aves | 145 | 1 | 0.007 |
+| YAMNet media | sgkf5 | aviones | 101 | 0 | 0.000 |
+| YAMNet media | sgkf5 | barcos | 53 | 1 | 0.019 |
+| YAMNet media | sgkf5 | fondo de campo | 942 | 61 | 0.065 |
+| YAMNet media | sgkf5 | fuego | 38 | 0 | 0.000 |
+| YAMNet media | sgkf5 | helicópteros | 69 | 0 | 0.000 |
+| YAMNet media | sgkf5 | insectos | 77 | 3 | 0.039 |
+| YAMNet media | sgkf5 | lluvia | 124 | 0 | 0.000 |
+| YAMNet media | sgkf5 | mar y oleaje | 39 | 0 | 0.000 |
+| YAMNet media | sgkf5 | motores y maquinaria | 123 | 5 | 0.041 |
+| YAMNet media | sgkf5 | motos | 70 | 0 | 0.000 |
+| YAMNet media | sgkf5 | perros | 23 | 0 | 0.000 |
+| YAMNet media | sgkf5 | tictac | 36 | 0 | 0.000 |
+| YAMNet media | sgkf5 | viento | 83 | 2 | 0.024 |
+| YAMNet media + aumento | loso | aves | 145 | 24 | 0.166 |
+| YAMNet media + aumento | loso | aviones | 101 | 6 | 0.059 |
+| YAMNet media + aumento | loso | barcos | 53 | 8 | 0.151 |
+| YAMNet media + aumento | loso | fondo de campo | 942 | 11 | 0.012 |
+| YAMNet media + aumento | loso | fuego | 38 | 0 | 0.000 |
+| YAMNet media + aumento | loso | helicópteros | 69 | 0 | 0.000 |
+| YAMNet media + aumento | loso | insectos | 77 | 27 | 0.351 |
+| YAMNet media + aumento | loso | lluvia | 124 | 3 | 0.024 |
+| YAMNet media + aumento | loso | mar y oleaje | 39 | 0 | 0.000 |
+| YAMNet media + aumento | loso | motores y maquinaria | 123 | 15 | 0.122 |
+| YAMNet media + aumento | loso | motos | 70 | 5 | 0.071 |
+| YAMNet media + aumento | loso | perros | 23 | 0 | 0.000 |
+| YAMNet media + aumento | loso | tictac | 36 | 0 | 0.000 |
+| YAMNet media + aumento | loso | viento | 83 | 13 | 0.157 |
+| YAMNet media + aumento | sgkf5 | aves | 145 | 7 | 0.048 |
+| YAMNet media + aumento | sgkf5 | aviones | 101 | 1 | 0.010 |
+| YAMNet media + aumento | sgkf5 | barcos | 53 | 2 | 0.038 |
+| YAMNet media + aumento | sgkf5 | fondo de campo | 942 | 78 | 0.083 |
+| YAMNet media + aumento | sgkf5 | fuego | 38 | 0 | 0.000 |
+| YAMNet media + aumento | sgkf5 | helicópteros | 69 | 0 | 0.000 |
+| YAMNet media + aumento | sgkf5 | insectos | 77 | 6 | 0.078 |
+| YAMNet media + aumento | sgkf5 | lluvia | 124 | 3 | 0.024 |
+| YAMNet media + aumento | sgkf5 | mar y oleaje | 39 | 1 | 0.026 |
+| YAMNet media + aumento | sgkf5 | motores y maquinaria | 123 | 5 | 0.041 |
+| YAMNet media + aumento | sgkf5 | motos | 70 | 1 | 0.014 |
+| YAMNet media + aumento | sgkf5 | perros | 23 | 0 | 0.000 |
+| YAMNet media + aumento | sgkf5 | tictac | 36 | 0 | 0.000 |
+| YAMNet media + aumento | sgkf5 | viento | 83 | 3 | 0.036 |
+| YAMNet media + aumento + negativos difíciles | loso | aves | 145 | 28 | 0.193 |
+| YAMNet media + aumento + negativos difíciles | loso | aviones | 101 | 8 | 0.079 |
+| YAMNet media + aumento + negativos difíciles | loso | barcos | 53 | 9 | 0.170 |
+| YAMNet media + aumento + negativos difíciles | loso | fondo de campo | 942 | 22 | 0.023 |
+| YAMNet media + aumento + negativos difíciles | loso | fuego | 38 | 0 | 0.000 |
+| YAMNet media + aumento + negativos difíciles | loso | helicópteros | 69 | 1 | 0.014 |
+| YAMNet media + aumento + negativos difíciles | loso | insectos | 77 | 34 | 0.442 |
+| YAMNet media + aumento + negativos difíciles | loso | lluvia | 124 | 3 | 0.024 |
+| YAMNet media + aumento + negativos difíciles | loso | mar y oleaje | 39 | 0 | 0.000 |
+| YAMNet media + aumento + negativos difíciles | loso | motores y maquinaria | 123 | 15 | 0.122 |
+| YAMNet media + aumento + negativos difíciles | loso | motos | 70 | 5 | 0.071 |
+| YAMNet media + aumento + negativos difíciles | loso | perros | 23 | 0 | 0.000 |
+| YAMNet media + aumento + negativos difíciles | loso | tictac | 36 | 0 | 0.000 |
+| YAMNet media + aumento + negativos difíciles | loso | viento | 83 | 19 | 0.229 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | aves | 145 | 8 | 0.055 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | aviones | 101 | 1 | 0.010 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | barcos | 53 | 3 | 0.057 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | fondo de campo | 942 | 74 | 0.079 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | fuego | 38 | 1 | 0.026 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | helicópteros | 69 | 0 | 0.000 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | insectos | 77 | 6 | 0.078 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | lluvia | 124 | 4 | 0.032 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | mar y oleaje | 39 | 1 | 0.026 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | motores y maquinaria | 123 | 6 | 0.049 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | motos | 70 | 1 | 0.014 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | perros | 23 | 0 | 0.000 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | tictac | 36 | 0 | 0.000 |
+| YAMNet media + aumento + negativos difíciles | sgkf5 | viento | 83 | 4 | 0.048 |
+| YAMNet ventanas + aumento · atencion | loso | aves | 145 | 62 | 0.428 |
+| YAMNet ventanas + aumento · atencion | loso | aviones | 101 | 30 | 0.297 |
+| YAMNet ventanas + aumento · atencion | loso | barcos | 53 | 20 | 0.377 |
+| YAMNet ventanas + aumento · atencion | loso | fondo de campo | 942 | 3 | 0.003 |
+| YAMNet ventanas + aumento · atencion | loso | fuego | 38 | 2 | 0.053 |
+| YAMNet ventanas + aumento · atencion | loso | helicópteros | 69 | 4 | 0.058 |
+| YAMNet ventanas + aumento · atencion | loso | insectos | 77 | 47 | 0.610 |
+| YAMNet ventanas + aumento · atencion | loso | lluvia | 124 | 16 | 0.129 |
+| YAMNet ventanas + aumento · atencion | loso | mar y oleaje | 39 | 2 | 0.051 |
+| YAMNet ventanas + aumento · atencion | loso | motores y maquinaria | 123 | 44 | 0.358 |
+| YAMNet ventanas + aumento · atencion | loso | motos | 70 | 36 | 0.514 |
+| YAMNet ventanas + aumento · atencion | loso | perros | 23 | 0 | 0.000 |
+| YAMNet ventanas + aumento · atencion | loso | tictac | 36 | 3 | 0.083 |
+| YAMNet ventanas + aumento · atencion | loso | viento | 83 | 24 | 0.289 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | aves | 145 | 34 | 0.234 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | aviones | 101 | 27 | 0.267 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | barcos | 53 | 16 | 0.302 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | fondo de campo | 942 | 71 | 0.075 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | fuego | 38 | 2 | 0.053 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | helicópteros | 69 | 11 | 0.159 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | insectos | 77 | 28 | 0.364 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | lluvia | 124 | 10 | 0.081 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | mar y oleaje | 39 | 2 | 0.051 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | motores y maquinaria | 123 | 28 | 0.228 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | motos | 70 | 25 | 0.357 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | perros | 23 | 1 | 0.043 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | tictac | 36 | 6 | 0.167 |
+| YAMNet ventanas + aumento · atencion | sgkf5 | viento | 83 | 18 | 0.217 |
+| YAMNet ventanas + aumento · max | loso | aves | 145 | 73 | 0.503 |
+| YAMNet ventanas + aumento · max | loso | aviones | 101 | 53 | 0.525 |
+| YAMNet ventanas + aumento · max | loso | barcos | 53 | 26 | 0.491 |
+| YAMNet ventanas + aumento · max | loso | fondo de campo | 942 | 2 | 0.002 |
+| YAMNet ventanas + aumento · max | loso | fuego | 38 | 4 | 0.105 |
+| YAMNet ventanas + aumento · max | loso | helicópteros | 69 | 5 | 0.072 |
+| YAMNet ventanas + aumento · max | loso | insectos | 77 | 57 | 0.740 |
+| YAMNet ventanas + aumento · max | loso | lluvia | 124 | 27 | 0.218 |
+| YAMNet ventanas + aumento · max | loso | mar y oleaje | 39 | 2 | 0.051 |
+| YAMNet ventanas + aumento · max | loso | motores y maquinaria | 123 | 55 | 0.447 |
+| YAMNet ventanas + aumento · max | loso | motos | 70 | 45 | 0.643 |
+| YAMNet ventanas + aumento · max | loso | perros | 23 | 0 | 0.000 |
+| YAMNet ventanas + aumento · max | loso | tictac | 36 | 3 | 0.083 |
+| YAMNet ventanas + aumento · max | loso | viento | 83 | 34 | 0.410 |
+| YAMNet ventanas + aumento · max | sgkf5 | aves | 145 | 39 | 0.269 |
+| YAMNet ventanas + aumento · max | sgkf5 | aviones | 101 | 35 | 0.347 |
+| YAMNet ventanas + aumento · max | sgkf5 | barcos | 53 | 19 | 0.358 |
+| YAMNet ventanas + aumento · max | sgkf5 | fondo de campo | 942 | 71 | 0.075 |
+| YAMNet ventanas + aumento · max | sgkf5 | fuego | 38 | 3 | 0.079 |
+| YAMNet ventanas + aumento · max | sgkf5 | helicópteros | 69 | 11 | 0.159 |
+| YAMNet ventanas + aumento · max | sgkf5 | insectos | 77 | 33 | 0.429 |
+| YAMNet ventanas + aumento · max | sgkf5 | lluvia | 124 | 15 | 0.121 |
+| YAMNet ventanas + aumento · max | sgkf5 | mar y oleaje | 39 | 1 | 0.026 |
+| YAMNet ventanas + aumento · max | sgkf5 | motores y maquinaria | 123 | 36 | 0.293 |
+| YAMNet ventanas + aumento · max | sgkf5 | motos | 70 | 33 | 0.471 |
+| YAMNet ventanas + aumento · max | sgkf5 | perros | 23 | 1 | 0.043 |
+| YAMNet ventanas + aumento · max | sgkf5 | tictac | 36 | 6 | 0.167 |
+| YAMNet ventanas + aumento · max | sgkf5 | viento | 83 | 23 | 0.277 |
+| YAMNet ventanas + aumento · max_suavizado | loso | aves | 145 | 63 | 0.434 |
+| YAMNet ventanas + aumento · max_suavizado | loso | aviones | 101 | 46 | 0.455 |
+| YAMNet ventanas + aumento · max_suavizado | loso | barcos | 53 | 28 | 0.528 |
+| YAMNet ventanas + aumento · max_suavizado | loso | fondo de campo | 942 | 2 | 0.002 |
+| YAMNet ventanas + aumento · max_suavizado | loso | fuego | 38 | 4 | 0.105 |
+| YAMNet ventanas + aumento · max_suavizado | loso | helicópteros | 69 | 3 | 0.043 |
+| YAMNet ventanas + aumento · max_suavizado | loso | insectos | 77 | 51 | 0.662 |
+| YAMNet ventanas + aumento · max_suavizado | loso | lluvia | 124 | 22 | 0.177 |
+| YAMNet ventanas + aumento · max_suavizado | loso | mar y oleaje | 39 | 0 | 0.000 |
+| YAMNet ventanas + aumento · max_suavizado | loso | motores y maquinaria | 123 | 49 | 0.398 |
+| YAMNet ventanas + aumento · max_suavizado | loso | motos | 70 | 34 | 0.486 |
+| YAMNet ventanas + aumento · max_suavizado | loso | perros | 23 | 0 | 0.000 |
+| YAMNet ventanas + aumento · max_suavizado | loso | tictac | 36 | 3 | 0.083 |
+| YAMNet ventanas + aumento · max_suavizado | loso | viento | 83 | 32 | 0.386 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | aves | 145 | 24 | 0.166 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | aviones | 101 | 27 | 0.267 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | barcos | 53 | 13 | 0.245 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | fondo de campo | 942 | 57 | 0.061 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | fuego | 38 | 4 | 0.105 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | helicópteros | 69 | 9 | 0.130 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | insectos | 77 | 28 | 0.364 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | lluvia | 124 | 13 | 0.105 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | mar y oleaje | 39 | 1 | 0.026 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | motores y maquinaria | 123 | 28 | 0.228 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | motos | 70 | 25 | 0.357 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | perros | 23 | 0 | 0.000 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | tictac | 36 | 2 | 0.056 |
+| YAMNet ventanas + aumento · max_suavizado | sgkf5 | viento | 83 | 16 | 0.193 |
+| YAMNet ventanas + aumento · media | loso | aves | 145 | 15 | 0.103 |
+| YAMNet ventanas + aumento · media | loso | aviones | 101 | 3 | 0.030 |
+| YAMNet ventanas + aumento · media | loso | barcos | 53 | 3 | 0.057 |
+| YAMNet ventanas + aumento · media | loso | fondo de campo | 942 | 8 | 0.008 |
+| YAMNet ventanas + aumento · media | loso | fuego | 38 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | loso | helicópteros | 69 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | loso | insectos | 77 | 25 | 0.325 |
+| YAMNet ventanas + aumento · media | loso | lluvia | 124 | 2 | 0.016 |
+| YAMNet ventanas + aumento · media | loso | mar y oleaje | 39 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | loso | motores y maquinaria | 123 | 12 | 0.098 |
+| YAMNet ventanas + aumento · media | loso | motos | 70 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | loso | perros | 23 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | loso | tictac | 36 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | loso | viento | 83 | 6 | 0.072 |
+| YAMNet ventanas + aumento · media | sgkf5 | aves | 145 | 3 | 0.021 |
+| YAMNet ventanas + aumento · media | sgkf5 | aviones | 101 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | sgkf5 | barcos | 53 | 1 | 0.019 |
+| YAMNet ventanas + aumento · media | sgkf5 | fondo de campo | 942 | 55 | 0.058 |
+| YAMNet ventanas + aumento · media | sgkf5 | fuego | 38 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | sgkf5 | helicópteros | 69 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | sgkf5 | insectos | 77 | 6 | 0.078 |
+| YAMNet ventanas + aumento · media | sgkf5 | lluvia | 124 | 1 | 0.008 |
+| YAMNet ventanas + aumento · media | sgkf5 | mar y oleaje | 39 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | sgkf5 | motores y maquinaria | 123 | 4 | 0.033 |
+| YAMNet ventanas + aumento · media | sgkf5 | motos | 70 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | sgkf5 | perros | 23 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | sgkf5 | tictac | 36 | 0 | 0.000 |
+| YAMNet ventanas + aumento · media | sgkf5 | viento | 83 | 2 | 0.024 |
+| YAMNet ventanas + aumento · top3 | loso | aves | 145 | 75 | 0.517 |
+| YAMNet ventanas + aumento · top3 | loso | aviones | 101 | 65 | 0.644 |
+| YAMNet ventanas + aumento · top3 | loso | barcos | 53 | 32 | 0.604 |
+| YAMNet ventanas + aumento · top3 | loso | fondo de campo | 942 | 2 | 0.002 |
+| YAMNet ventanas + aumento · top3 | loso | fuego | 38 | 5 | 0.132 |
+| YAMNet ventanas + aumento · top3 | loso | helicópteros | 69 | 5 | 0.072 |
+| YAMNet ventanas + aumento · top3 | loso | insectos | 77 | 59 | 0.766 |
+| YAMNet ventanas + aumento · top3 | loso | lluvia | 124 | 29 | 0.234 |
+| YAMNet ventanas + aumento · top3 | loso | mar y oleaje | 39 | 1 | 0.026 |
+| YAMNet ventanas + aumento · top3 | loso | motores y maquinaria | 123 | 60 | 0.488 |
+| YAMNet ventanas + aumento · top3 | loso | motos | 70 | 38 | 0.543 |
+| YAMNet ventanas + aumento · top3 | loso | perros | 23 | 0 | 0.000 |
+| YAMNet ventanas + aumento · top3 | loso | tictac | 36 | 3 | 0.083 |
+| YAMNet ventanas + aumento · top3 | loso | viento | 83 | 39 | 0.470 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | aves | 145 | 39 | 0.269 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | aviones | 101 | 33 | 0.327 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | barcos | 53 | 22 | 0.415 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | fondo de campo | 942 | 59 | 0.063 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | fuego | 38 | 5 | 0.132 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | helicópteros | 69 | 13 | 0.188 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | insectos | 77 | 36 | 0.468 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | lluvia | 124 | 20 | 0.161 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | mar y oleaje | 39 | 1 | 0.026 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | motores y maquinaria | 123 | 35 | 0.285 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | motos | 70 | 31 | 0.443 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | perros | 23 | 0 | 0.000 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | tictac | 36 | 3 | 0.083 |
+| YAMNet ventanas + aumento · top3 | sgkf5 | viento | 83 | 26 | 0.313 |
+
+**Diagnóstico adicional (ROC-AUC LOSO, independiente de la prevalencia):** clips ARIS 4485 dron / 920 fondo; Svanström 28 / 52; ESC-10 y FSD50K solo negativos. En LOSO sin ARIS el entrenamiento solo dispone de 28 positivos (Svanström) y la ROC-AUC en ARIS es 0,23–0,39 (por debajo del azar): el fallo es de **falta de fuentes de dron**, no solo de técnica. En LOSO sin Svanström, YAMNet media alcanza ROC-AUC 0,908 con recall 0 al umbral: el orden se transfiere y el umbral no (calibración por emplazamiento). El PR-AUC LOSO en ARIS no es informativo (prevalencia 0,83); el criterio D-6 del hito 2 se corrige por ADR.
