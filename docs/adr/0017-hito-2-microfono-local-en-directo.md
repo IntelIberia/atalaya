@@ -1,6 +1,6 @@
 # 0017 — Hito 2: micrófono del Mac en directo, solo en memoria, para la demo del piloto acústico
 
-- Estado: aceptado por el usuario (2026-11-16, «Si, yo doy el visto bueno a todo»); revisiones `legal-guardrail-reviewer` y `privacy-reviewer` pendientes antes de H2.7 (captura)
+- Estado: aceptado por el usuario (2026-11-16, «Si, yo doy el visto bueno a todo»). Revisión legal y de privacidad de la PR #18 (2026-11-16): **aprobado con condiciones**. L1, P1, P2, P7 y P8 están corregidos en la misma PR. La **primera captura real con el micrófono queda bloqueada** hasta cumplir P3, P4 y P5 (sección «Revisión legal y de privacidad»)
 - Fecha: 2026-11-16
 - Decisores: usuario (aprobado 2026-11-16); Claude Code (redacción)
 
@@ -69,8 +69,9 @@ Propuesta: opción 1, con la opción 2 como respaldo si T0.1 del plan demuestra 
   probado del piloto; el modelo local es un artefacto pequeño (JSON con pesos y hashes) cargado tras
   verificar su SHA-256.
 - Negativas: el micrófono abierto en una vivienda capta voces de terceros aunque se descarten; la
-  memoria del proceso puede ir a la swap del sistema (macOS la cifra por defecto, NO VERIFICADO en
-  este Mac): riesgo residual documentado, no eliminado.
+  memoria del proceso puede ir a la swap del sistema: riesgo residual documentado, no eliminado.
+  La swap de este Mac está cifrada (P6, comprobado el 2026-11-16 con `sysctl vm.swapusage`, que
+  devuelve `(encrypted)`).
 - Riesgos: que la demo «funcione» por memorizar los vídeos o por el volumen y se presente como
   rendimiento real. Mitigación: etiqueta fija «reproducción en sala, no vuelo real», línea base
   (iteración 5) en el mismo protocolo, métricas con IC 95 % y lo no medible marcado NO VERIFICADO.
@@ -94,8 +95,47 @@ x86_64, Python 3.12).
 | `flatbuffers` | 25.12.19 | Apache-2.0 | Dependencia de `onnxruntime` |
 | `protobuf` | 4.25.9 | BSD-3-Clause | Dependencia de `onnxruntime` |
 | `sympy` / `mpmath` | 1.14.0 / 1.3.0 | BSD | Dependencias de `onnxruntime` |
+| `pyreadline3` | 3.5.6 | BSD (PyPI; BSD-3-Clause según la revisión, sin contrastar con su fichero de licencia) | Dependencia de `humanfriendly` **solo en Windows** (`sys_platform == 'win32'`); figura en `uv.lock` pero no se instala en macOS |
 
-Ninguna con copyleft (REQ-LEG-016). Incremento medido del entorno: 128 MB (257 412 kB → 388 120 kB
+Ninguna con copyleft fuerte (REQ-LEG-016). `onnxruntime` incorpora Eigen, con licencia MPL-2.0
+(copyleft débil, a nivel de fichero), según su `ThirdPartyNotices.txt`. Se usa sin modificar y
+como binario, así que no obliga a nada sobre el código de Atalaya. La rueda de `sounddevice`
+incluye además DLL de Windows compiladas con el ASIO SDK de Steinberg, que tiene licencia propia;
+en macOS no se cargan (se usa `libportaudio.dylib`) y no se redistribuyen. Incremento medido del entorno: 128 MB (257 412 kB → 388 120 kB
 con `du -sk .venv`), dentro del presupuesto de 300 MB. El extra `live` no arrastra TensorFlow.
 `onnxruntime` figura también en el grupo `dev` para que los tests del cargador (H2.6) ejecuten un
 ONNX diminuto real; `tf2onnx` y `onnx` siguen siendo solo de Colab (sus licencias, NO VERIFICADO).
+
+## Revisión legal y de privacidad (PR #18, 2026-11-16)
+Resultado: **aprobado con condiciones**. Corregido en la misma PR, con una prueba negativa por
+hallazgo (`docs/evidence/hito-2/registro-tareas.md`):
+
+- **L1:** el artefacto no puede relajar la puerta de voz: umbral igual a
+  `SPEECH_EXCLUSION_THRESHOLD` (0,30) y clases canónicas de voz de YAMNet obligatorias.
+- **P1:** el gancho de auditoría bloquea procesos hijos, código nativo cargado con `ctypes`,
+  `sqlite3`, `mmap`, ficheros temporales y red no local; el análisis estático prohíbe esos módulos,
+  la importación dinámica, los logs a fichero y los alias de volcado de arrays.
+- **P2:** las señales solo marcan la parada; el bucle principal cierra y borra el búfer (antes
+  podía interbloquearse con el cerrojo del búfer).
+- **P7:** la sesión vigila también el directorio temporal y el HOME reales.
+- **P8:** sensibilidad `OPERATOR` declarada para cada campo de la página y para las etiquetas.
+
+**Condiciones que bloquean la PRIMERA CAPTURA REAL** (tareas H2.P3–H2.P5 del plan):
+
+- **P3:** punto de entrada de sesión con este orden: `disable_core_dumps()` →
+  `WriteAudit(block=True)` → `stop_on_signals()` → `try/finally` con `stop()`. Debe probarse en
+  un subproceso con SIGTERM, y `scan_package` debe ampliarse a los módulos de `acoustic_pilot` que
+  importe la sesión.
+- **P4:** DPIA y registro de actividades de tratamiento actualizados antes de la primera captura
+  real (RGPD art. 35, REQ-PRIV-006).
+- **P5:** en H2.9, `window.samples.fill(0)` al descartar una ventana con voz, además de borrar su
+  región del búfer.
+
+**Riesgos residuales declarados** (no eliminados):
+
+- paginación de la memoria a la swap (cifrada en este Mac, P6);
+- escrituras desde código nativo (onnxruntime, PortAudio, CoreAudio), invisibles para el gancho
+  de Python;
+- otros procesos con permiso de micrófono y el propio `coreaudiod`, fuera del proceso;
+- informes de fallo de macOS (ReportCrash), que pueden incluir memoria del proceso pese a
+  `RLIMIT_CORE = 0`.
