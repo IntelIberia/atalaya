@@ -1,8 +1,8 @@
 # 0017 — Hito 2: micrófono del Mac en directo, solo en memoria, para la demo del piloto acústico
 
-- Estado: propuesto (pendiente de aprobación del usuario y de revisión `legal-guardrail-reviewer` y `privacy-reviewer`)
+- Estado: aceptado por el usuario (2026-11-16, «Si, yo doy el visto bueno a todo»); revisiones `legal-guardrail-reviewer` y `privacy-reviewer` pendientes antes de H2.7 (captura)
 - Fecha: 2026-11-16
-- Decisores: usuario (pendiente); Claude Code (redacción)
+- Decisores: usuario (aprobado 2026-11-16); Claude Code (redacción)
 
 ## Contexto
 El usuario quiere una demo local en directo (plan `docs/plans/HITO-2.md`): el Mac escucha con su
