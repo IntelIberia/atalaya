@@ -77,3 +77,25 @@ Propuesta: opción 1, con la opción 2 como respaldo si T0.1 del plan demuestra 
 - Verificación: tests de H2.7–H2.12 del plan en verde (incluidas sus pruebas negativas),
   `make check` en verde, revisión `privacy-reviewer` y `legal-guardrail-reviewer` sin hallazgos
   abiertos y registro de la aprobación en `docs/requirements/DECISIONES-USUARIO.md`.
+
+## Anexo T0.1 — Dependencias del Mac verificadas (2026-11-16)
+Leído en los metadatos de las ruedas instaladas (`*.dist-info/METADATA` y ficheros de licencia) y en
+el índice de PyPI. Instalación real con `uv sync --extra live --frozen` en el Mac Intel (macOS 15.8.3,
+x86_64, Python 3.12).
+
+| Paquete | Versión | Licencia | Motivo |
+|---|---|---|---|
+| `onnxruntime` | 1.23.2 | MIT | Inferencia ONNX en CPU; última versión con rueda `cp312-macosx_13_0_x86_64` (1.24.x en adelante no la publica) |
+| `sounddevice` | 0.5.6 | MIT | Captura de entrada (solo `InputStream`) |
+| PortAudio (dentro de `sounddevice`) | V19.7.0-devel | MIT (README de `portaudio-binaries`) | Biblioteca nativa de sonido; las DLL de Windows con ASIO incluidas en la rueda no se cargan en macOS |
+| `cffi` | 2.1.1 | MIT-0 | Dependencia de `sounddevice` |
+| `pycparser` | 3.12 | BSD-3-Clause | Dependencia de `cffi` |
+| `coloredlogs` / `humanfriendly` | 15.0.1 / 10.0 | MIT | Dependencias de `onnxruntime` |
+| `flatbuffers` | 25.12.19 | Apache-2.0 | Dependencia de `onnxruntime` |
+| `protobuf` | 4.25.9 | BSD-3-Clause | Dependencia de `onnxruntime` |
+| `sympy` / `mpmath` | 1.14.0 / 1.3.0 | BSD | Dependencias de `onnxruntime` |
+
+Ninguna con copyleft (REQ-LEG-016). Incremento medido del entorno: 128 MB (257 412 kB → 388 120 kB
+con `du -sk .venv`), dentro del presupuesto de 300 MB. El extra `live` no arrastra TensorFlow.
+`onnxruntime` figura también en el grupo `dev` para que los tests del cargador (H2.6) ejecuten un
+ONNX diminuto real; `tf2onnx` y `onnx` siguen siendo solo de Colab (sus licencias, NO VERIFICADO).
