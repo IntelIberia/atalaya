@@ -207,8 +207,38 @@ Todos los tests nuevos llevan `@pytest.mark.req(...)` con los IDs de la tarea.
   solo en el test) hace **fallar** las capas (a) y (b); otro que hace `np.save` del búfer también;
   ambas fixtures se ejecutan en cada `pytest` para demostrar que la red atrapa el fallo.
 - **Riesgo residual declarado:** la memoria del proceso puede paginarse a la swap del sistema; no se
-  puede impedir desde Python sin privilegios. Se documenta (macOS cifra la swap por defecto, NO
-  VERIFICADO en este Mac: comprobar con `sysctl vm.swapusage` y registrar).
+  puede impedir desde Python sin privilegios. Se documenta; la swap de este Mac está cifrada
+  (`sysctl vm.swapusage` → `encrypted`, comprobado el 2026-11-16, revisión P6).
+
+### H2.P3 — Punto de entrada de sesión endurecido (condición de la revisión, BLOQUEANTE)
+- **Qué:** un único punto de entrada de la sesión en directo con este orden: `disable_core_dumps()`
+  → `WriteAudit(block=True)` → `stop_on_signals()` → `try/finally` con `engine.stop()`. Además,
+  `scan_package` se amplía a los módulos de `acoustic_pilot` que importe la sesión.
+- **Requisitos:** REQ-PRIV-002, REQ-LEG-005, REQ-LEG-006
+- **Verificación:** test en subproceso que arranca la sesión con origen sintético, recibe SIGTERM y
+  comprueba que el búfer se borra, que la salida es 143, que `RLIMIT_CORE` vale 0 y que no hay
+  eventos de auditoría.
+- **Prueba negativa:** con el orden alterado (gancho después de abrir la captura) o con un módulo
+  de `acoustic_pilot` que escriba a disco, el test falla.
+- **Bloquea:** la primera captura real con el micrófono (H2.14 y cualquier prueba manual).
+
+### H2.P4 — DPIA y registro de actividades (condición de la revisión, BLOQUEANTE)
+- **Qué:** actualizar la DPIA (`docs/dpia/`) y el registro de actividades de tratamiento con el
+  micrófono en una vivienda, la ausencia de conservación, la puerta de voz, el aviso a los
+  convivientes y los riesgos residuales del ADR 0017. Se adelanta parte de H2.15.
+- **Requisitos:** REQ-PRIV-006 (RGPD art. 35)
+- **Verificación:** revisión `privacy-reviewer` sin hallazgos abiertos; `make check` en verde.
+- **Prueba negativa:** sin la DPIA actualizada, la primera captura real no se hace (STOP).
+- **Bloquea:** la primera captura real con el micrófono.
+
+### H2.P5 — Borrado de la ventana descartada por voz (condición de la revisión, BLOQUEANTE)
+- **Qué:** en H2.9, al descartar una ventana con voz, además de borrar su región del búfer
+  (`zero_window`), se pone a cero la copia entregada al consumidor (`window.samples.fill(0)`).
+- **Requisitos:** REQ-LEG-005, REQ-PRIV-010
+- **Verificación:** `uv run pytest tests/live/test_speech_gate_live.py -q`; la ventana descartada
+  y su región del búfer quedan a cero.
+- **Prueba negativa:** si se omite el `fill(0)`, el test que inspecciona la copia falla.
+- **Bloquea:** la primera captura real con el micrófono.
 
 ### H2.9 — Puerta de voz en directo
 - **Qué:** con la salida de 521 clases de YAMNet de cada ventana, si la puntuación máxima de las

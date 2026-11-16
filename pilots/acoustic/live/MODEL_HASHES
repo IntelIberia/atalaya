@@ -1,0 +1,3 @@
+# SHA-256 fijados del artefacto del hito 2 (formato sha256sum: "<hex>  <nombre>").
+# Los ficheros del modelo viven fuera del repositorio (decisión D-8). Sin entrada, no se carga nada.
+# Se añadirán aquí modelo_hito2.json y yamnet.onnx cuando H2.5 los exporte desde Colab.
