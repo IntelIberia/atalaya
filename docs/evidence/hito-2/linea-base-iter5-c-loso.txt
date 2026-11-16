@@ -1,0 +1,48 @@
+# Recalculado con pilots/acoustic/recompute_metrics.py --criterio c-loso desde predicciones.csv de la iteración 5
+# predicciones.csv SHA-256 8ec5d2281682dd02cb11c3a0d9a74feb59df508325afdaa99a715d39a7c67407
+# modelo_piloto.json SHA-256 61be895c3303f8d96e1264c96cf3816d40ac5b32b865bc76b54adce60001f3e1 (ambos fuera del repositorio)
+
+Criterio C-LOSO (ADR 0018) · modelo YAMNet media: NO CUMPLE
+| fuente retenida | n | dron | fuentes de dron entrenando | ROC-AUC | recall | FPR | estado |
+|---|---|---|---|---|---|---|---|
+| aris | 5405 | 4485 | svanstrom | 0.291 | 0.002 | 0.001 | NO EVALUABLE |
+| esc10 | 269 | 0 | aris, svanstrom | — | — | 0.004 | CUMPLE |
+| fsd50k | 682 | 0 | aris, svanstrom | — | — | 0.104 | NO CUMPLE |
+| svanstrom | 80 | 28 | aris | 0.908 | 0.000 | 0.000 | NO EVALUABLE |
+Referencia D-6: PR-AUC ARIS 0.740, recall ARIS 0.002, FPR FSD50K 0.104 -> no cumple (dependiente de la prevalencia)
+
+Criterio C-LOSO (ADR 0018) · modelo YAMNet media + aumento: NO CUMPLE
+| fuente retenida | n | dron | fuentes de dron entrenando | ROC-AUC | recall | FPR | estado |
+|---|---|---|---|---|---|---|---|
+| aris | 5405 | 4485 | svanstrom | 0.325 | 0.008 | 0.012 | NO EVALUABLE |
+| esc10 | 269 | 0 | aris, svanstrom | — | — | 0.000 | CUMPLE |
+| fsd50k | 682 | 0 | aris, svanstrom | — | — | 0.148 | NO CUMPLE |
+| svanstrom | 80 | 28 | aris | 0.817 | 0.000 | 0.000 | NO EVALUABLE |
+Referencia D-6: PR-AUC ARIS 0.751, recall ARIS 0.008, FPR FSD50K 0.148 -> no cumple (dependiente de la prevalencia)
+
+Criterio C-LOSO (ADR 0018) · modelo YAMNet ventanas + aumento · atencion: NO CUMPLE
+| fuente retenida | n | dron | fuentes de dron entrenando | ROC-AUC | recall | FPR | estado |
+|---|---|---|---|---|---|---|---|
+| aris | 5405 | 4485 | svanstrom | 0.387 | 0.008 | 0.003 | NO EVALUABLE |
+| esc10 | 269 | 0 | aris, svanstrom | — | — | 0.059 | CUMPLE |
+| fsd50k | 682 | 0 | aris, svanstrom | — | — | 0.400 | NO CUMPLE |
+| svanstrom | 80 | 28 | aris | 0.813 | 0.179 | 0.019 | NO EVALUABLE |
+Referencia D-6: PR-AUC ARIS 0.793, recall ARIS 0.008, FPR FSD50K 0.400 -> no cumple (dependiente de la prevalencia)
+
+Criterio C-LOSO (ADR 0018) · modelo YAMNet ventanas + aumento · max: NO CUMPLE
+| fuente retenida | n | dron | fuentes de dron entrenando | ROC-AUC | recall | FPR | estado |
+|---|---|---|---|---|---|---|---|
+| aris | 5405 | 4485 | svanstrom | 0.387 | 0.000 | 0.000 | NO EVALUABLE |
+| esc10 | 269 | 0 | aris, svanstrom | — | — | 0.104 | NO CUMPLE |
+| fsd50k | 682 | 0 | aris, svanstrom | — | — | 0.521 | NO CUMPLE |
+| svanstrom | 80 | 28 | aris | 0.822 | 0.286 | 0.058 | NO EVALUABLE |
+Referencia D-6: PR-AUC ARIS 0.793, recall ARIS 0.000, FPR FSD50K 0.521 -> no cumple (dependiente de la prevalencia)
+
+Criterio C-LOSO (ADR 0018) · modelo MFCC+sonoridad: NO CUMPLE
+| fuente retenida | n | dron | fuentes de dron entrenando | ROC-AUC | recall | FPR | estado |
+|---|---|---|---|---|---|---|---|
+| aris | 5405 | 4485 | svanstrom | 0.226 | 0.168 | 0.422 | NO EVALUABLE |
+| esc10 | 269 | 0 | aris, svanstrom | — | — | 0.112 | NO CUMPLE |
+| fsd50k | 682 | 0 | aris, svanstrom | — | — | 0.082 | CUMPLE |
+| svanstrom | 80 | 28 | aris | 0.481 | 0.000 | 0.000 | NO EVALUABLE |
+Referencia D-6: PR-AUC ARIS 0.737, recall ARIS 0.168, FPR FSD50K 0.082 -> no cumple (dependiente de la prevalencia)
