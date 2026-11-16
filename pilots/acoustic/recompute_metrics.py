@@ -10,8 +10,13 @@ umbral de cada fila y calcula:
   isotónica, y Brier;
 - falsas alarmas por tipo de negativo (formato de la iteración 5).
 
+- iteración 6: criterio C-LOSO del ADR 0018 (ROC-AUC por rangos, recall y FPR por fuente
+  retenida) con D-6 como referencia, y comprobación del artefacto ``modelo_hito2.json``.
+
 Uso:  uv run python recompute_metrics.py predicciones.csv --sha256 <hash>
           [--record modelo_piloto.json] [--json salida.json]
+      uv run python recompute_metrics.py predicciones.csv --sha256 <hash>
+          --record registro_iter6.json --artifact modelo_hito2.json --criterio c-loso
 """
 
 from __future__ import annotations
@@ -199,6 +204,122 @@ def check_record(record: dict[str, Any], csv_sha256: str) -> None:
         raise ValueError("el registro del experimento cita otro CSV de predicciones")
 
 
+def _roc_auc(labels: list[int], scores: list[float]) -> float | None:
+    """ROC-AUC por rangos (Mann-Whitney), con empates a media de rango."""
+    positives = sum(labels)
+    negatives = len(labels) - positives
+    if positives == 0 or negatives == 0:
+        return None
+    order = sorted(range(len(scores)), key=lambda i: scores[i])
+    ranks = [0.0] * len(scores)
+    k = 0
+    while k < len(order):
+        j = k
+        while j + 1 < len(order) and scores[order[j + 1]] == scores[order[k]]:
+            j += 1
+        for t in range(k, j + 1):
+            ranks[order[t]] = (k + j) / 2 + 1
+        k = j + 1
+    rank_sum = sum(r for r, y in zip(ranks, labels, strict=True) if y == 1)
+    return (rank_sum - positives * (positives + 1) / 2) / (positives * negatives)
+
+
+# Criterio C-LOSO (ADR 0018) y, como referencia, D-6 (DECISIONES-USUARIO, 2026-11-16).
+C_LOSO = {"roc_auc_min": 0.85, "recall_min": 0.50, "fpr_max": 0.10, "fuentes_dron_min": 2}
+D6 = {"pr_auc_min": 0.85, "recall_min": 0.50, "fpr_max": 0.10}
+
+
+def criterion_c_loso(data: bytes, expected_sha256: str, model: str) -> dict[str, Any]:
+    """C-LOSO del modelo indicado, solo con el CSV: las fuentes con dron de cada pliegue de
+    entrenamiento son las fuentes del CSV con alguna fila dron=1 distintas de la retenida."""
+    _, rows = _rows(data, expected_sha256)
+    loso = [r for r in rows if r["esquema"] == "loso" and r["modelo"] == model]
+    if not loso:
+        raise ValueError(f"no hay filas LOSO del modelo {model!r}")
+    drone_sources = sorted({r["fuente"] for r in rows if int(r["dron"]) == 1})
+    folds: dict[str, list[dict[str, str]]] = defaultdict(list)
+    for r in loso:
+        folds[r["fuente"]].append(r)
+    out = []
+    for source in sorted(folds):
+        members = folds[source]
+        partitions = {r["particion"] for r in members}
+        if partitions != {f"sin_{source}"}:
+            raise ValueError(f"filas de {source} fuera de su pliegue: {sorted(partitions)}")
+        labels = [int(r["dron"]) for r in members]
+        scores = [float(r["puntuacion"]) for r in members]
+        tn, fp, fn, tp = _counts(members)
+        entry: dict[str, Any] = {
+            "fuente_retenida": source,
+            "n": len(members),
+            "positivos": tp + fn,
+            "fuentes_dron_entrenando": [s for s in drone_sources if s != source],
+            "roc_auc": _roc_auc(labels, scores),
+            "pr_auc": _average_precision(labels, scores),
+            "recall": _ratio(tp, tp + fn),
+            "fpr": _ratio(fp, fp + tn),
+        }
+        checks = []
+        if entry["positivos"]:
+            if len(entry["fuentes_dron_entrenando"]) < C_LOSO["fuentes_dron_min"]:
+                entry["estado"] = "NO EVALUABLE"
+            else:
+                checks.append(
+                    entry["recall"] is not None and entry["recall"] >= C_LOSO["recall_min"]
+                )
+                # ROC-AUC solo se define si la fuente retenida también tiene negativos; una fuente
+                # solo de dron (Salford, DroneAudioSet, Yi-KAIST) se juzga por recall.
+                if entry["fpr"] is not None:
+                    checks.append(
+                        entry["roc_auc"] is not None and entry["roc_auc"] >= C_LOSO["roc_auc_min"]
+                    )
+        if entry["fpr"] is not None:
+            checks.append(entry["fpr"] <= C_LOSO["fpr_max"])
+        entry.setdefault("estado", "CUMPLE" if all(checks) else "NO CUMPLE")
+        out.append(entry)
+    states = {e["estado"] for e in out}
+    overall = (
+        "CUMPLE"
+        if states == {"CUMPLE"}
+        else (
+            "NO EVALUABLE"
+            if "NO EVALUABLE" in states and "NO CUMPLE" not in states
+            else "NO CUMPLE"
+        )
+    )
+    by_source = {e["fuente_retenida"]: e for e in out}
+    aris, fsd = by_source.get("aris"), by_source.get("fsd50k")
+    d6 = None
+    if aris and fsd:
+        d6 = {
+            "pr_auc_aris": aris["pr_auc"],
+            "recall_aris": aris["recall"],
+            "fpr_fsd50k": fsd["fpr"],
+        }
+        d6["cumple"] = bool(
+            d6["pr_auc_aris"] is not None
+            and d6["pr_auc_aris"] >= D6["pr_auc_min"]
+            and (d6["recall_aris"] or 0) >= D6["recall_min"]
+            and d6["fpr_fsd50k"] is not None
+            and d6["fpr_fsd50k"] <= D6["fpr_max"]
+        )
+    return {"modelo": model, "c_loso": overall, "por_fuente": out, "d6_referencia": d6}
+
+
+def check_artifact(artifact: dict[str, Any], csv_sha256: str, record: dict | None) -> None:
+    """modelo_hito2.json: hash propio y referencias al CSV y al registro del experimento."""
+    body = {k: v for k, v in artifact.items() if k != "artefacto_sha256"}
+    canon = json.dumps(body, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    if hashlib.sha256(canon).hexdigest() != artifact.get("artefacto_sha256"):
+        raise ValueError("el hash propio del artefacto no cuadra")
+    if artifact.get("predicciones_csv_sha256") != csv_sha256.strip().lower():
+        raise ValueError("el artefacto cita otro CSV de predicciones")
+    if record is not None and artifact.get("registro_experimento_sha256") != record.get(
+        "registro_sha256"
+    ):
+        raise ValueError("el artefacto cita otro registro del experimento")
+
+
 def _fmt(value: float | None) -> str:
     return "—" if value is None else f"{value:.3f}"
 
@@ -209,10 +330,23 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sha256", required=True)
     parser.add_argument("--record", type=Path)
     parser.add_argument("--json", type=Path)
+    parser.add_argument("--artifact", type=Path, help="modelo_hito2.json (iteración 6)")
+    parser.add_argument("--criterio", choices=["c-loso"], help="criterio del ADR 0018")
+    parser.add_argument("--modelo", help="modelo al que se aplica el criterio (principal)")
     args = parser.parse_args(argv)
     data = args.csv.read_bytes()
+    record = None
     if args.record:
-        check_record(json.loads(args.record.read_text(encoding="utf-8")), args.sha256)
+        record = json.loads(args.record.read_text(encoding="utf-8"))
+        check_record(record, args.sha256)
+    if args.artifact:
+        check_artifact(json.loads(args.artifact.read_text(encoding="utf-8")), args.sha256, record)
+    criterion = None
+    if args.criterio:
+        model = args.modelo or (record or {}).get("modelo_principal")
+        if not model:
+            parser.error("--criterio necesita --modelo o un registro con modelo_principal")
+        criterion = criterion_c_loso(data, args.sha256, model)
     table = recompute(data, args.sha256)
     pooled = recompute_pooled(data, args.sha256)
     by_type = recompute_by_type(data, args.sha256)
@@ -233,8 +367,30 @@ def main(argv: list[str] | None = None) -> int:
                 f"| {r['modelo']} | {r['esquema']} | {r['tipo']} | {r['n']} | {r['fp']} "
                 f"| {r['fpr']:.3f} |"
             )
+    if criterion:
+        print(f"\nCriterio C-LOSO (ADR 0018) · modelo {criterion['modelo']}: {criterion['c_loso']}")
+        print(
+            "| fuente retenida | n | dron | fuentes de dron entrenando | ROC-AUC | recall | FPR "
+            "| estado |"
+        )
+        print("|---|---|---|---|---|---|---|---|")
+        for e in criterion["por_fuente"]:
+            print(
+                f"| {e['fuente_retenida']} | {e['n']} | {e['positivos']} "
+                f"| {', '.join(e['fuentes_dron_entrenando']) or '—'} | {_fmt(e['roc_auc'])} "
+                f"| {_fmt(e['recall'])} | {_fmt(e['fpr'])} | {e['estado']} |"
+            )
+        d6 = criterion["d6_referencia"]
+        if d6:
+            print(
+                f"Referencia D-6: PR-AUC ARIS {_fmt(d6['pr_auc_aris'])}, recall ARIS "
+                f"{_fmt(d6['recall_aris'])}, FPR FSD50K {_fmt(d6['fpr_fsd50k'])} -> "
+                f"{'cumple' if d6['cumple'] else 'no cumple'} (dependiente de la prevalencia)"
+            )
     if args.json:
         result = {"por_particion": table, "agregado": pooled, "por_tipo": by_type}
+        if criterion:
+            result["criterio"] = criterion
         args.json.write_text(json.dumps(result, ensure_ascii=False, indent=1) + "\n")
     return 0
 

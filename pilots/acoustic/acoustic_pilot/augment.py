@@ -91,6 +91,85 @@ def plan_mixes(
     return plan
 
 
+def plan_cross_mixes(
+    positives: Sequence[int],
+    negatives: Sequence[int],
+    sources: Sequence[str],
+    seconds: Sequence[float],
+    *,
+    n: int,
+    seed: int,
+) -> list[dict]:
+    """Hito 2 (H2.3): mezclas CRUZADAS, el dron de la fuente A sobre fondo de una fuente B != A,
+    para que el canal deje de delatar la clase. Fuente de dron y fuente de fondo se eligen
+    equilibradas (cada fuente con la misma probabilidad); nunca dos partes de la misma fuente.
+    Mismo formato que plan_mixes (se generan con render_mix) más cross/drone_source/
+    background_source."""
+    by_src: dict[str, dict[str, list[int]]] = {"pos": {}, "neg": {}}
+    for kind, pool in (("pos", positives), ("neg", negatives)):
+        for i in pool:
+            by_src[kind].setdefault(sources[i], []).append(int(i))
+    pairs = [(a, b) for a in sorted(by_src["pos"]) for b in sorted(by_src["neg"]) if a != b]
+    if not pairs:
+        raise ValueError("hacen falta drones y fondos de fuentes distintas")
+    drone_sources = sorted({a for a, _ in pairs})
+    rng = np.random.default_rng(seed)
+    plan = []
+    for k in range(n):
+        drone_src = drone_sources[int(rng.integers(len(drone_sources)))]
+        bg_options = sorted(b for a, b in pairs if a == drone_src)
+        bg_src = bg_options[int(rng.integers(len(bg_options)))]
+        d = by_src["pos"][drone_src][int(rng.integers(len(by_src["pos"][drone_src])))]
+        b = by_src["neg"][bg_src][int(rng.integers(len(by_src["neg"][bg_src])))]
+        plan.append(
+            {
+                "id": f"cruzada{k:05d}",
+                "drone": d,
+                "background": b,
+                "drone_source": drone_src,
+                "background_source": bg_src,
+                "snr_db": float(rng.uniform(*MIX_SNR_RANGE_DB)),
+                "gain_db": float(rng.uniform(*MIX_GAIN_RANGE_DB)),
+                "shift_fraction": float(rng.uniform()),
+                "drone_offset": float(rng.uniform()),
+                "background_offset": float(rng.uniform()),
+                "seconds": float(min(seconds[d], seconds[b], MIX_MAX_SECONDS)),
+                "synthetic": True,
+                "cross": True,
+                "dron": 1,
+            }
+        )
+    return plan
+
+
+def assert_cross_mixes_allowed(
+    plan: Sequence[dict], used: Sequence[int], train: Sequence[int], *, held_out: str | None
+) -> None:
+    """Fallo cerrado: dron y fondo en entrenamiento, fuentes distintas y ninguna es la retenida."""
+    allowed = set(train)
+    for k in used:
+        m = plan[k]
+        if m["drone"] not in allowed or m["background"] not in allowed:
+            raise ValueError(f"mezcla {m['id']} con audio fuera de entrenamiento")
+        if m["drone_source"] == m["background_source"]:
+            raise ValueError(f"mezcla {m['id']} con ambas partes de la misma fuente")
+        if held_out is not None and held_out in (m["drone_source"], m["background_source"]):
+            raise ValueError(f"mezcla {m['id']} usa la fuente retenida {held_out}")
+
+
+def cross_mixes_for_fold(
+    plan: Sequence[dict], train: Sequence[int], *, held_out: str | None
+) -> list[int]:
+    """Mezclas cruzadas utilizables en un pliegue (LOSO: held_out = fuente retenida)."""
+    ids = [
+        k
+        for k in mixes_for_training(plan, train)
+        if held_out not in (plan[k]["drone_source"], plan[k]["background_source"])
+    ]
+    assert_cross_mixes_allowed(plan, ids, train, held_out=held_out)
+    return ids
+
+
 def _crop(x: np.ndarray, length: int, offset_fraction: float) -> np.ndarray:
     start = int((len(x) - length) * offset_fraction) if len(x) > length else 0
     return np.asarray(x)[start : start + length]
