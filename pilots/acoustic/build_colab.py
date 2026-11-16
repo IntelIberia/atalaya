@@ -9,10 +9,18 @@ or the private Atalaya repository. Run this after the pinned source manifests ex
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
+
+from acoustic_pilot.extra_sources import (
+    EXTRA_SOURCES,
+    droneaudioset_selection,
+    salford_selection,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "ml/datasets/svanstrom/manifest.json"
@@ -213,15 +221,17 @@ de Drive.
 """
 
 
-def main(output: Path = OUTPUT) -> None:
-    sources_src = {
-        name: (PILOT_PKG / f"{name}.py").read_text(encoding="utf-8") for name in EMBEDDED
-    }
+def _embedded_sources(names: tuple[str, ...]) -> dict[str, str]:
+    sources_src = {name: (PILOT_PKG / f"{name}.py").read_text(encoding="utf-8") for name in names}
     for name, text in sources_src.items():
         assert "__future__" not in text, name  # se incrusta a mitad de cuaderno
         assert "from acoustic_pilot" not in text, name
+    return sources_src
+
+
+def _base_config() -> dict:
     svan = _svanstrom()
-    config = {
+    return {
         "source_commit": svan["commit"],
         "license_sha256": svan["license_sha256"],
         "group_status": svan["group_status"],
@@ -233,6 +243,10 @@ def main(output: Path = OUTPUT) -> None:
         "fraunhofer_record": "https://zenodo.org/api/records/17525811",
         "dads_card": "https://huggingface.co/datasets/geronimobasso/drone-audio-detection-samples",
     }
+
+
+def _iter5_cells(config: dict, sources_src: dict[str, str]) -> list[dict]:
+    """Celdas de la iteración 5 (también fuente de las celdas de descarga de la iteración 6)."""
     cells = [
         md(INTRO),
         code("""# Dependencias para el entorno actual de Colab; se comprueba la versión de TensorFlow.
@@ -1111,6 +1125,16 @@ vuelo/sitio.
         cells[speech_cell],
         cells[gate_cell],
     )
+    return cells
+
+
+def main(output: Path = OUTPUT) -> None:
+    sources_src = _embedded_sources(EMBEDDED)
+    cells = _iter5_cells(_base_config(), sources_src)
+    _finalize(cells, output, OUTPUT.name)
+
+
+def _finalize(cells: list[dict], output: Path, name: str) -> None:
     # Hash del código del cuaderno: SHA-256 del JSON canónico de las celdas con el marcador; se
     # sustituye después (el cuaderno no puede contener su propio hash final).
     code_sha256 = hashlib.sha256(
@@ -1125,7 +1149,7 @@ vuelo/sitio.
         # nbformat 4.5 exige un id por celda; ids deterministas para que la salida sea reproducible.
         "cells": [{"id": f"celda-{i:02d}", **cell} for i, cell in enumerate(cells)],
         "metadata": {
-            "colab": {"name": OUTPUT.name, "provenance": []},
+            "colab": {"name": name, "provenance": []},
             "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
             "language_info": {"name": "python"},
         },
@@ -1136,5 +1160,120 @@ vuelo/sitio.
     print(output)
 
 
+# --- Iteración 6 (hito 2, H2.5) -------------------------------------------------------------
+OUTPUT6 = ROOT / "pilots/acoustic/Atalaya_YAMNet_Colab_iter6.ipynb"
+SALFORD_MANIFEST = ROOT / "ml/datasets/salford-dronenoise/manifest.json"
+DAS_MANIFEST = ROOT / "ml/datasets/droneaudioset-drone-only/manifest.json"
+YI_MANIFEST = ROOT / "ml/datasets/yi-kaist-drone-fault/manifest.json"
+DECISIONS = ROOT / "docs/requirements/DECISIONES-USUARIO.md"
+# Autorización del usuario para usar cada fuente de dron extra en ESTA prueba técnica (sus
+# manifiestos siguen con intake_approved=false). None = desactivada. Para activarla: registrar la
+# decisión en DECISIONES-USUARIO.md, poner aquí su cita literal y regenerar el cuaderno.
+EXTRA_AUTHORIZATION: dict[str, str | None] = {
+    "salford": None,
+    "droneaudioset": None,
+    "yi_kaist": None,
+}
+YI_PAIRS = 1200  # pares de segmentos normales de 0,5 s del dron A (subconjunto con semilla)
+RELATIVE_IMPORT = re.compile(r"^from \.(\w+) import (\([^)]*\)|[^\n]+)\n", re.MULTILINE)
+
+
+def _strip_relative_imports(sources_src: dict[str, str]) -> dict[str, str]:
+    """Quita las importaciones relativas (en el cuaderno, esos nombres ya los definió un módulo
+    incrustado ANTES); comprueba que el módulo y cada nombre existen y van antes."""
+    out: dict[str, str] = {}
+    for name, text in sources_src.items():
+        for match in RELATIVE_IMPORT.finditer(text):
+            module = match.group(1)
+            assert module in out, f"{name} importa {module}, que no se incrusta antes"
+            names = [n.strip() for n in match.group(2).strip("()").split(",") if n.strip()]
+            tree = ast.parse(out[module])
+            defined = {
+                t.id if isinstance(t, ast.Name) else t
+                for node in tree.body
+                for t in (
+                    [node.name]
+                    if isinstance(node, ast.FunctionDef | ast.ClassDef)
+                    else (node.targets if isinstance(node, ast.Assign) else [])
+                )
+            }
+            missing = set(names) - {d for d in defined if isinstance(d, str)}
+            assert not missing, f"{name}: {missing} no están definidos en {module}"
+        out[name] = RELATIVE_IMPORT.sub("", text)
+        assert "from ." not in out[name], name
+    return out
+
+
+def _extra_config() -> dict:
+    sal = json.loads(SALFORD_MANIFEST.read_text())
+    assert sal["license"] == "CC-BY-4.0" and sal["intake_approved"] is False
+    keep = ("path", "bytes", "md5", "url", "figshare_file_id", "suas_code", "event_id", "group_id")
+    salford = {
+        "api": "https://api.figshare.com/v2/articles/22133411",
+        "files": [{k: f[k] for k in keep} for f in salford_selection(sal["files"])],
+    }
+    das = json.loads(DAS_MANIFEST.read_text())
+    assert das["license"] == "MIT" and das["intake_approved"] is False
+    das_sel = droneaudioset_selection(das["files"], seed=20261111)
+    row_keep = ("upstream_file_path", "drone", "take", "group_id", "label_status")
+    droneaudioset = {
+        "info_url": f"https://huggingface.co/api/datasets/ahlab-drone-project/DroneAudioSet/revision/{das['revision']}",
+        "revision": das["revision"],
+        "files": [
+            {
+                "path": f["path"],
+                "bytes": f["bytes"],
+                "sha256": f["sha256"],
+                "url": f["url"],
+                "rows": [{k: r[k] for k in row_keep} for r in f["rows"]],
+            }
+            for f in das_sel
+        ],
+    }
+    yi = json.loads(YI_MANIFEST.read_text())
+    assert yi["license"] == "CC-BY-4.0" and yi["intake_approved"] is False
+    file_a = next(f for f in yi["files"] if f["selected_for_colab"])
+    yi_kaist = {
+        "api": "https://zenodo.org/api/records/7779574",
+        "file": {k: file_a[k] for k in ("path", "bytes", "md5", "url")},
+        "n_pairs": YI_PAIRS,
+    }
+    return {"salford": salford, "droneaudioset": droneaudioset, "yi_kaist": yi_kaist}
+
+
+def _check_authorizations(auth: dict[str, str | None]) -> None:
+    assert set(auth) == set(EXTRA_SOURCES), auth
+    text = DECISIONS.read_text(encoding="utf-8")
+    for source, quote in auth.items():
+        if quote:
+            assert quote in text, f"la autorización de {source} no está en DECISIONES-USUARIO.md"
+
+
+def main_iter6(output: Path = OUTPUT6) -> None:
+    from colab_iter6 import ITER6_MODULES, iter6_cells
+
+    _check_authorizations(EXTRA_AUTHORIZATION)
+    sources5 = _embedded_sources(EMBEDDED)
+    cells5 = _iter5_cells(_base_config(), sources5)
+    embedded = _strip_relative_imports({**sources5, **_embedded_sources(ITER6_MODULES)})
+
+    def iter5_cell(prefix: str) -> dict:
+        found = [c for c in cells5 if "".join(c["source"]).startswith(prefix)]
+        assert len(found) == 1, prefix
+        return json.loads(json.dumps(found[0]))
+
+    config = {**_base_config(), "extra": _extra_config()}
+    config_json = json.dumps(config, ensure_ascii=False, separators=(",", ":"))
+    cells = iter6_cells(config_json, EXTRA_AUTHORIZATION, embedded, iter5_cell, md, code)
+    _finalize(cells, output, OUTPUT6.name)
+
+
 if __name__ == "__main__":
-    main(Path(sys.argv[1]) if len(sys.argv) > 1 else OUTPUT)
+    args = sys.argv[1:]
+    if args[:1] == ["--iter6"]:
+        main_iter6(Path(args[1]) if len(args) > 1 else OUTPUT6)
+    elif args:
+        main(Path(args[0]))
+    else:
+        main()
+        main_iter6()

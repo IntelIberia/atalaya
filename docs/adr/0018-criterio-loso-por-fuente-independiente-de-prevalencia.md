@@ -64,7 +64,8 @@ calibración, ni para elegir el umbral):
   pliegue solo cuenta si el entrenamiento tiene **≥ 2 fuentes de dron distintas** (las mezclas
   sintéticas no cuentan como fuente); si no, el pliegue es **NO EVALUABLE** y el criterio **no se
   cumple**. Si cuenta: **ROC-AUC ≥ 0,85** y **recall ≥ 0,50** con el umbral elegido en validación
-  sin esa fuente.
+  sin esa fuente. Una fuente retenida **solo de dron** (sin negativos propios: Salford,
+  DroneAudioSet, Yi-KAIST) no tiene ROC-AUC definido y se juzga por el recall.
 - **(b) FPR ≤ 0,10** sobre los negativos de **cada** fuente retenida (ESC-10, FSD50K y los fondos de
   ARIS y de Svanström), con el mismo umbral.
 - Todas las cifras con IC 95 % por grupos (remuestreo de grupos completos); el criterio se juzga
