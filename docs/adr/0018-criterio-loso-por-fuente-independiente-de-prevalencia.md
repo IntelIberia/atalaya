@@ -1,8 +1,8 @@
 # 0018 — Criterio de avance del hito 2: LOSO por fuente e independiente de la prevalencia (sustituye a D-6)
 
-- Estado: propuesto (pendiente de aprobación del usuario; sustituye a la decisión D-6 del 2026-11-16 si se aprueba)
+- Estado: aceptado por el usuario (2026-11-16, «Aprobar ADR 0018 (Recommended)»); sustituye a la decisión D-6
 - Fecha: 2026-11-16
-- Decisores: usuario (pendiente); Claude Code (redacción, a petición del coordinador del hito 2)
+- Decisores: usuario (aprobado 2026-11-16); Claude Code (redacción, a petición del coordinador del hito 2)
 
 ## Contexto
 El plan del hito 2 (`docs/plans/HITO-2.md`, H2.5) fija como criterio de avance de la iteración 6 la

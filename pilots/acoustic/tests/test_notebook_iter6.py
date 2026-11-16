@@ -141,16 +141,15 @@ def test_prohibited_sources_stay_blocked() -> None:
         assert name.lower() not in text.lower()
 
 
-def test_extra_drone_sources_are_disabled_without_recorded_authorization() -> None:
-    assert build_colab.EXTRA_AUTHORIZATION == {
-        "salford": None,
-        "droneaudioset": None,
-        "yi_kaist": None,
-    }
+def test_extra_drone_sources_enabled_with_recorded_user_authorization() -> None:
+    # Decisión del usuario 2026-11-16 (respuesta directa en el chat), registrada en
+    # DECISIONES-USUARIO.md: las 3 fuentes extra SOLO para la prueba técnica en Colab.
+    quote = "usuario, 2026-11-16: «Sí, las 3 (Recommended)»"
+    expected = {"salford": quote, "droneaudioset": quote, "yi_kaist": quote}
+    assert expected == build_colab.EXTRA_AUTHORIZATION
+    assert quote in build_colab.DECISIONS.read_text(encoding="utf-8")
     code = _code()
-    assert (
-        "EXTRA_AUTHORIZATION = {'salford': None, 'droneaudioset': None, 'yi_kaist': None}" in code
-    )
+    assert f"EXTRA_AUTHORIZATION = {build_colab.EXTRA_AUTHORIZATION!r}" in code
     assert "EXTRA_ENABLED = enabled_extra_sources(EXTRA_AUTHORIZATION)" in code
     for source in ("salford", "droneaudioset", "yi_kaist"):
         assert f'if "{source}" in EXTRA_ENABLED:' in code

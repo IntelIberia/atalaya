@@ -1167,12 +1167,13 @@ DAS_MANIFEST = ROOT / "ml/datasets/droneaudioset-drone-only/manifest.json"
 YI_MANIFEST = ROOT / "ml/datasets/yi-kaist-drone-fault/manifest.json"
 DECISIONS = ROOT / "docs/requirements/DECISIONES-USUARIO.md"
 # Autorización del usuario para usar cada fuente de dron extra en ESTA prueba técnica (sus
-# manifiestos siguen con intake_approved=false). None = desactivada. Para activarla: registrar la
+# manifiestos siguen con intake_approved=false). None = desactivada. Activadas el 2026-11-16 por
+# respuesta directa del usuario (DECISIONES-USUARIO.md), solo para la prueba técnica en Colab. Para activarla: registrar la
 # decisión en DECISIONES-USUARIO.md, poner aquí su cita literal y regenerar el cuaderno.
 EXTRA_AUTHORIZATION: dict[str, str | None] = {
-    "salford": None,
-    "droneaudioset": None,
-    "yi_kaist": None,
+    "salford": "usuario, 2026-11-16: «Sí, las 3 (Recommended)»",
+    "droneaudioset": "usuario, 2026-11-16: «Sí, las 3 (Recommended)»",
+    "yi_kaist": "usuario, 2026-11-16: «Sí, las 3 (Recommended)»",
 }
 YI_PAIRS = 1200  # pares de segmentos normales de 0,5 s del dron A (subconjunto con semilla)
 RELATIVE_IMPORT = re.compile(r"^from \.(\w+) import (\([^)]*\)|[^\n]+)\n", re.MULTILINE)
