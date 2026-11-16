@@ -8,7 +8,9 @@
   y de registros de verdad terreno, hash del contenido).
 
 Códigos de salida: 0 correcto, 2 entrada inválida (escenario, semilla, duración o fichero, incluido
-un replay truncado, alterado o de versión desconocida). La salida MQTT (`--mqtt`) llega en T1.16.
+un replay truncado, alterado o de versión desconocida); 3 publicación MQTT denegada: `--mqtt` en
+`run` o `replay` se rechaza antes de ejecutar nada (T1.16: puerta cerrada hasta T1.7b, ver
+`sim/mqtt_out.py`); no lee credenciales ni crea el transporte.
 """
 
 from __future__ import annotations
@@ -23,7 +25,7 @@ for _extra in (_REPO / "proto" / "gen" / "python", _REPO / "proto" / "python"):
     if str(_extra) not in sys.path:
         sys.path.insert(0, str(_extra))
 
-from sim import replay  # noqa: E402
+from sim import mqtt_out, replay  # noqa: E402
 from sim.rng import check_seed  # noqa: E402
 from sim.scenario import ScenarioError  # noqa: E402
 
@@ -71,14 +73,19 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--seed", type=int, default=None)
     run.add_argument("--duration", type=float, default=None, help="segundos simulados")
     run.add_argument("--out", type=Path, required=True)
+    run.add_argument("--mqtt", action="store_true", help="publicar por MQTT (deshabilitado)")
     run.set_defaults(handler=_run)
     hash_cmd = commands.add_parser("hash", help="SHA-256 del flujo y del fichero")
     hash_cmd.add_argument("file", type=Path)
     hash_cmd.set_defaults(handler=_hash)
     replay_cmd = commands.add_parser("replay", help="lee y comprueba un replay .pb.zst")
     replay_cmd.add_argument("--in", dest="input", type=Path, required=True)
+    replay_cmd.add_argument("--mqtt", action="store_true", help="publicar por MQTT (deshabilitado)")
     replay_cmd.set_defaults(handler=_replay)
     args = parser.parse_args(argv)
+    if getattr(args, "mqtt", False) and not mqtt_out.publication_gate_open():
+        print("sim: publicación MQTT deshabilitada hasta T1.7b", file=sys.stderr)
+        return 3
     try:
         sys.stdout.write(args.handler(args))
     except (ScenarioError, ValueError) as exc:

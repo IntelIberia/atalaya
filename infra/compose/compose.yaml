@@ -9,13 +9,27 @@ services:
     environment:
       MQTT_USER: ${MQTT_USER:?falta MQTT_USER en .env}
       MQTT_PASSWORD: ${MQTT_PASSWORD:?falta MQTT_PASSWORD en .env}
-    # El fichero de contraseñas (hash) se genera al arrancar a partir de las variables.
+      MQTT_SIM_USER: ${MQTT_SIM_USER:?falta MQTT_SIM_USER en .env (make bootstrap)}
+      MQTT_SIM_PASSWORD: ${MQTT_SIM_PASSWORD:?falta MQTT_SIM_PASSWORD en .env (make bootstrap)}
+      MQTT_INGEST_USER: ${MQTT_INGEST_USER:?falta MQTT_INGEST_USER en .env (make bootstrap)}
+      MQTT_INGEST_PASSWORD: ${MQTT_INGEST_PASSWORD:?falta MQTT_INGEST_PASSWORD en .env (make bootstrap)}
+    # El fichero de contraseñas (hash) de las tres cuentas y la ACL (T1.16) se generan al arrancar a
+    # partir de las variables; los usuarios se validan antes de sustituirlos en la plantilla.
     command: >-
-      sh -c 'mosquitto_passwd -c -b /mosquitto/passwd "$$MQTT_USER" "$$MQTT_PASSWORD" &&
-      chmod 0700 /mosquitto/passwd && chown mosquitto:mosquitto /mosquitto/passwd &&
+      sh -c 'set -eu &&
+      for u in "$$MQTT_USER" "$$MQTT_SIM_USER" "$$MQTT_INGEST_USER"; do
+      printf "%s" "$$u" | grep -Eqx "[A-Za-z0-9_]+" || { echo "usuario MQTT inválido" >&2; exit 1; }; done &&
+      mosquitto_passwd -c -b /mosquitto/passwd "$$MQTT_USER" "$$MQTT_PASSWORD" &&
+      mosquitto_passwd -b /mosquitto/passwd "$$MQTT_SIM_USER" "$$MQTT_SIM_PASSWORD" &&
+      mosquitto_passwd -b /mosquitto/passwd "$$MQTT_INGEST_USER" "$$MQTT_INGEST_PASSWORD" &&
+      sed -e "s/@MQTT_USER@/$$MQTT_USER/" -e "s/@MQTT_SIM_USER@/$$MQTT_SIM_USER/"
+      -e "s/@MQTT_INGEST_USER@/$$MQTT_INGEST_USER/" /mosquitto/config/acl.tmpl > /mosquitto/acl &&
+      chmod 0700 /mosquitto/passwd /mosquitto/acl &&
+      chown mosquitto:mosquitto /mosquitto/passwd /mosquitto/acl &&
       exec mosquitto -c /mosquitto/config/mosquitto.conf'
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/acl.tmpl:/mosquitto/config/acl.tmpl:ro
     ports:
       - "127.0.0.1:1883:1883"
     # El healthcheck pasa la contraseña a mosquitto_sub por argv: es un proceso efímero DENTRO del
